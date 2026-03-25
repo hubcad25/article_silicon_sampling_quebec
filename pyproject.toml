@@ -1,0 +1,17 @@
+[project]
+name = "article-silicon-sampling-quebec"
+version = "0.1.0"
+description = "Code workspace for silicon sampling research on Quebec public opinion"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "polars>=1.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
