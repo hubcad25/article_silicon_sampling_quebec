@@ -240,6 +240,11 @@ def main() -> None:
     results_df = pl.DataFrame(samples)
     results_df.write_parquet(args.output)
     logger.info(f"Saved {len(samples)} samples → {args.output}")
+    
+    # Also save as CSV for inspection and manuscript workflows
+    csv_output = args.output.with_suffix('.csv')
+    results_df.write_csv(csv_output)
+    logger.info(f"Saved {len(samples)} samples → {csv_output}")
 
 
 if __name__ == "__main__":
