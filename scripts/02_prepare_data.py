@@ -65,18 +65,33 @@ def load_stata_data(path: str) -> tuple[pd.DataFrame, dict, dict]:
     return df, var_labels, value_labels
 
 
-def load_codebook_jsonl(path: str) -> dict:
-    """Load question metadata from JSONL codebook."""
+def load_codebook_jsonl(path: str) -> tuple[dict, dict]:
+    """Load question metadata from JSONL codebook, returning EN and FR dicts separately.
+
+    The JSONL has two entries per variable: English first, French second.
+    Heuristic: an entry is French if its label or question contains accented characters
+    or if it's the second entry seen for that variable.
+    """
     logger.info(f"Loading codebook from {path}...")
-    codebook: dict = {}
+    codebook_en: dict = {}
+    codebook_fr: dict = {}
+    seen: dict = {}  # var -> first entry already stored
     with open(path) as f:
         for line in f:
             item = json.loads(line.strip())
             var = item.get("variable")
-            if var and var not in codebook:
-                codebook[var] = item
-    logger.info(f"Loaded {len(codebook)} question entries")
-    return codebook
+            if not var:
+                continue
+            if var not in seen:
+                seen[var] = item
+                codebook_en[var] = item
+            else:
+                # Second entry for this variable → French version
+                codebook_fr[var] = item
+    logger.info(
+        f"Loaded {len(codebook_en)} EN + {len(codebook_fr)} FR question entries"
+    )
+    return codebook_en, codebook_fr
 
 
 def load_thematic_domains(path: str) -> dict:
@@ -182,6 +197,12 @@ def prepare_respondents(
         "cps21_genderid": ("gender", lambda: apply_value_labels(df, value_labels, "cps21_genderid")),
     }
 
+    # Survey interface language (FR-CA or EN) — used to select prompt language
+    if "UserLanguage" in df.columns:
+        respondents["survey_language"] = df["UserLanguage"].astype(str)
+    else:
+        respondents["survey_language"] = "EN"
+
     for var in selected_vars:
         if var in rename:
             col_name, fn = rename[var]
@@ -210,10 +231,11 @@ def prepare_questions(
     selected_vars: list[str],
     var_labels: dict,
     value_labels: dict,
-    codebook: dict,
+    codebook_en: dict,
+    codebook_fr: dict,
     thematic_domains: dict,
 ) -> pd.DataFrame:
-    """Build questions metadata table with thematic domain and split columns."""
+    """Build questions metadata table with thematic domain, split, and FR columns."""
     logger.info("Preparing questions metadata...")
 
     col_rename = {
@@ -229,13 +251,18 @@ def prepare_questions(
             continue  # replaced by age, not an attitude question
 
         label = var_labels.get(var, "")
-        question_text = codebook.get(var, {}).get("question", "")
+        question_text = codebook_en.get(var, {}).get("question", "")
 
-        options = codebook.get(var, {}).get("options", [])
+        options = codebook_en.get(var, {}).get("options", [])
         if not options and var in value_labels:
             options = [
                 f"{k}: {v}" for k, v in sorted(value_labels[var].items())
             ]
+
+        # French versions
+        label_fr = codebook_fr.get(var, {}).get("label", "")
+        question_fr = codebook_fr.get(var, {}).get("question", "")
+        options_fr = codebook_fr.get(var, {}).get("options", [])
 
         domain_entry = thematic_domains.get(var, {})
         domain = domain_entry.get("domain") if isinstance(domain_entry, dict) else None
@@ -246,7 +273,10 @@ def prepare_questions(
             "column_name": col_rename.get(var, var),
             "label": label,
             "question": question_text,
-            "options": json.dumps(options) if options else "",
+            "options": json.dumps(options, ensure_ascii=False) if options else "",
+            "label_fr": label_fr,
+            "question_fr": question_fr,
+            "options_fr": json.dumps(options_fr, ensure_ascii=False) if options_fr else "",
             "thematic_domain": domain,
             "split": split,
         })
@@ -272,7 +302,7 @@ def main() -> None:
     df, var_labels, value_labels = load_stata_data(
         str(data_dir / "raw" / "ces_2021" / "ces_2021.dta")
     )
-    codebook = load_codebook_jsonl(
+    codebook_en, codebook_fr = load_codebook_jsonl(
         str(data_dir / "raw" / "ces_2021" / "ces_2021_codebook_questions.jsonl")
     )
     thematic_domains = load_thematic_domains(
@@ -280,14 +310,17 @@ def main() -> None:
     )
 
     df_qc = filter_quebec(df)
-    selected_vars = select_relevant_variables(df_qc, codebook, thematic_domains)
+    selected_vars = select_relevant_variables(df_qc, codebook_en, thematic_domains)
     respondents = prepare_respondents(df_qc, selected_vars, value_labels)
-    questions = prepare_questions(selected_vars, var_labels, value_labels, codebook, thematic_domains)
+    questions = prepare_questions(
+        selected_vars, var_labels, value_labels,
+        codebook_en, codebook_fr, thematic_domains,
+    )
 
     # Exclude _drop variables from respondents matrix
     keep_cols = questions.loc[questions["split"] != "drop", "column_name"].tolist()
-    # Always keep SES columns (they have no split assignment)
-    ses_cols = ["age", "province", "education", "gender", "language"]
+    # Always keep SES columns and survey metadata (no split assignment)
+    ses_cols = ["survey_language", "age", "province", "education", "gender", "language"]
     keep_cols = [c for c in respondents.columns if c in ses_cols or c in keep_cols]
     respondents = respondents[keep_cols]
     logger.info(f"Respondents matrix after dropping _drop vars: {len(respondents)} × {len(respondents.columns)}")
