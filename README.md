@@ -4,7 +4,7 @@ Working repo for an academic article on silicon sampling applied to Quebec publi
 
 ## Research question
 
-Can LLM-based silicon sampling — conditioned on real survey data — reliably simulate Quebec public opinion on unsurveyed questions? Which conditioning mechanism contributes most to predictive accuracy?
+Two mechanisms for LLM-based opinion simulation are compared: retrieval-augmented generation (RAG), which conditions a general-purpose model on empirically similar survey responses at inference time, and supervised fine-tuning (SFT), which trains a model to internalize population-level opinion patterns. We evaluate which mechanism — alone or combined — best reproduces observed response distributions in a held-out validation design applied to Quebec public opinion data.
 
 ## Positioning relative to Argyle et al. (2023)
 
@@ -63,8 +63,10 @@ Need to review how comparable studies have handled this (not the first to face t
 
 - **Manuscript**: Quarto (`.qmd`)
 - **Data**: Canadian Election Study 2021 (CES 2021)
-- **Code**: Python/R (English)
+- **Code**: Python/R (English); fine-tuning via script (`scripts/finetune.py`), not notebooks
 - **Embeddings**: sentence-transformers or OpenAI embeddings (TBD)
+- **Fine-tuning**: `transformers` + `peft` + `trl` (HuggingFace ecosystem, QLoRA); cloud GPU (provider TBD)
+- **LLM inference**: open-source model (Mistral 7B or Llama 3), deployment TBD (see LLM infrastructure)
 
 ## Project structure
 
