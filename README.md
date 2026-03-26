@@ -28,10 +28,11 @@ Four conditions evaluated on the same held-out questions:
 |---|---|---|
 | 1 | LLM cold | Baseline — intrinsic LLM capacity |
 | 2 | LLM + demographics | Marginal contribution of sociodemographic profile |
-| 3 | LLM + demographics + semantically similar attitudes (RAG) | Marginal contribution of empirical priors |
+| 3 | LLM + demographics + RAG | Marginal contribution of empirical priors at inference time |
 | 4 | LLM fine-tuned on CES subset | Marginal contribution of training on real survey data |
+| 5 | Fine-tuned LLM + demographics + RAG | Whether RAG still adds value on top of fine-tuning |
 
-The marginal contribution of each layer is the core empirical result. Fine-tuned model is evaluated on held-out thematic domains (train/test split by topic, not randomly) to prevent memorization and force genuine generalization.
+The marginal contribution of each layer is the core empirical result. Condition 5 tests whether the two mechanisms are complementary or redundant. Fine-tuned model is evaluated on held-out thematic domains (train/test split by topic, not randomly) to prevent memorization and force genuine generalization.
 
 ## Data
 
@@ -111,6 +112,7 @@ python -m pip install -r requirements.txt
 - [ ] Thematic domain split (train/test split by topic, not random)
 - [ ] Simulation pipeline — conditions 1, 2, 3 (cold / demographics / RAG)
 - [ ] Fine-tuning pipeline — condition 4 (open-source LLM on CES thematic subset)
+- [ ] Combined pipeline — condition 5 (fine-tuned LLM + RAG)
 - [ ] Validation study (held-out questions, distribution-level metrics)
 - [ ] Subgroup analysis (sociodemographic stratification)
 - [ ] Writing (Quarto)
