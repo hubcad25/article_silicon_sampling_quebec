@@ -44,6 +44,25 @@ def load_stata_data(path: str) -> tuple[pd.DataFrame, dict]:
             # If it fails, leave as is
             pass
     
+    # Also fix value_labels encoding (latin-1 → UTF-8)
+    for var_name, labels_dict in value_labels.items():
+        try:
+            fixed_labels = {}
+            for key, label_str in labels_dict.items():
+                if isinstance(label_str, str):
+                    # Try latin-1 to UTF-8 conversion
+                    try:
+                        fixed_label = label_str.encode('latin-1').decode('utf-8', errors='ignore')
+                        fixed_labels[key] = fixed_label
+                    except (UnicodeDecodeError, UnicodeEncodeError):
+                        fixed_labels[key] = label_str
+                else:
+                    fixed_labels[key] = label_str
+            value_labels[var_name] = fixed_labels
+        except Exception:
+            # If anything fails, leave as is
+            pass
+    
     return df, var_labels, value_labels
 
 
