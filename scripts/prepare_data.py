@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 
-def load_stata_data(path: str) -> tuple[pd.DataFrame, dict]:
+def load_stata_data(path: str) -> tuple[pd.DataFrame, dict, dict]:
     """Load Stata file with value labels."""
     logger.info(f"Loading {path}...")
     reader = StataReader(path, convert_categoricals=False)
@@ -82,6 +82,15 @@ def load_codebook_jsonl(path: str) -> dict:
     return codebook
 
 
+def load_thematic_domains(path: str) -> dict:
+    """Load thematic domain mapping from JSON file."""
+    logger.info(f"Loading thematic domains from {path}...")
+    with open(path, "r", encoding="utf-8") as f:
+        thematic_domains = json.load(f)
+    logger.info(f"Loaded {len(thematic_domains)} thematic domain mappings")
+    return thematic_domains
+
+
 def filter_quebec(df: pd.DataFrame) -> pd.DataFrame:
     """Filter to Quebec respondents only (cps21_province == 11)."""
     initial_count = len(df)
@@ -123,7 +132,7 @@ def select_relevant_variables(df: pd.DataFrame, codebook: dict) -> list[str]:
         # Skip PES21 questions (keep CPS21 only)
         if var.startswith("pes21"):
             continue
-        # Skip if doesn't exist in data
+        # Skip if doesn\'t exist in data
         if var not in df.columns:
             continue
         # Skip if matches exclusion patterns
@@ -132,7 +141,7 @@ def select_relevant_variables(df: pd.DataFrame, codebook: dict) -> list[str]:
         # Skip explicit exclusions
         if var in exclude_vars:
             continue
-        # Skip if it's a TEXT field (open-ended)
+        # Skip if it\'s a TEXT field (open-ended)
         if var.endswith("_TEXT"):
             continue
         selected.append(var)
@@ -199,9 +208,9 @@ def prepare_respondents(
 
 
 def prepare_questions(
-    selected_vars: list[str], var_labels: dict, value_labels: dict, codebook: dict
+    selected_vars: list[str], var_labels: dict, value_labels: dict, codebook: dict, thematic_domains: dict
 ) -> pd.DataFrame:
-    """Prepare questions metadata."""
+    """Prepare questions metadata with thematic domains."""
     logger.info("Preparing questions metadata...")
     
     questions = []
@@ -232,7 +241,7 @@ def prepare_questions(
             ]
         
         # Serialize options as JSON string for CSV export
-        import json
+
         options_json = json.dumps(options) if options else ""
         
         # Determine renamed column name
@@ -247,25 +256,65 @@ def prepare_questions(
         else:
             col_name = var
         
+        # Assign thematic domain
+        domain = thematic_domains.get(var, None)
+        
         questions.append({
             "variable_name": var,
             "column_name": col_name,
             "label": label,
             "question": question,
             "options": options_json,
+            "thematic_domain": domain,
         })
     
     df_questions = pd.DataFrame(questions)
     logger.info(f"Created questions matrix: {len(df_questions)} rows")
     return df_questions
 
+def split_questions_by_domain(
+    questions_df: pd.DataFrame, respondents_df: pd.DataFrame, test_domains: list[str]
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Split questions and respondents dataframes into train and test sets by thematic domain."""
+    logger.info(f"Splitting data by thematic domains. Test domains: {test_domains}")
+
+    # Identify questions for train and test sets
+    questions_test = questions_df[questions_df["thematic_domain"].isin(test_domains)].copy()
+    questions_train = questions_df[~questions_df["thematic_domain"].isin(test_domains)].copy()
+
+    # Identify columns for respondents train and test sets
+    # Ensure \'age\', \'language\', \'province\', \'education\', \'gender\' are always in train_cols
+    # and also in test_cols if they are not part of the questions being held out
+
+    # Always include SES variables in both train and test respondent dataframes
+    ses_cols = ["age", "language", "province", "education", "gender"]
+    
+    # Columns that are actual questions (not SES) for train and test
+    train_question_cols = questions_train[~questions_train["column_name"].isin(ses_cols)]["column_name"].tolist()
+    test_question_cols = questions_test[~questions_test["column_name"].isin(ses_cols)]["column_name"].tolist()
+
+    # Combine SES and question columns
+    respondents_train_cols = list(set(ses_cols + train_question_cols))
+    respondents_test_cols = list(set(ses_cols + test_question_cols))
+
+    # Filter respondents dataframe based on identified columns
+    respondents_train = respondents_df[respondents_train_cols].copy()
+    respondents_test = respondents_df[respondents_test_cols].copy()
+
+    logger.info(f"Train set: {len(questions_train)} questions, {len(respondents_train.columns)} respondent columns")
+    logger.info(f"Test set: {len(questions_test)} questions, {len(respondents_test.columns)} respondent columns")
+
+    return questions_train, questions_test, respondents_train, respondents_test
+
 
 def main():
     """Main pipeline."""
     # Paths
     data_dir = Path("data")
+    src_dir = Path("src/article_silicon_sampling_quebec")
     raw_ces = data_dir / "raw" / "ces_2021" / "ces_2021.dta"
     codebook_path = data_dir / "raw" / "ces_2021" / "ces_2021_codebook_questions.jsonl"
+    thematic_domains_path = src_dir / "thematic_domains.json"
     processed_dir = data_dir / "processed"
     
     # Create output directory
@@ -274,38 +323,53 @@ def main():
     # Load data
     df, var_labels, value_labels = load_stata_data(str(raw_ces))
     codebook = load_codebook_jsonl(str(codebook_path))
+    thematic_domains = load_thematic_domains(str(thematic_domains_path))
     
     # Process
     df_qc = filter_quebec(df)
     selected_vars = select_relevant_variables(df_qc, codebook)
     respondents = prepare_respondents(df_qc, selected_vars, value_labels)
-    questions = prepare_questions(selected_vars, var_labels, value_labels, codebook)
+    questions = prepare_questions(selected_vars, var_labels, value_labels, codebook, thematic_domains)
     
-    # Save
-    respondents_path = processed_dir / "respondents.parquet"
-    questions_path = processed_dir / "questions.parquet"
+    # Define test domains (example, will ask user for actual selection)
+    test_domains = ["COVID-19", "Social Issues"]
+
+    # Split data
+    questions_train, questions_test, respondents_train, respondents_test = \
+        split_questions_by_domain(questions, respondents, test_domains)
+
+    # Save train sets
+    questions_train_path = processed_dir / "questions_train.parquet"
+    questions_train_csv_path = processed_dir / "questions_train.csv"
+    respondents_train_path = processed_dir / "respondents_train.parquet"
+    respondents_train_csv_path = processed_dir / "respondents_train.csv"
+
+    pl.from_pandas(questions_train).write_parquet(str(questions_train_path))
+    questions_train.to_csv(str(questions_train_csv_path), index=False, encoding="utf-8")
+    logger.info(f"Saved questions_train \u2192 {questions_train_path} and {questions_train_csv_path}")
+
+    pl.from_pandas(respondents_train).write_parquet(str(respondents_train_path))
+    respondents_train.to_csv(str(respondents_train_csv_path), index=False, encoding="utf-8")
+    logger.info(f"Saved respondents_train \u2192 {respondents_train_path} and {respondents_train_csv_path}")
+
+    # Save test sets
+    questions_test_path = processed_dir / "questions_test.parquet"
+    questions_test_csv_path = processed_dir / "questions_test.csv"
+    respondents_test_path = processed_dir / "respondents_test.parquet"
+    respondents_test_csv_path = processed_dir / "respondents_test.csv"
+
+    pl.from_pandas(questions_test).write_parquet(str(questions_test_path))
+    questions_test.to_csv(str(questions_test_csv_path), index=False, encoding="utf-8")
+    logger.info(f"Saved questions_test \u2192 {questions_test_path} and {questions_test_csv_path}")
+
+    pl.from_pandas(respondents_test).write_parquet(str(respondents_test_path))
+    respondents_test.to_csv(str(respondents_test_csv_path), index=False, encoding="utf-8")
+    logger.info(f"Saved respondents_test \u2192 {respondents_test_path} and {respondents_test_csv_path}")
     
-    # Save respondents (parquet + CSV)
-    respondents_pl = pl.from_pandas(respondents)
-    respondents_pl.write_parquet(str(respondents_path))
-    logger.info(f"Saved respondents → {respondents_path}")
-    
-    # Also save as CSV for ease of use (UTF-8 encoded via pandas)
-    respondents_csv_path = processed_dir / "respondents.csv"
-    respondents.to_csv(str(respondents_csv_path), index=False, encoding="utf-8")
-    logger.info(f"Saved respondents → {respondents_csv_path}")
-    
-    questions_pl = pl.from_pandas(questions)
-    questions_pl.write_parquet(str(questions_path))
-    logger.info(f"Saved questions → {questions_path}")
-    
-    # Also save as CSV for ease of use (UTF-8 encoded via pandas)
-    questions_csv_path = processed_dir / "questions.csv"
-    questions.to_csv(str(questions_csv_path), index=False, encoding="utf-8")
-    logger.info(f"Saved questions → {questions_csv_path}")
-    
-    logger.info("✓ Data preparation complete")
+    logger.info("\u2713 Data preparation complete")
 
 
 if __name__ == "__main__":
     main()
+
+
