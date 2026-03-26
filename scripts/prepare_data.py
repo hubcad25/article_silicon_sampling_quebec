@@ -66,11 +66,12 @@ def select_relevant_variables(df: pd.DataFrame, codebook: dict) -> list[str]:
     
     Categories:
     - SES: age (yob), province, education, gender, language
-    - Attitude questions: survey questions (exclude timing/admin/TEXT/captcha)
+    - Attitude questions: CPS21 survey questions only (exclude timing/admin/TEXT/captcha)
+    Note: PES21 questions excluded to focus on core CPS21 survey
     """
     selected = []
     
-    # SES variables (hardcoded keys)
+    # SES variables (hardcoded keys, CPS21 only)
     ses_vars = [
         "cps21_yob",  # Year of birth (will compute age)
         "cps21_province",  # Province
@@ -80,12 +81,15 @@ def select_relevant_variables(df: pd.DataFrame, codebook: dict) -> list[str]:
     ]
     selected.extend([v for v in ses_vars if v in df.columns])
     
-    # Attitude questions from codebook
+    # Attitude questions from codebook (CPS21 only)
     # Exclude: timing (_t suffix), admin, captcha, TEXT (open-ended), response metadata
     exclude_patterns = {"_t", "_timing", "captcha", "TEXT", "Duration", "Date", "ResponseId", "StartDate", "EndDate", "RecordedDate"}
     exclude_vars = {"cps21_consent", "cps21_citizenship"}  # Skip consent/citizenship
     
     for var in codebook.keys():
+        # Skip PES21 questions (keep CPS21 only)
+        if var.startswith("pes21"):
+            continue
         # Skip if doesn't exist in data
         if var not in df.columns:
             continue
@@ -100,7 +104,7 @@ def select_relevant_variables(df: pd.DataFrame, codebook: dict) -> list[str]:
             continue
         selected.append(var)
     
-    logger.info(f"Selected {len(selected)} variables: {len(ses_vars)} SES + attitude questions")
+    logger.info(f"Selected {len(selected)} variables: {len(ses_vars)} SES + CPS21 attitude questions")
     return selected
 
 
@@ -194,6 +198,10 @@ def prepare_questions(
                 for v, label_text in sorted(labels_dict.items())
             ]
         
+        # Serialize options as JSON string for CSV export
+        import json
+        options_json = json.dumps(options) if options else ""
+        
         # Determine renamed column name
         if var == "cps21_language_1":
             col_name = "language"
@@ -211,7 +219,7 @@ def prepare_questions(
             "column_name": col_name,
             "label": label,
             "question": question,
-            "options": options,
+            "options": options_json,
         })
     
     df_questions = pd.DataFrame(questions)
@@ -244,14 +252,24 @@ def main():
     respondents_path = processed_dir / "respondents.parquet"
     questions_path = processed_dir / "questions.parquet"
     
-    # Convert to polars and save
+    # Convert to polars and save (parquet + CSV)
     respondents_pl = pl.from_pandas(respondents)
     respondents_pl.write_parquet(str(respondents_path))
     logger.info(f"Saved respondents → {respondents_path}")
     
+    # Also save as CSV for ease of use
+    respondents_csv_path = processed_dir / "respondents.csv"
+    respondents_pl.write_csv(str(respondents_csv_path))
+    logger.info(f"Saved respondents → {respondents_csv_path}")
+    
     questions_pl = pl.from_pandas(questions)
     questions_pl.write_parquet(str(questions_path))
     logger.info(f"Saved questions → {questions_path}")
+    
+    # Also save as CSV for ease of use
+    questions_csv_path = processed_dir / "questions.csv"
+    questions_pl.write_csv(str(questions_csv_path))
+    logger.info(f"Saved questions → {questions_csv_path}")
     
     logger.info("✓ Data preparation complete")
 
