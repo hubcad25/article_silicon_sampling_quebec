@@ -16,14 +16,25 @@ Schema:
     }
 
 Thematic domains:
-    - vote_behaviour       : vote choice, party lean, past vote, likelihood
-    - party_leader_eval    : party/leader/candidate ratings, leader traits
-    - issue_ownership      : which party best handles which issue, campaign issue
-    - political_attitudes  : dem satisfaction, govt trust, party ID, left-right scale
-    - economic_attitudes   : economic retrospection, spending preferences, env-economy tradeoffs
-    - social_attitudes     : immigration, discrimination, end-of-life, cannabis, reconciliation
-    - national_identity    : Quebec sovereignty, federal/provincial identity strength
-    - covid                : COVID relief, vaccine, health measure satisfaction
+  TRAIN SET:
+    - electoral_participation : likelihood of voting, turnout, civic duty, past vote
+    - political_attitudes     : dem satisfaction, govt trust, party ID, left-right scale,
+                                debate watching, political knowledge
+    - issue_ownership         : which party best handles which issue, campaign issue
+    - economic_attitudes      : economic retrospection, spending preferences, env-economy tradeoffs
+    - social_attitudes        : immigration, discrimination, end-of-life, cannabis, reconciliation
+    - covid                   : COVID relief, vaccine, health measure satisfaction,
+                                comfort voting in person
+
+  TEST SET (dependent variables):
+    - vote_choice             : vote choice (merged votechoice + vote_unlikely), party leaning,
+                                second choice, party rejection (not_vote_for 1-5)
+    - national_identity       : Quebec sovereignty (1 variable)
+
+  DROPPED (kept for traceability, excluded from analysis):
+    - _drop                   : party/leader/candidate evaluations (leakage toward vote_choice),
+                                redundant vote variables (v_advance), vague/DK rejection items
+                                (not_vote_for 6-8), rejection reasons (not_vote_for_w)
 
 SES variables (yob, province, education, gender, language) are excluded —
 they are not attitude questions and do not need a thematic domain.
@@ -46,104 +57,111 @@ logger = logging.getLogger(__name__)
 # (i.e. cps21_ attitude questions, no _DO_/_t/captcha/TEXT/admin).
 # ---------------------------------------------------------------------------
 DOMAIN_MAP: dict[str, str] = {
-    # --- vote_behaviour ---
-    "cps21_v_likely":           "vote_behaviour",
-    "cps21_howvote2":           "vote_behaviour",
-    "cps21_votechoice":         "vote_behaviour",
-    "cps21_vote_unlikely":      "vote_behaviour",
-    "cps21_v_advance":          "vote_behaviour",
-    "cps21_vote_lean":          "vote_behaviour",
-    "cps21_2nd_choice":         "vote_behaviour",
-    "cps21_not_vote_for_1":     "vote_behaviour",
-    "cps21_not_vote_for_2":     "vote_behaviour",
-    "cps21_not_vote_for_3":     "vote_behaviour",
-    "cps21_not_vote_for_4":     "vote_behaviour",
-    "cps21_not_vote_for_5":     "vote_behaviour",
-    "cps21_not_vote_for_6":     "vote_behaviour",
-    "cps21_not_vote_for_7":     "vote_behaviour",
-    "cps21_not_vote_for_8":     "vote_behaviour",
-    "cps21_not_vote_for_w_1":   "vote_behaviour",
-    "cps21_not_vote_for_w_2":   "vote_behaviour",
-    "cps21_not_vote_for_w_3":   "vote_behaviour",
-    "cps21_not_vote_for_w_4":   "vote_behaviour",
-    "cps21_not_vote_for_w_5":   "vote_behaviour",
-    "cps21_vote_2019":          "vote_behaviour",
-    "cps21_spoil":              "vote_behaviour",
-    "cps21_duty_choice":        "vote_behaviour",
-    "cps21_comfort1":           "vote_behaviour",
-    "cps21_comfort2":           "vote_behaviour",
-    "cps21_comfort3":           "vote_behaviour",
-    "cps21_debate_fr":          "vote_behaviour",
-    "cps21_debate_fr2":         "vote_behaviour",
-    "cps21_debate_en":          "vote_behaviour",
+    # --- vote_choice (TEST SET) ---
+    # cps21_votechoice and cps21_vote_unlikely measure the same concept on different
+    # subsamples (likely vs unlikely voters) and must be merged before modelling.
+    "cps21_votechoice":         "vote_choice",
+    "cps21_vote_unlikely":      "vote_choice",
+    "cps21_vote_lean":          "vote_choice",
+    "cps21_2nd_choice":         "vote_choice",
+    "cps21_not_vote_for_1":     "vote_choice",   # reject Liberal
+    "cps21_not_vote_for_2":     "vote_choice",   # reject Conservative
+    "cps21_not_vote_for_3":     "vote_choice",   # reject NDP
+    "cps21_not_vote_for_4":     "vote_choice",   # reject Bloc Québécois
+    "cps21_not_vote_for_5":     "vote_choice",   # reject Green
 
-    # --- party_leader_eval ---
-    "cps21_party_rating_23":    "party_leader_eval",
-    "cps21_party_rating_24":    "party_leader_eval",
-    "cps21_party_rating_25":    "party_leader_eval",
-    "cps21_party_rating_26":    "party_leader_eval",
-    "cps21_party_rating_27":    "party_leader_eval",
-    "cps21_party_rating_29":    "party_leader_eval",
-    "cps21_lead_rating_23":     "party_leader_eval",
-    "cps21_lead_rating_24":     "party_leader_eval",
-    "cps21_lead_rating_25":     "party_leader_eval",
-    "cps21_lead_rating_26":     "party_leader_eval",
-    "cps21_lead_rating_27":     "party_leader_eval",
-    "cps21_lead_rating_29":     "party_leader_eval",
-    "cps21_cand_rating_23":     "party_leader_eval",
-    "cps21_cand_rating_24":     "party_leader_eval",
-    "cps21_cand_rating_25":     "party_leader_eval",
-    "cps21_cand_rating_26":     "party_leader_eval",
-    "cps21_cand_rating_27":     "party_leader_eval",
-    "cps21_lead_int_1":         "party_leader_eval",
-    "cps21_lead_int_2":         "party_leader_eval",
-    "cps21_lead_int_3":         "party_leader_eval",
-    "cps21_lead_int_4":         "party_leader_eval",
-    "cps21_lead_int_5":         "party_leader_eval",
-    "cps21_lead_int_6":         "party_leader_eval",
-    "cps21_lead_int_7":         "party_leader_eval",
-    "cps21_lead_strong_1":      "party_leader_eval",
-    "cps21_lead_strong_2":      "party_leader_eval",
-    "cps21_lead_strong_3":      "party_leader_eval",
-    "cps21_lead_strong_4":      "party_leader_eval",
-    "cps21_lead_strong_5":      "party_leader_eval",
-    "cps21_lead_strong_6":      "party_leader_eval",
-    "cps21_lead_strong_7":      "party_leader_eval",
-    "cps21_lead_trust_1":       "party_leader_eval",
-    "cps21_lead_trust_2":       "party_leader_eval",
-    "cps21_lead_trust_3":       "party_leader_eval",
-    "cps21_lead_trust_4":       "party_leader_eval",
-    "cps21_lead_trust_5":       "party_leader_eval",
-    "cps21_lead_trust_6":       "party_leader_eval",
-    "cps21_lead_trust_7":       "party_leader_eval",
-    "cps21_lead_cares_1":       "party_leader_eval",
-    "cps21_lead_cares_2":       "party_leader_eval",
-    "cps21_lead_cares_3":       "party_leader_eval",
-    "cps21_lead_cares_4":       "party_leader_eval",
-    "cps21_lead_cares_5":       "party_leader_eval",
-    "cps21_lead_cares_6":       "party_leader_eval",
-    "cps21_lead_cares_7":       "party_leader_eval",
-    "cps21_lib_promises":       "party_leader_eval",
+    # --- national_identity (TEST SET) ---
+    "cps21_quebec_sov":         "national_identity",
 
-    # --- issue_ownership ---
-    "cps21_imp_iss":            "issue_ownership",
-    "cps21_imp_iss_party":      "issue_ownership",
-    "cps21_imp_loc_iss":        "issue_ownership",
-    "cps21_imp_loc_iss_p":      "issue_ownership",
-    "cps21_camp_issue":         "issue_ownership",
-    "cps21_issue_handle_1":     "issue_ownership",
-    "cps21_issue_handle_2":     "issue_ownership",
-    "cps21_issue_handle_3":     "issue_ownership",
-    "cps21_issue_handle_4":     "issue_ownership",
-    "cps21_issue_handle_5":     "issue_ownership",
-    "cps21_issue_handle_6":     "issue_ownership",
-    "cps21_issue_handle_7":     "issue_ownership",
-    "cps21_issue_handle_8":     "issue_ownership",
-    "cps21_issue_handle_9":     "issue_ownership",
-    "cps21_outcome_most":       "issue_ownership",
-    "cps21_outcome_least":      "issue_ownership",
+    # --- electoral_participation (TRAIN SET) ---
+    "cps21_v_likely":           "electoral_participation",
+    "cps21_howvote2":           "electoral_participation",
+    "cps21_vote_2019":          "electoral_participation",
+    "cps21_spoil":              "electoral_participation",
+    "cps21_duty_choice":        "electoral_participation",
 
-    # --- political_attitudes ---
+    # --- _drop (leakage / redundant / too vague) ---
+    "cps21_v_advance":          "_drop",         # redundant with votechoice
+    "cps21_not_vote_for_6":     "_drop",         # "another party" — too vague
+    "cps21_not_vote_for_7":     "_drop",         # "I could vote for any" — inverse of rejection
+    "cps21_not_vote_for_8":     "_drop",         # don't know
+    "cps21_not_vote_for_w_1":   "_drop",         # rejection reason
+    "cps21_not_vote_for_w_2":   "_drop",         # rejection reason
+    "cps21_not_vote_for_w_3":   "_drop",         # rejection reason
+    "cps21_not_vote_for_w_4":   "_drop",         # rejection reason
+    "cps21_not_vote_for_w_5":   "_drop",         # rejection reason
+    # party/leader/candidate evaluations: direct leakage toward vote_choice
+    "cps21_party_rating_23":    "_drop",
+    "cps21_party_rating_24":    "_drop",
+    "cps21_party_rating_25":    "_drop",
+    "cps21_party_rating_26":    "_drop",
+    "cps21_party_rating_27":    "_drop",
+    "cps21_party_rating_29":    "_drop",
+    "cps21_lead_rating_23":     "_drop",
+    "cps21_lead_rating_24":     "_drop",
+    "cps21_lead_rating_25":     "_drop",
+    "cps21_lead_rating_26":     "_drop",
+    "cps21_lead_rating_27":     "_drop",
+    "cps21_lead_rating_29":     "_drop",
+    "cps21_cand_rating_23":     "_drop",
+    "cps21_cand_rating_24":     "_drop",
+    "cps21_cand_rating_25":     "_drop",
+    "cps21_cand_rating_26":     "_drop",
+    "cps21_cand_rating_27":     "_drop",
+    "cps21_lead_int_1":         "_drop",
+    "cps21_lead_int_2":         "_drop",
+    "cps21_lead_int_3":         "_drop",
+    "cps21_lead_int_4":         "_drop",
+    "cps21_lead_int_5":         "_drop",
+    "cps21_lead_int_6":         "_drop",
+    "cps21_lead_int_7":         "_drop",
+    "cps21_lead_strong_1":      "_drop",
+    "cps21_lead_strong_2":      "_drop",
+    "cps21_lead_strong_3":      "_drop",
+    "cps21_lead_strong_4":      "_drop",
+    "cps21_lead_strong_5":      "_drop",
+    "cps21_lead_strong_6":      "_drop",
+    "cps21_lead_strong_7":      "_drop",
+    "cps21_lead_trust_1":       "_drop",
+    "cps21_lead_trust_2":       "_drop",
+    "cps21_lead_trust_3":       "_drop",
+    "cps21_lead_trust_4":       "_drop",
+    "cps21_lead_trust_5":       "_drop",
+    "cps21_lead_trust_6":       "_drop",
+    "cps21_lead_trust_7":       "_drop",
+    "cps21_lead_cares_1":       "_drop",
+    "cps21_lead_cares_2":       "_drop",
+    "cps21_lead_cares_3":       "_drop",
+    "cps21_lead_cares_4":       "_drop",
+    "cps21_lead_cares_5":       "_drop",
+    "cps21_lead_cares_6":       "_drop",
+    "cps21_lead_cares_7":       "_drop",
+    "cps21_lib_promises":       "_drop",
+
+    # --- issue_ownership (TRAIN SET) ---
+    # Only kept: issue salience and campaign perception (no party attribution)
+    "cps21_imp_iss":            "issue_ownership",   # most important issue (no party named)
+    "cps21_imp_loc_iss":        "issue_ownership",   # most important local issue (no party named)
+    "cps21_camp_issue":         "issue_ownership",   # issue campaign focused on most
+    # dropped: direct party attribution on issues — leakage toward vote_choice
+    "cps21_imp_iss_party":      "_drop",             # party best on most important issue
+    "cps21_imp_loc_iss_p":      "_drop",             # party best on local issue
+    "cps21_issue_handle_1":     "_drop",             # best party: healthcare
+    "cps21_issue_handle_2":     "_drop",             # best party: education
+    "cps21_issue_handle_3":     "_drop",             # best party: environment
+    "cps21_issue_handle_4":     "_drop",             # best party: crime and justice
+    "cps21_issue_handle_5":     "_drop",             # best party: defence
+    "cps21_issue_handle_6":     "_drop",             # best party: international diplomacy
+    "cps21_issue_handle_7":     "_drop",             # best party: immigration and minorities
+    "cps21_issue_handle_8":     "_drop",             # best party: COVID-19
+    "cps21_issue_handle_9":     "_drop",             # best party: economy
+    "cps21_outcome_most":       "_drop",             # preferred election outcome (names party)
+    "cps21_outcome_least":      "_drop",             # least preferred outcome (names party)
+
+    # --- political_attitudes (TRAIN SET) ---
+    "cps21_debate_fr":          "political_attitudes",   # watched French debate Sep 2
+    "cps21_debate_fr2":         "political_attitudes",   # watched French debate Sep 8
+    "cps21_debate_en":          "political_attitudes",   # watched English debate
     "cps21_demsat":             "political_attitudes",
     "cps21_fed_gov_sat":        "political_attitudes",
     "cps21_prov_gov_sat":       "political_attitudes",
@@ -184,7 +202,7 @@ DOMAIN_MAP: dict[str, str] = {
     "cps21_govgen_name":        "political_attitudes",
     "cps21_volunteer":          "political_attitudes",
 
-    # --- economic_attitudes ---
+    # --- economic_attitudes (TRAIN SET) ---
     "cps21_spend_educ":         "economic_attitudes",
     "cps21_spend_env":          "economic_attitudes",
     "cps21_spend_just_law":     "economic_attitudes",
@@ -205,7 +223,7 @@ DOMAIN_MAP: dict[str, str] = {
     "cps21_ownfinanc_fed":      "economic_attitudes",
     "cps21_own_fin_future":     "economic_attitudes",
 
-    # --- social_attitudes ---
+    # --- social_attitudes (TRAIN SET) ---
     "cps21_imm":                "social_attitudes",
     "cps21_refugees":           "social_attitudes",
     "cps21_groupdiscrim_1":     "social_attitudes",
@@ -228,10 +246,10 @@ DOMAIN_MAP: dict[str, str] = {
     "cps21_groups_therm_4":     "social_attitudes",
     "cps21_groups_therm_6":     "social_attitudes",
 
-    # --- national_identity ---
-    "cps21_quebec_sov":         "national_identity",
-
-    # --- covid ---
+    # --- covid (TRAIN SET) ---
+    "cps21_comfort1":           "covid",             # comfort voting in person during COVID
+    "cps21_comfort2":           "covid",             # idem (unlikely voters)
+    "cps21_comfort3":           "covid",             # idem (already voted)
     "cps21_covid_liberty":      "covid",
     "cps21_covidrelief__1":     "covid",
     "cps21_covidrelief__2":     "covid",

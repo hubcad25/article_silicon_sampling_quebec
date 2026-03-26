@@ -1,367 +1,359 @@
 {
-    "cps21_v_likely": {
-        "label": "Likelihood of voting on election day?",
-        "domain": "vote_behaviour"
-    },
-    "cps21_howvote2": {
-        "label": "How did you vote?",
-        "domain": "vote_behaviour"
-    },
     "cps21_votechoice": {
         "label": "Party you think you will vote for?",
-        "domain": "vote_behaviour"
+        "domain": "vote_choice"
     },
     "cps21_vote_unlikely": {
         "label": "If you decide to vote, which party do you think you will vote for?",
-        "domain": "vote_behaviour"
-    },
-    "cps21_v_advance": {
-        "label": "For which party did you vote?",
-        "domain": "vote_behaviour"
+        "domain": "vote_choice"
     },
     "cps21_vote_lean": {
         "label": "Is there a party you are leaning towards?",
-        "domain": "vote_behaviour"
+        "domain": "vote_choice"
     },
     "cps21_2nd_choice": {
         "label": "And which party would be your second choice?",
-        "domain": "vote_behaviour"
+        "domain": "vote_choice"
     },
     "cps21_not_vote_for_1": {
         "label": "Parties that you would absolutely not vote for? (Select all that apply) - Libera",
-        "domain": "vote_behaviour"
+        "domain": "vote_choice"
     },
     "cps21_not_vote_for_2": {
         "label": "Parties that you would absolutely not vote for? (Select all that apply) - Conser",
-        "domain": "vote_behaviour"
+        "domain": "vote_choice"
     },
     "cps21_not_vote_for_3": {
         "label": "Parties that you would absolutely not vote for? (Select all that apply) - NDP",
-        "domain": "vote_behaviour"
+        "domain": "vote_choice"
     },
     "cps21_not_vote_for_4": {
         "label": "Parties that you would absolutely not vote for? (Select all that apply) - Bloc Q",
-        "domain": "vote_behaviour"
+        "domain": "vote_choice"
     },
     "cps21_not_vote_for_5": {
         "label": "Parties that you would absolutely not vote for? (Select all that apply) - Green ",
-        "domain": "vote_behaviour"
+        "domain": "vote_choice"
     },
-    "cps21_not_vote_for_6": {
-        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Anothe",
-        "domain": "vote_behaviour"
+    "cps21_quebec_sov": {
+        "label": "Very favourable, somewhat favourable, somewhat opposed, or very opposed to Quebe",
+        "domain": "national_identity"
     },
-    "cps21_not_vote_for_7": {
-        "label": "Parties that you would absolutely not vote for? (Select all that apply) - I coul",
-        "domain": "vote_behaviour"
+    "cps21_v_likely": {
+        "label": "Likelihood of voting on election day?",
+        "domain": "electoral_participation"
     },
-    "cps21_not_vote_for_8": {
-        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Don't ",
-        "domain": "vote_behaviour"
-    },
-    "cps21_not_vote_for_w_1": {
-        "label": "Reason to not vote for this party/these parties? (Select all that apply) - I don",
-        "domain": "vote_behaviour"
-    },
-    "cps21_not_vote_for_w_2": {
-        "label": "Reason to not vote for this party/these parties? (Select all that apply) - I don",
-        "domain": "vote_behaviour"
-    },
-    "cps21_not_vote_for_w_3": {
-        "label": "Reason to not vote for this party/these parties? (Select all that apply) - I don",
-        "domain": "vote_behaviour"
-    },
-    "cps21_not_vote_for_w_4": {
-        "label": "Reason to not vote for this party/these parties? (Select all that apply) - Other",
-        "domain": "vote_behaviour"
-    },
-    "cps21_not_vote_for_w_5": {
-        "label": "Reason to not vote for this party/these parties? (Select all that apply) - Don't",
-        "domain": "vote_behaviour"
+    "cps21_howvote2": {
+        "label": "How did you vote?",
+        "domain": "electoral_participation"
     },
     "cps21_vote_2019": {
         "label": "Which party did you vote for in the 2019 Federal election?",
-        "domain": "vote_behaviour"
+        "domain": "electoral_participation"
     },
     "cps21_spoil": {
         "label": "Have you ever intentionally spoiled your ballot in an election?",
-        "domain": "vote_behaviour"
+        "domain": "electoral_participation"
     },
     "cps21_duty_choice": {
         "label": "For you personally, is voting first and foremost a Duty or a Choice?",
-        "domain": "vote_behaviour"
+        "domain": "electoral_participation"
     },
-    "cps21_comfort1": {
-        "label": "Comfort voting in person during COVID-19 pandemic?",
-        "domain": "vote_behaviour"
+    "cps21_v_advance": {
+        "label": "For which party did you vote?",
+        "domain": "_drop"
     },
-    "cps21_comfort2": {
-        "label": "Unlikely to vote: If you decide to vote, comfort with voting in person during CO",
-        "domain": "vote_behaviour"
+    "cps21_not_vote_for_6": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Anothe",
+        "domain": "_drop"
     },
-    "cps21_comfort3": {
-        "label": "Already voted: Comfort with voting in person during COVID-19 pandemic?",
-        "domain": "vote_behaviour"
+    "cps21_not_vote_for_7": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - I coul",
+        "domain": "_drop"
     },
-    "cps21_debate_fr": {
-        "label": "Did you watch/listen to the French-language federal leaders' debate Sep 2?",
-        "domain": "vote_behaviour"
+    "cps21_not_vote_for_8": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Don't ",
+        "domain": "_drop"
     },
-    "cps21_debate_fr2": {
-        "label": "And what about the French-language federal leaders' debate Sep 8?",
-        "domain": "vote_behaviour"
+    "cps21_not_vote_for_w_1": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - I don",
+        "domain": "_drop"
     },
-    "cps21_debate_en": {
-        "label": "Did you happen to watch/listen to the English-language federal leaders' debate S",
-        "domain": "vote_behaviour"
+    "cps21_not_vote_for_w_2": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - I don",
+        "domain": "_drop"
+    },
+    "cps21_not_vote_for_w_3": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - I don",
+        "domain": "_drop"
+    },
+    "cps21_not_vote_for_w_4": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - Other",
+        "domain": "_drop"
+    },
+    "cps21_not_vote_for_w_5": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - Don't",
+        "domain": "_drop"
     },
     "cps21_party_rating_23": {
         "label": "How do you feel about the federal political parties below? - Liberal Party",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_party_rating_24": {
         "label": "How do you feel about the federal political parties below? - Conservative Party",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_party_rating_25": {
         "label": "How do you feel about the federal political parties below? - NDP",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_party_rating_26": {
         "label": "How do you feel about the federal political parties below? - Bloc Quebecois",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_party_rating_27": {
         "label": "How do you feel about the federal political parties below? - Green Party",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_party_rating_29": {
         "label": "How do you feel about the federal political parties below? - People's Party of C",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_rating_23": {
         "label": "How do you feel about the federal party leaders below? - Justin Trudeau",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_rating_24": {
         "label": "How do you feel about the federal party leaders below? - Erin O'Toole",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_rating_25": {
         "label": "How do you feel about the federal party leaders below? - Jagmeet Singh",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_rating_26": {
         "label": "How do you feel about the federal party leaders below? - Yves-Francois Blanchet",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_rating_27": {
         "label": "How do you feel about the federal party leaders below? - Annamie Paul",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_rating_29": {
         "label": "How do you feel about the federal party leaders below? - Maxime Bernier",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_cand_rating_23": {
         "label": "How do you feel about the candidates in your local riding? - Liberate candidate",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_cand_rating_24": {
         "label": "How do you feel about the candidates in your local riding? - Conservative candid",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_cand_rating_25": {
         "label": "How do you feel about the candidates in your local riding? - NDP candidate",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_cand_rating_26": {
         "label": "How do you feel about the candidates in your local riding? - Bloc Quebecois cand",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_cand_rating_27": {
         "label": "How do you feel about the candidates in your local riding? - Green candidate",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_int_1": {
         "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Ju",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_int_2": {
         "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Er",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_int_3": {
         "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Ja",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_int_4": {
         "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Yv",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_int_5": {
         "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - An",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_int_6": {
         "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - No",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_int_7": {
         "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Do",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_strong_1": {
         "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_strong_2": {
         "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_strong_3": {
         "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_strong_4": {
         "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_strong_5": {
         "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_strong_6": {
         "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_strong_7": {
         "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_trust_1": {
         "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Ju",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_trust_2": {
         "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Er",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_trust_3": {
         "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Ja",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_trust_4": {
         "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Yv",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_trust_5": {
         "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - An",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_trust_6": {
         "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - No",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_trust_7": {
         "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Do",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_cares_1": {
         "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_cares_2": {
         "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_cares_3": {
         "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_cares_4": {
         "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_cares_5": {
         "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_cares_6": {
         "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lead_cares_7": {
         "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_lib_promises": {
         "label": "Justin Trudeau kept the election promises he made in 2019.",
-        "domain": "party_leader_eval"
+        "domain": "_drop"
     },
     "cps21_imp_iss": {
         "label": "Most important issue to you personally in this federal election?",
-        "domain": "issue_ownership"
-    },
-    "cps21_imp_iss_party": {
-        "label": "Party best at addressing this issue? - Selected Choice",
         "domain": "issue_ownership"
     },
     "cps21_imp_loc_iss": {
         "label": "Most important local issue to you personally in this federal election?",
         "domain": "issue_ownership"
     },
-    "cps21_imp_loc_iss_p": {
-        "label": "Party best at addressing this local issue? - Selected Choice",
-        "domain": "issue_ownership"
-    },
     "cps21_camp_issue": {
         "label": "Issue this election campaign has focused on the most?",
         "domain": "issue_ownership"
     },
+    "cps21_imp_iss_party": {
+        "label": "Party best at addressing this issue? - Selected Choice",
+        "domain": "_drop"
+    },
+    "cps21_imp_loc_iss_p": {
+        "label": "Party best at addressing this local issue? - Selected Choice",
+        "domain": "_drop"
+    },
     "cps21_issue_handle_1": {
         "label": "Which party would do the best job at handling... - Healthcare",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_issue_handle_2": {
         "label": "Which party would do the best job at handling... - Education",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_issue_handle_3": {
         "label": "Which party would do the best job at handling... - Environment",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_issue_handle_4": {
         "label": "Which party would do the best job at handling... - Crime and justice",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_issue_handle_5": {
         "label": "Which party would do the best job at handling... - Defence",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_issue_handle_6": {
         "label": "Which party would do the best job at handling... - International diplomacy",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_issue_handle_7": {
         "label": "Which party would do the best job at handling... - Immigration and minorities",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_issue_handle_8": {
         "label": "Which party would do the best job at handling... - COVID-19 pandemic",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_issue_handle_9": {
         "label": "Which party would do the best job at handling... - Economy",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_outcome_most": {
         "label": "Which election outcome would you most prefer?",
-        "domain": "issue_ownership"
+        "domain": "_drop"
     },
     "cps21_outcome_least": {
         "label": "Which election outcome would you least prefer?",
-        "domain": "issue_ownership"
+        "domain": "_drop"
+    },
+    "cps21_debate_fr": {
+        "label": "Did you watch/listen to the French-language federal leaders' debate Sep 2?",
+        "domain": "political_attitudes"
+    },
+    "cps21_debate_fr2": {
+        "label": "And what about the French-language federal leaders' debate Sep 8?",
+        "domain": "political_attitudes"
+    },
+    "cps21_debate_en": {
+        "label": "Did you happen to watch/listen to the English-language federal leaders' debate S",
+        "domain": "political_attitudes"
     },
     "cps21_demsat": {
         "label": "Satisfaction with democracy in Canada",
@@ -679,9 +671,17 @@
         "label": "How do you feel about the following groups? - Feminists",
         "domain": "social_attitudes"
     },
-    "cps21_quebec_sov": {
-        "label": "Very favourable, somewhat favourable, somewhat opposed, or very opposed to Quebe",
-        "domain": "national_identity"
+    "cps21_comfort1": {
+        "label": "Comfort voting in person during COVID-19 pandemic?",
+        "domain": "covid"
+    },
+    "cps21_comfort2": {
+        "label": "Unlikely to vote: If you decide to vote, comfort with voting in person during CO",
+        "domain": "covid"
+    },
+    "cps21_comfort3": {
+        "label": "Already voted: Comfort with voting in person during COVID-19 pandemic?",
+        "domain": "covid"
     },
     "cps21_covid_liberty": {
         "label": "Public health recommendations aimed at slowing COVID-19 spread are threatening m",

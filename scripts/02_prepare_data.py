@@ -99,13 +99,16 @@ def filter_quebec(df: pd.DataFrame) -> pd.DataFrame:
     return df_qc
 
 
-def select_relevant_variables(df: pd.DataFrame, codebook: dict) -> list[str]:
+def select_relevant_variables(
+    df: pd.DataFrame, codebook: dict, thematic_domains: dict
+) -> list[str]:
     """
     Select relevant variables for the analysis.
 
     Categories:
     - SES: age (yob), province, education, gender, language
-    - Attitude questions: CPS21 only (exclude timing/admin/TEXT/captcha/display-order)
+    - Attitude questions: all variables in thematic_domains.json (train + test + _drop)
+      plus any CPS21 variables found in the codebook not already covered.
     PES21 questions excluded to focus on core CPS21 survey.
     """
     ses_vars = [
@@ -116,7 +119,15 @@ def select_relevant_variables(df: pd.DataFrame, codebook: dict) -> list[str]:
         "cps21_language_1",
     ]
     selected = [v for v in ses_vars if v in df.columns]
+    selected_set = set(selected)
 
+    # Always include all variables explicitly classified in thematic_domains.json
+    for var in thematic_domains:
+        if var in df.columns and var not in selected_set:
+            selected.append(var)
+            selected_set.add(var)
+
+    # Also include any remaining CPS21 codebook variables not already covered
     exclude_patterns = {
         "_t", "_timing", "captcha", "TEXT", "Duration", "Date",
         "ResponseId", "StartDate", "EndDate", "RecordedDate", "_DO_", "_ADO_",
@@ -128,6 +139,8 @@ def select_relevant_variables(df: pd.DataFrame, codebook: dict) -> list[str]:
             continue
         if var not in df.columns:
             continue
+        if var in selected_set:
+            continue
         if any(p in var for p in exclude_patterns):
             continue
         if var in exclude_vars:
@@ -135,6 +148,7 @@ def select_relevant_variables(df: pd.DataFrame, codebook: dict) -> list[str]:
         if var.endswith("_TEXT"):
             continue
         selected.append(var)
+        selected_set.add(var)
 
     logger.info(f"Selected {len(selected)} variables ({len(ses_vars)} SES + attitude questions)")
     return selected
@@ -179,6 +193,19 @@ def prepare_respondents(
     return respondents
 
 
+TEST_DOMAINS = {"vote_choice", "national_identity"}
+DROP_DOMAINS = {"_drop"}
+
+
+def get_split(domain: str | None) -> str:
+    """Map a thematic domain to train/test/drop."""
+    if domain in DROP_DOMAINS:
+        return "drop"
+    if domain in TEST_DOMAINS:
+        return "test"
+    return "train"
+
+
 def prepare_questions(
     selected_vars: list[str],
     var_labels: dict,
@@ -186,7 +213,7 @@ def prepare_questions(
     codebook: dict,
     thematic_domains: dict,
 ) -> pd.DataFrame:
-    """Build questions metadata table with thematic domain column."""
+    """Build questions metadata table with thematic domain and split columns."""
     logger.info("Preparing questions metadata...")
 
     col_rename = {
@@ -212,6 +239,7 @@ def prepare_questions(
 
         domain_entry = thematic_domains.get(var, {})
         domain = domain_entry.get("domain") if isinstance(domain_entry, dict) else None
+        split = get_split(domain)
 
         rows.append({
             "variable_name": var,
@@ -220,10 +248,18 @@ def prepare_questions(
             "question": question_text,
             "options": json.dumps(options) if options else "",
             "thematic_domain": domain,
+            "split": split,
         })
 
     df_q = pd.DataFrame(rows)
-    logger.info(f"Questions table: {len(df_q)} rows")
+
+    counts = df_q["split"].value_counts()
+    logger.info(
+        f"Questions table: {len(df_q)} rows "
+        f"(train={counts.get('train', 0)}, "
+        f"test={counts.get('test', 0)}, "
+        f"drop={counts.get('drop', 0)})"
+    )
     return df_q
 
 
@@ -244,9 +280,17 @@ def main() -> None:
     )
 
     df_qc = filter_quebec(df)
-    selected_vars = select_relevant_variables(df_qc, codebook)
+    selected_vars = select_relevant_variables(df_qc, codebook, thematic_domains)
     respondents = prepare_respondents(df_qc, selected_vars, value_labels)
     questions = prepare_questions(selected_vars, var_labels, value_labels, codebook, thematic_domains)
+
+    # Exclude _drop variables from respondents matrix
+    keep_cols = questions.loc[questions["split"] != "drop", "column_name"].tolist()
+    # Always keep SES columns (they have no split assignment)
+    ses_cols = ["age", "province", "education", "gender", "language"]
+    keep_cols = [c for c in respondents.columns if c in ses_cols or c in keep_cols]
+    respondents = respondents[keep_cols]
+    logger.info(f"Respondents matrix after dropping _drop vars: {len(respondents)} × {len(respondents.columns)}")
 
     # Save
     pl.from_pandas(questions).write_parquet(str(processed_dir / "questions.parquet"))
