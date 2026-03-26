@@ -9,7 +9,8 @@ Training data format (flat input/output):
     {"input": "Voici des reponses ...\n\nQuestion cible:\nQ: ...\nR:", "output": "..."}
 
 The model is trained to complete the input by generating the output (answer).
-Loss is computed only on the output tokens (via DataCollatorForCompletionOnlyLM).
+Loss is computed only on the output tokens (via SFTConfig completion_only_loss=True,
+which replaces the deprecated DataCollatorForCompletionOnlyLM from trl < 0.9).
 
 Usage:
     # Dry-run to validate data loading and config
@@ -41,10 +42,6 @@ import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
-# Response template: the collator uses this to find where the answer starts
-# and masks all tokens before it (input tokens don't contribute to loss).
-RESPONSE_TEMPLATE = "\nR:"
 
 DEFAULT_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 DEFAULT_DATA = "data/processed/finetune_train.jsonl"
@@ -292,12 +289,12 @@ def build_lora_config(args: argparse.Namespace):
 
 
 def build_training_args(args: argparse.Namespace):
-    """Build HuggingFace TrainingArguments."""
-    from transformers import TrainingArguments
+    """Build SFTConfig (trl >= 0.9 replacement for TrainingArguments + SFTTrainer config)."""
+    from trl import SFTConfig
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    return TrainingArguments(
+    return SFTConfig(
         output_dir=str(args.output_dir),
         num_train_epochs=args.epochs,
         max_steps=args.max_steps,
@@ -320,6 +317,9 @@ def build_training_args(args: argparse.Namespace):
         seed=args.seed,
         report_to="none",   # Disable wandb/tensorboard by default; enable manually if needed
         dataloader_num_workers=4,
+        # SFT-specific: compute loss only on answer tokens (replaces DataCollatorForCompletionOnlyLM)
+        completion_only_loss=True,
+        max_length=args.max_seq_len,
     )
 
 
@@ -390,36 +390,26 @@ def main() -> None:
 
     # --- From here: GPU required ---
 
-    from peft import get_peft_model
-    from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+    from trl import SFTTrainer
 
     # Load model + tokenizer
     model, tokenizer = build_model_and_tokenizer(args)
 
-    # Apply LoRA
+    # LoRA config (passed directly to SFTTrainer — no need to call get_peft_model manually)
     lora_config = build_lora_config(args)
-    model = get_peft_model(model, lora_config)
-    model.print_trainable_parameters()
 
-    # Collator: compute loss only on tokens after RESPONSE_TEMPLATE ("\nR:")
-    response_template_ids = tokenizer.encode(RESPONSE_TEMPLATE, add_special_tokens=False)
-    collator = DataCollatorForCompletionOnlyLM(
-        response_template=response_template_ids,
-        tokenizer=tokenizer,
-    )
-
-    # Training arguments
+    # SFTConfig: TrainingArguments + SFT-specific options (completion_only_loss, max_length)
     training_args = build_training_args(args)
 
-    # SFTTrainer
+    # SFTTrainer handles LoRA application, tokenization, and completion-only loss internally
     trainer = SFTTrainer(
         model=model,
         args=training_args,
         train_dataset=train_ds,
         eval_dataset=eval_ds,
-        data_collator=collator,
+        processing_class=tokenizer,
+        peft_config=lora_config,
         formatting_func=format_sample,
-        max_seq_length=args.max_seq_len,
     )
 
     # Train
