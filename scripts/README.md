@@ -103,4 +103,10 @@ Run from the project root:
 python scripts/05_build_similarity_index.py --top-k 5
 ```
 
-Default behavior builds nearest neighbors from `test` questions to `train` questions and writes `data/processed/rag_similarity.parquet`.
+Default behavior builds nearest neighbors from `test` questions to `train` questions and writes `data/processed/rag_similarity.csv`.
+
+You can still output Parquet if needed:
+
+```bash
+python scripts/05_build_similarity_index.py --output data/processed/rag_similarity.parquet
+```
