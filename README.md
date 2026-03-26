@@ -90,6 +90,16 @@ Need to review how comparable studies have handled this (not the first to face t
 
 ## Python environment (quick start)
 
+A virtual environment (`.venv`) is included in this repo. Activate it with:
+
+```bash
+source .venv/bin/activate  # on Linux/macOS
+# or on Windows:
+.venv\Scripts\activate
+```
+
+To set up a fresh environment:
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate

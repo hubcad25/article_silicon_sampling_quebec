@@ -1,5 +1,17 @@
 # Agent Instructions
 
+## Python Environment
+
+A virtual environment is committed to this repo at `.venv`. Always activate it before running scripts:
+
+```bash
+source .venv/bin/activate  # Linux/macOS
+# or
+.venv\Scripts\activate     # Windows
+```
+
+All dependencies (polars, pandas, pyarrow, etc.) are already installed in the venv.
+
 ## Issue Tracking
 
 This project uses **bd (beads)** for issue tracking. 

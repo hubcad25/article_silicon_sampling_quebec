@@ -30,6 +30,20 @@ def load_stata_data(path: str) -> tuple[pd.DataFrame, dict]:
     var_labels = reader.variable_labels()
     value_labels = reader.value_labels()
     logger.info(f"Loaded {len(df)} rows × {len(df.columns)} columns")
+    
+    # Fix encoding issues: Stata files may have latin-1 encoded strings
+    # Convert to proper UTF-8 representation
+    for col in df.select_dtypes(include=['object', 'string']).columns:
+        try:
+            # Try to decode as latin-1 and re-encode as UTF-8
+            df[col] = df[col].apply(
+                lambda x: x.encode('latin-1').decode('utf-8', errors='ignore')
+                if isinstance(x, str) else x
+            )
+        except (UnicodeDecodeError, UnicodeEncodeError):
+            # If it fails, leave as is
+            pass
+    
     return df, var_labels, value_labels
 
 
@@ -252,23 +266,23 @@ def main():
     respondents_path = processed_dir / "respondents.parquet"
     questions_path = processed_dir / "questions.parquet"
     
-    # Convert to polars and save (parquet + CSV)
+    # Save respondents (parquet + CSV)
     respondents_pl = pl.from_pandas(respondents)
     respondents_pl.write_parquet(str(respondents_path))
     logger.info(f"Saved respondents → {respondents_path}")
     
-    # Also save as CSV for ease of use
+    # Also save as CSV for ease of use (UTF-8 encoded via pandas)
     respondents_csv_path = processed_dir / "respondents.csv"
-    respondents_pl.write_csv(str(respondents_csv_path))
+    respondents.to_csv(str(respondents_csv_path), index=False, encoding="utf-8")
     logger.info(f"Saved respondents → {respondents_csv_path}")
     
     questions_pl = pl.from_pandas(questions)
     questions_pl.write_parquet(str(questions_path))
     logger.info(f"Saved questions → {questions_path}")
     
-    # Also save as CSV for ease of use
+    # Also save as CSV for ease of use (UTF-8 encoded via pandas)
     questions_csv_path = processed_dir / "questions.csv"
-    questions_pl.write_csv(str(questions_csv_path))
+    questions.to_csv(str(questions_csv_path), index=False, encoding="utf-8")
     logger.info(f"Saved questions → {questions_csv_path}")
     
     logger.info("✓ Data preparation complete")
