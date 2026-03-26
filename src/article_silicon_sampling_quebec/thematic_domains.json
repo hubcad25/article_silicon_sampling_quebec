@@ -1,127 +1,762 @@
 {
-    "cps21_yob": "Demographics/Admin",
-    "cps21_province": "Demographics/Admin",
-    "cps21_education": "Demographics/Admin",
-    "cps21_genderid": "Demographics/Admin",
-    "cps21_language_1": "Demographics/Admin",
-
-    "cps21_demsat": "Political Process",
-    "cps21_imp_iss": "Political Process",
-    "cps21_imp_iss_party": "Political Process",
-    "cps21_imp_loc_iss": "Political Process",
-    "cps21_imp_loc_iss_p": "Political Process",
-    "cps21_camp_issue": "Political Process",
-    "cps21_interest_gen_1": "Political Process",
-    "cps21_interest_elxn_1": "Political Process",
-    "cps21_v_likely": "Political Process",
-    "cps21_v_likely_pr": "Political Process",
-    "cps21_howvote2": "Political Process",
-    "cps21_comfort1": "Political Process",
-    "cps21_comfort2": "Political Process",
-    "cps21_comfort3": "Political Process",
-    "cps21_votechoice": "Political Process",
-    "cps21_votechoice_pr": "Political Process",
-    "cps21_vote_unlikely": "Political Process",
-    "cps21_vote_unlike_pr": "Political Process",
-    "cps21_v_advance": "Political Process",
-    "cps21_vote_lean": "Political Process",
-    "cps21_vote_lean_pr": "Political Process",
-    "cps21_2nd_choice": "Political Process",
-    "cps21_2nd_choice_pr": "Political Process",
-    "cps21_not_vote_for": "Political Process",
-    "cps21_not_vote_for_w": "Political Process",
-    "cps21_fed_gov_sat": "Political Process",
-    "cps21_party_rating": "Political Process",
-    "cps21_lead_rating": "Political Process",
-    "cps21_cand_rating": "Political Process",
-    "cps21_lr_parties": "Political Process",
-    "cps21_lr_scale_bef_1": "Political Process",
-    "cps21_lead_int": "Political Process",
-    "cps21_lead_strong": "Political Process",
-    "cps21_lead_trust": "Political Process",
-    "cps21_lead_cares": "Political Process",
-    "cps21_pos_mailtrust": "Political Process",
-    "cps21_pos_fptp": "Political Process",
-    "cps21_minority_gov": "Political Process",
-    "cps21_lib_promises": "Political Process",
-    "cps21_news_cons": "Political Process",
-    "cps21_premier_name": "Political Process",
-    "cps21_finmin_name": "Political Process",
-    "cps21_govgen_name": "Political Process",
-    "cps21_volunteer": "Political Process",
-    "cps21_duty_choice": "Political Process",
-    "cps21_most_seats": "Political Process",
-    "cps21_win_local": "Political Process",
-    "cps21__candidateref": "Political Process",
-    "cps21_candidate_imag": "Political Process",
-    "cps21_outcome_most": "Political Process",
-    "cps21_outcome_least": "Political Process",
-    "cps21_govt_confusing": "Political Process",
-    "cps21_govt_say": "Political Process",
-    "cps21_pol_eth": "Political Process",
-    "cps21_prov_gov_sat": "Political Process",
-    "cps21_fed_id": "Political Process",
-    "cps21_fed_id_str": "Political Process",
-    "cps21_prov_id": "Political Process",
-    "cps21_prov_id_str": "Political Process",
-
-    "cps21_spend_educ": "Government Spending",
-    "cps21_spend_env": "Government Spending",
-    "cps21_spend_just_law": "Government Spending",
-    "cps21_spend_defence": "Government Spending",
-    "cps21_spend_imm_min": "Government Spending",
-    "cps21_spend_rec_indi": "Government Spending",
-    "cps21_spend_afford_h": "Government Spending",
-    "cps21_spend_nation_c": "Government Spending",
-
-    "cps21_pos_life": "Social Issues",
-    "cps21_pos_cannabis": "Social Issues",
-    "cps21_imm": "Social Issues",
-    "cps21_refugees": "Social Issues",
-    "cps21_groupdiscrim_1": "Social Issues",
-    "cps21_groupdiscrim_2": "Social Issues",
-    "cps21_groupdiscrim_3": "Social Issues",
-    "cps21_groupdiscrim_4": "Social Issues",
-    "cps21_groupdiscrim_5": "Social Issues",
-    "cps21_groupdiscrim_6": "Social Issues",
-    "cps21_groupdiscrim_7": "Social Issues",
-    "cps21_groupdiscrim_8": "Social Issues",
-    "cps21_quebec_sov": "Social Issues",
-    "cps21_groups_therm_1": "Social Issues",
-    "cps21_groups_therm_2": "Social Issues",
-    "cps21_groups_therm_3": "Social Issues",
-    "cps21_groups_therm_4": "Social Issues",
-    "cps21_groups_therm_6": "Social Issues",
-
-    "cps21_pos_carbon": "Environment & Economy",
-    "cps21_pos_energy": "Environment & Economy",
-    "cps21_pos_envreg": "Environment & Economy",
-    "cps21_pos_jobs": "Environment & Economy",
-    "cps21_pos_subsid": "Environment & Economy",
-    "cps21_pos_trade": "Environment & Economy",
-    "cps21_econ_retro": "Environment & Economy",
-    "cps21_econ_fed_bette": "Environment & Economy",
-    "cps21_own_fin_retro": "Environment & Economy",
-    "cps21_ownfinanc_fed": "Environment & Economy",
-    "cps21_own_fin_future": "Environment & Economy",
-
-    "cps21_covid_liberty": "COVID-19",
-    "cps21_covidrelief__1": "COVID-19",
-    "cps21_covidrelief__2": "COVID-19",
-    "cps21_covidrelief__3": "COVID-19",
-    "cps21_covidrelief__4": "COVID-19",
-    "cps21_covidrelief__5": "COVID-19",
-    "cps21_covidrelief__6": "COVID-19",
-    "cps21_covidrelief__7": "COVID-19",
-    "cps21_covidrelief__8": "COVID-19",
-    "cps21_covidrelief__9": "COVID-19",
-    "cps21_covid_sat_1": "COVID-19",
-    "cps21_covid_sat_2": "COVID-19",
-    "cps21_covid_sat_3": "COVID-19",
-    "cps21_vaccine_mandat_1": "COVID-19",
-    "cps21_vaccine_mandat_2": "COVID-19",
-    "cps21_vaccine_mandat_3": "COVID-19",
-    "cps21_vaccine1": "COVID-19",
-    "cps21_vaccine2": "COVID-19",
-    "cps21_vaccine3": "COVID-19"
+    "cps21_v_likely": {
+        "label": "Likelihood of voting on election day?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_howvote2": {
+        "label": "How did you vote?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_votechoice": {
+        "label": "Party you think you will vote for?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_vote_unlikely": {
+        "label": "If you decide to vote, which party do you think you will vote for?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_v_advance": {
+        "label": "For which party did you vote?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_vote_lean": {
+        "label": "Is there a party you are leaning towards?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_2nd_choice": {
+        "label": "And which party would be your second choice?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_1": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Libera",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_2": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Conser",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_3": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - NDP",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_4": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Bloc Q",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_5": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Green ",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_6": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Anothe",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_7": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - I coul",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_8": {
+        "label": "Parties that you would absolutely not vote for? (Select all that apply) - Don't ",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_w_1": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - I don",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_w_2": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - I don",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_w_3": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - I don",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_w_4": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - Other",
+        "domain": "vote_behaviour"
+    },
+    "cps21_not_vote_for_w_5": {
+        "label": "Reason to not vote for this party/these parties? (Select all that apply) - Don't",
+        "domain": "vote_behaviour"
+    },
+    "cps21_vote_2019": {
+        "label": "Which party did you vote for in the 2019 Federal election?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_spoil": {
+        "label": "Have you ever intentionally spoiled your ballot in an election?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_duty_choice": {
+        "label": "For you personally, is voting first and foremost a Duty or a Choice?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_comfort1": {
+        "label": "Comfort voting in person during COVID-19 pandemic?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_comfort2": {
+        "label": "Unlikely to vote: If you decide to vote, comfort with voting in person during CO",
+        "domain": "vote_behaviour"
+    },
+    "cps21_comfort3": {
+        "label": "Already voted: Comfort with voting in person during COVID-19 pandemic?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_debate_fr": {
+        "label": "Did you watch/listen to the French-language federal leaders' debate Sep 2?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_debate_fr2": {
+        "label": "And what about the French-language federal leaders' debate Sep 8?",
+        "domain": "vote_behaviour"
+    },
+    "cps21_debate_en": {
+        "label": "Did you happen to watch/listen to the English-language federal leaders' debate S",
+        "domain": "vote_behaviour"
+    },
+    "cps21_party_rating_23": {
+        "label": "How do you feel about the federal political parties below? - Liberal Party",
+        "domain": "party_leader_eval"
+    },
+    "cps21_party_rating_24": {
+        "label": "How do you feel about the federal political parties below? - Conservative Party",
+        "domain": "party_leader_eval"
+    },
+    "cps21_party_rating_25": {
+        "label": "How do you feel about the federal political parties below? - NDP",
+        "domain": "party_leader_eval"
+    },
+    "cps21_party_rating_26": {
+        "label": "How do you feel about the federal political parties below? - Bloc Quebecois",
+        "domain": "party_leader_eval"
+    },
+    "cps21_party_rating_27": {
+        "label": "How do you feel about the federal political parties below? - Green Party",
+        "domain": "party_leader_eval"
+    },
+    "cps21_party_rating_29": {
+        "label": "How do you feel about the federal political parties below? - People's Party of C",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_rating_23": {
+        "label": "How do you feel about the federal party leaders below? - Justin Trudeau",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_rating_24": {
+        "label": "How do you feel about the federal party leaders below? - Erin O'Toole",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_rating_25": {
+        "label": "How do you feel about the federal party leaders below? - Jagmeet Singh",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_rating_26": {
+        "label": "How do you feel about the federal party leaders below? - Yves-Francois Blanchet",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_rating_27": {
+        "label": "How do you feel about the federal party leaders below? - Annamie Paul",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_rating_29": {
+        "label": "How do you feel about the federal party leaders below? - Maxime Bernier",
+        "domain": "party_leader_eval"
+    },
+    "cps21_cand_rating_23": {
+        "label": "How do you feel about the candidates in your local riding? - Liberate candidate",
+        "domain": "party_leader_eval"
+    },
+    "cps21_cand_rating_24": {
+        "label": "How do you feel about the candidates in your local riding? - Conservative candid",
+        "domain": "party_leader_eval"
+    },
+    "cps21_cand_rating_25": {
+        "label": "How do you feel about the candidates in your local riding? - NDP candidate",
+        "domain": "party_leader_eval"
+    },
+    "cps21_cand_rating_26": {
+        "label": "How do you feel about the candidates in your local riding? - Bloc Quebecois cand",
+        "domain": "party_leader_eval"
+    },
+    "cps21_cand_rating_27": {
+        "label": "How do you feel about the candidates in your local riding? - Green candidate",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_int_1": {
+        "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Ju",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_int_2": {
+        "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Er",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_int_3": {
+        "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Ja",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_int_4": {
+        "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Yv",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_int_5": {
+        "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - An",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_int_6": {
+        "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - No",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_int_7": {
+        "label": "Party leader(s) below you think is/are intelligent? (Select all that apply) - Do",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_strong_1": {
+        "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_strong_2": {
+        "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_strong_3": {
+        "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_strong_4": {
+        "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_strong_5": {
+        "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_strong_6": {
+        "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_strong_7": {
+        "label": "Party leader(s) below you think provide(s) strong leadership? (Select all that a",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_trust_1": {
+        "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Ju",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_trust_2": {
+        "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Er",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_trust_3": {
+        "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Ja",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_trust_4": {
+        "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Yv",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_trust_5": {
+        "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - An",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_trust_6": {
+        "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - No",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_trust_7": {
+        "label": "Party leader(s) below you think is/are trustworthy? (Select all that apply) - Do",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_cares_1": {
+        "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_cares_2": {
+        "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_cares_3": {
+        "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_cares_4": {
+        "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_cares_5": {
+        "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_cares_6": {
+        "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lead_cares_7": {
+        "label": "Party leader(s) below you think really care(s) about people like you? (Select al",
+        "domain": "party_leader_eval"
+    },
+    "cps21_lib_promises": {
+        "label": "Justin Trudeau kept the election promises he made in 2019.",
+        "domain": "party_leader_eval"
+    },
+    "cps21_imp_iss": {
+        "label": "Most important issue to you personally in this federal election?",
+        "domain": "issue_ownership"
+    },
+    "cps21_imp_iss_party": {
+        "label": "Party best at addressing this issue? - Selected Choice",
+        "domain": "issue_ownership"
+    },
+    "cps21_imp_loc_iss": {
+        "label": "Most important local issue to you personally in this federal election?",
+        "domain": "issue_ownership"
+    },
+    "cps21_imp_loc_iss_p": {
+        "label": "Party best at addressing this local issue? - Selected Choice",
+        "domain": "issue_ownership"
+    },
+    "cps21_camp_issue": {
+        "label": "Issue this election campaign has focused on the most?",
+        "domain": "issue_ownership"
+    },
+    "cps21_issue_handle_1": {
+        "label": "Which party would do the best job at handling... - Healthcare",
+        "domain": "issue_ownership"
+    },
+    "cps21_issue_handle_2": {
+        "label": "Which party would do the best job at handling... - Education",
+        "domain": "issue_ownership"
+    },
+    "cps21_issue_handle_3": {
+        "label": "Which party would do the best job at handling... - Environment",
+        "domain": "issue_ownership"
+    },
+    "cps21_issue_handle_4": {
+        "label": "Which party would do the best job at handling... - Crime and justice",
+        "domain": "issue_ownership"
+    },
+    "cps21_issue_handle_5": {
+        "label": "Which party would do the best job at handling... - Defence",
+        "domain": "issue_ownership"
+    },
+    "cps21_issue_handle_6": {
+        "label": "Which party would do the best job at handling... - International diplomacy",
+        "domain": "issue_ownership"
+    },
+    "cps21_issue_handle_7": {
+        "label": "Which party would do the best job at handling... - Immigration and minorities",
+        "domain": "issue_ownership"
+    },
+    "cps21_issue_handle_8": {
+        "label": "Which party would do the best job at handling... - COVID-19 pandemic",
+        "domain": "issue_ownership"
+    },
+    "cps21_issue_handle_9": {
+        "label": "Which party would do the best job at handling... - Economy",
+        "domain": "issue_ownership"
+    },
+    "cps21_outcome_most": {
+        "label": "Which election outcome would you most prefer?",
+        "domain": "issue_ownership"
+    },
+    "cps21_outcome_least": {
+        "label": "Which election outcome would you least prefer?",
+        "domain": "issue_ownership"
+    },
+    "cps21_demsat": {
+        "label": "Satisfaction with democracy in Canada",
+        "domain": "political_attitudes"
+    },
+    "cps21_fed_gov_sat": {
+        "label": "Satisfaction with federal government's performance under Justin Trudeau?",
+        "domain": "political_attitudes"
+    },
+    "cps21_prov_gov_sat": {
+        "label": "Satisfaction with the performance of your provincial government under [provincia",
+        "domain": "political_attitudes"
+    },
+    "cps21_govt_confusing": {
+        "label": "Sometimes, politics and government seem so complicated that a person like me can",
+        "domain": "political_attitudes"
+    },
+    "cps21_govt_say": {
+        "label": "People like me don't have any say about what the government does.",
+        "domain": "political_attitudes"
+    },
+    "cps21_pol_eth": {
+        "label": "It is important that politicians behave ethically in office.",
+        "domain": "political_attitudes"
+    },
+    "cps21_interest_gen_1": {
+        "label": "How interested are you in politics generally?",
+        "domain": "political_attitudes"
+    },
+    "cps21_interest_elxn_1": {
+        "label": "How interested are you in this federal election?",
+        "domain": "political_attitudes"
+    },
+    "cps21_lr_scale_bef_1": {
+        "label": "Using the same scale, where would you place yourself?",
+        "domain": "political_attitudes"
+    },
+    "cps21_lr_parties_1": {
+        "label": "Where would you place the federal political parties on a scale from left (0) to ",
+        "domain": "political_attitudes"
+    },
+    "cps21_lr_parties_2": {
+        "label": "Where would you place the federal political parties on a scale from left (0) to ",
+        "domain": "political_attitudes"
+    },
+    "cps21_lr_parties_3": {
+        "label": "Where would you place the federal political parties on a scale from left (0) to ",
+        "domain": "political_attitudes"
+    },
+    "cps21_lr_parties_4": {
+        "label": "Where would you place the federal political parties on a scale from left (0) to ",
+        "domain": "political_attitudes"
+    },
+    "cps21_lr_parties_5": {
+        "label": "Where would you place the federal political parties on a scale from left (0) to ",
+        "domain": "political_attitudes"
+    },
+    "cps21_lr_parties_7": {
+        "label": "Where would you place the federal political parties on a scale from left (0) to ",
+        "domain": "political_attitudes"
+    },
+    "cps21_fed_id": {
+        "label": "In federal politics, do you usually think of yourself as a: ...",
+        "domain": "political_attitudes"
+    },
+    "cps21_fed_id_str": {
+        "label": "How strongly [Field-pid_en] [QID39-ChoiceTextEntryValue-7] do you feel?",
+        "domain": "political_attitudes"
+    },
+    "cps21_prov_id": {
+        "label": "In provincial politics, do you usually think of yourself as a: ...",
+        "domain": "political_attitudes"
+    },
+    "cps21_prov_id_str": {
+        "label": "How strongly [QID41-ChoiceGroup-SelectedChoicesTextEntry] do you feel?",
+        "domain": "political_attitudes"
+    },
+    "cps21_minority_gov": {
+        "label": "Do you think minority governments are: ...",
+        "domain": "political_attitudes"
+    },
+    "cps21_pos_mailtrust": {
+        "label": "Voting by mail is equally as trustworthy as voting in person.",
+        "domain": "political_attitudes"
+    },
+    "cps21_pos_fptp": {
+        "label": "Canada should change electoral system from 'First Past the Post' to 'proportiona",
+        "domain": "political_attitudes"
+    },
+    "cps21_most_seats_1": {
+        "label": "How likely is each party below to win the most House of Commons seats? - Liberal",
+        "domain": "political_attitudes"
+    },
+    "cps21_most_seats_2": {
+        "label": "How likely is each party below to win the most House of Commons seats? - Conserv",
+        "domain": "political_attitudes"
+    },
+    "cps21_most_seats_3": {
+        "label": "How likely is each party below to win the most House of Commons seats? - NDP",
+        "domain": "political_attitudes"
+    },
+    "cps21_most_seats_4": {
+        "label": "How likely is each party below to win the most House of Commons seats? - Bloc Qu",
+        "domain": "political_attitudes"
+    },
+    "cps21_most_seats_5": {
+        "label": "How likely is each party below to win the most House of Commons seats? - Green P",
+        "domain": "political_attitudes"
+    },
+    "cps21_win_local_1": {
+        "label": "How likely is each party to win the seat in your own local riding? - Liberal Par",
+        "domain": "political_attitudes"
+    },
+    "cps21_win_local_2": {
+        "label": "How likely is each party to win the seat in your own local riding? - Conservativ",
+        "domain": "political_attitudes"
+    },
+    "cps21_win_local_3": {
+        "label": "How likely is each party to win the seat in your own local riding? - NDP",
+        "domain": "political_attitudes"
+    },
+    "cps21_win_local_4": {
+        "label": "How likely is each party to win the seat in your own local riding? - Bloc Quebec",
+        "domain": "political_attitudes"
+    },
+    "cps21_win_local_5": {
+        "label": "How likely is each party to win the seat in your own local riding? - Green Party",
+        "domain": "political_attitudes"
+    },
+    "cps21__candidateref": {
+        "label": "Which candidate do you want to win the seat in your riding?",
+        "domain": "political_attitudes"
+    },
+    "cps21_candidate_imag": {
+        "label": "Imagine you were the only voter in the election. Which candidate would you want ",
+        "domain": "political_attitudes"
+    },
+    "cps21_news_cons": {
+        "label": "Average time usually spent watching/reading/listening to news each day?",
+        "domain": "political_attitudes"
+    },
+    "cps21_premier_name": {
+        "label": "Without checking offline, recall your province Premier's name?",
+        "domain": "political_attitudes"
+    },
+    "cps21_finmin_name": {
+        "label": "Name of the federal Minister of Finance?",
+        "domain": "political_attitudes"
+    },
+    "cps21_govgen_name": {
+        "label": "Name of the Governor-General of Canada?",
+        "domain": "political_attitudes"
+    },
+    "cps21_volunteer": {
+        "label": "In the past 12 months, how many times did you volunteer for a group/organization",
+        "domain": "political_attitudes"
+    },
+    "cps21_spend_educ": {
+        "label": "Federal government spending on education?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_spend_env": {
+        "label": "Federal government spending on the environment?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_spend_just_law": {
+        "label": "Federal government spending on [Field-justice_law]?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_spend_defence": {
+        "label": "Federal government spending on  defence?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_spend_imm_min": {
+        "label": "Federal government spending on immigrants and minorities?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_spend_rec_indi": {
+        "label": "Federal government spending on reconciliation with Indigenous Peoples?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_spend_afford_h": {
+        "label": "Federal government spending on affordable housing?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_spend_nation_c": {
+        "label": "Federal government spending on a national childcare system?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_pos_carbon": {
+        "label": "Greenhouse gas emissions reduction: The federal government should continue the c",
+        "domain": "economic_attitudes"
+    },
+    "cps21_pos_energy": {
+        "label": "The federal government should do more to help Canada's energy sector, including ",
+        "domain": "economic_attitudes"
+    },
+    "cps21_pos_envreg": {
+        "label": "Stricter environmental regulation, even if it leads to higher prices for consume",
+        "domain": "economic_attitudes"
+    },
+    "cps21_pos_jobs": {
+        "label": "During conflict between protecting the environment and creating jobs, jobs shoul",
+        "domain": "economic_attitudes"
+    },
+    "cps21_pos_subsid": {
+        "label": "The federal government should end all corporate and economic development subsidi",
+        "domain": "economic_attitudes"
+    },
+    "cps21_pos_trade": {
+        "label": "Should be more free trade with other countries, even if it hurts some Canadian i",
+        "domain": "economic_attitudes"
+    },
+    "cps21_econ_retro": {
+        "label": "Over the past year, has Canada's economy...",
+        "domain": "economic_attitudes"
+    },
+    "cps21_econ_fed_bette": {
+        "label": "Policies of the federal government made Canada's economy...?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_own_fin_retro": {
+        "label": "Over the past year, has your financial situation: ...",
+        "domain": "economic_attitudes"
+    },
+    "cps21_ownfinanc_fed": {
+        "label": "Effect of policies of the federal government on your financial situation?",
+        "domain": "economic_attitudes"
+    },
+    "cps21_own_fin_future": {
+        "label": "Over the next year, do you think your financial situation will: ...",
+        "domain": "economic_attitudes"
+    },
+    "cps21_imm": {
+        "label": "Do you think Canada should admit: ...",
+        "domain": "social_attitudes"
+    },
+    "cps21_refugees": {
+        "label": "Do you think Canada should admit: ...",
+        "domain": "social_attitudes"
+    },
+    "cps21_groupdiscrim_1": {
+        "label": "How much discrimination is there in Canada against ...? - Indigenous Peoples",
+        "domain": "social_attitudes"
+    },
+    "cps21_groupdiscrim_2": {
+        "label": "How much discrimination is there in Canada against ...? - Black people or people",
+        "domain": "social_attitudes"
+    },
+    "cps21_groupdiscrim_3": {
+        "label": "How much discrimination is there in Canada against ...? - Immigrants",
+        "domain": "social_attitudes"
+    },
+    "cps21_groupdiscrim_4": {
+        "label": "How much discrimination is there in Canada against ...? - Women",
+        "domain": "social_attitudes"
+    },
+    "cps21_groupdiscrim_5": {
+        "label": "How much discrimination is there in Canada against ...? - Men",
+        "domain": "social_attitudes"
+    },
+    "cps21_groupdiscrim_6": {
+        "label": "How much discrimination is there in Canada against ...? - Gays and lesbians",
+        "domain": "social_attitudes"
+    },
+    "cps21_groupdiscrim_7": {
+        "label": "How much discrimination is there in Canada against ...? - Transgender people",
+        "domain": "social_attitudes"
+    },
+    "cps21_groupdiscrim_8": {
+        "label": "How much discrimination is there in Canada against ...? - White people",
+        "domain": "social_attitudes"
+    },
+    "cps21_pos_life": {
+        "label": "Individuals who are terminally ill should be allowed to end their lives with doc",
+        "domain": "social_attitudes"
+    },
+    "cps21_pos_cannabis": {
+        "label": "Possession of cannabis should be a criminal offence.",
+        "domain": "social_attitudes"
+    },
+    "cps21_residential_2a": {
+        "label": "Accelerate progress on calls to action from the Truth and Reconciliation Commiss",
+        "domain": "social_attitudes"
+    },
+    "cps21_residential_2b": {
+        "label": "Federal government funding to identify unmarked graves at all former residential",
+        "domain": "social_attitudes"
+    },
+    "cps21_residential_2c": {
+        "label": "All governments ceasing court actions against residential school survivors and F",
+        "domain": "social_attitudes"
+    },
+    "cps21_residential_2d": {
+        "label": "Renaming buildings and institutions named for people who built/ran parts of resi",
+        "domain": "social_attitudes"
+    },
+    "cps21_groups_therm_1": {
+        "label": "How do you feel about the following groups? - Racial minorities",
+        "domain": "social_attitudes"
+    },
+    "cps21_groups_therm_2": {
+        "label": "How do you feel about the following groups? - Immigrants",
+        "domain": "social_attitudes"
+    },
+    "cps21_groups_therm_3": {
+        "label": "How do you feel about the following groups? - Francophones",
+        "domain": "social_attitudes"
+    },
+    "cps21_groups_therm_4": {
+        "label": "How do you feel about the following groups? - Indigenous Peoples",
+        "domain": "social_attitudes"
+    },
+    "cps21_groups_therm_6": {
+        "label": "How do you feel about the following groups? - Feminists",
+        "domain": "social_attitudes"
+    },
+    "cps21_quebec_sov": {
+        "label": "Very favourable, somewhat favourable, somewhat opposed, or very opposed to Quebe",
+        "domain": "national_identity"
+    },
+    "cps21_covid_liberty": {
+        "label": "Public health recommendations aimed at slowing COVID-19 spread are threatening m",
+        "domain": "covid"
+    },
+    "cps21_covidrelief__1": {
+        "label": "Applied for any of the following COVID relief programs? (Select all that apply) ",
+        "domain": "covid"
+    },
+    "cps21_covidrelief__2": {
+        "label": "Applied for any of the following COVID relief programs? (Select all that apply) ",
+        "domain": "covid"
+    },
+    "cps21_covidrelief__3": {
+        "label": "Applied for any of the following COVID relief programs? (Select all that apply) ",
+        "domain": "covid"
+    },
+    "cps21_covidrelief__4": {
+        "label": "Applied for any of the following COVID relief programs? (Select all that apply) ",
+        "domain": "covid"
+    },
+    "cps21_covidrelief__5": {
+        "label": "Applied for any of the following COVID relief programs? (Select all that apply) ",
+        "domain": "covid"
+    },
+    "cps21_covidrelief__6": {
+        "label": "Applied for any of the following COVID relief programs? (Select all that apply) ",
+        "domain": "covid"
+    },
+    "cps21_covidrelief__7": {
+        "label": "Applied for any of the following COVID relief programs? (Select all that apply) ",
+        "domain": "covid"
+    },
+    "cps21_covidrelief__8": {
+        "label": "Applied for any of the following COVID relief programs? (Select all that apply) ",
+        "domain": "covid"
+    },
+    "cps21_covidrelief__9": {
+        "label": "Applied for any of the following COVID relief programs? (Select all that apply) ",
+        "domain": "covid"
+    },
+    "cps21_covid_sat_1": {
+        "label": "Satisfaction with how each of the following have handled the COVID-19 outbreak? ",
+        "domain": "covid"
+    },
+    "cps21_covid_sat_2": {
+        "label": "Satisfaction with how each of the following have handled the COVID-19 outbreak? ",
+        "domain": "covid"
+    },
+    "cps21_covid_sat_3": {
+        "label": "Satisfaction with how each of the following have handled the COVID-19 outbreak? ",
+        "domain": "covid"
+    },
+    "cps21_vaccine_mandat_1": {
+        "label": "Should vaccination be required to: - Travel by air or rail in Canada",
+        "domain": "covid"
+    },
+    "cps21_vaccine_mandat_2": {
+        "label": "Should vaccination be required to: - Go to a bar or restaurant",
+        "domain": "covid"
+    },
+    "cps21_vaccine_mandat_3": {
+        "label": "Should vaccination be required to: - Work in a hospital",
+        "domain": "covid"
+    },
+    "cps21_vaccine1": {
+        "label": "Have you been vaccinated?",
+        "domain": "covid"
+    },
+    "cps21_vaccine2": {
+        "label": "Are you eligible to be vaccinated?",
+        "domain": "covid"
+    },
+    "cps21_vaccine3": {
+        "label": "Not vaccinated: Are you: ...",
+        "domain": "covid"
+    }
 }
