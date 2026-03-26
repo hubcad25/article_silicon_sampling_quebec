@@ -17,6 +17,7 @@ Outputs:
 
 import json
 import logging
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -25,6 +26,8 @@ from pandas.io.stata import StataReader
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
+
+LANGUAGE_DUMMY_COLS = [f"cps21_language_{i}" for i in range(1, 19)]
 
 
 def load_stata_data(path: str) -> tuple[pd.DataFrame, dict, dict]:
@@ -122,9 +125,10 @@ def select_relevant_variables(
 
     Categories:
     - SES: age (yob), province, education, gender, language
-    - Attitude questions: all variables in thematic_domains.json (train + test + _drop)
-      plus any CPS21 variables found in the codebook not already covered.
-    PES21 questions excluded to focus on core CPS21 survey.
+    - Attitude questions: only variables explicitly classified in thematic_domains.json
+
+    This keeps the analysis universe fixed and avoids unclassified variables leaking
+    into the train split by default.
     """
     ses_vars = [
         "cps21_yob",        # Year of birth (converted to age)
@@ -142,30 +146,12 @@ def select_relevant_variables(
             selected.append(var)
             selected_set.add(var)
 
-    # Also include any remaining CPS21 codebook variables not already covered
-    exclude_patterns = {
-        "_t", "_timing", "captcha", "TEXT", "Duration", "Date",
-        "ResponseId", "StartDate", "EndDate", "RecordedDate", "_DO_", "_ADO_",
-    }
-    exclude_vars = {"cps21_consent", "cps21_citizenship"}
-
-    for var in codebook:
-        if var.startswith("pes21"):
-            continue
-        if var not in df.columns:
-            continue
-        if var in selected_set:
-            continue
-        if any(p in var for p in exclude_patterns):
-            continue
-        if var in exclude_vars:
-            continue
-        if var.endswith("_TEXT"):
-            continue
-        selected.append(var)
-        selected_set.add(var)
-
-    logger.info(f"Selected {len(selected)} variables ({len(ses_vars)} SES + attitude questions)")
+    logger.info(
+        "Selected %d variables (%d SES + %d thematic variables)",
+        len(selected),
+        len(ses_vars),
+        len(selected) - len(ses_vars),
+    )
     return selected
 
 
@@ -182,6 +168,34 @@ def compute_age(df: pd.DataFrame) -> pd.Series:
     return (2021 - yob).astype(str)
 
 
+def compute_language_profile(df: pd.DataFrame, value_labels: dict) -> pd.Series:
+    """Collapse language dummies into 3 categories: English/French/Other."""
+
+    available = [col for col in LANGUAGE_DUMMY_COLS if col in df.columns]
+    if not available:
+        return pd.Series(["Not specified"] * len(df), index=df.index)
+
+    def row_to_language(row: pd.Series) -> str:
+        english = bool(pd.notna(row.get("cps21_language_1")))
+        french = bool(pd.notna(row.get("cps21_language_2")))
+        other = any(
+            pd.notna(row.get(col))
+            for col in available
+            if col not in {"cps21_language_1", "cps21_language_2"}
+        )
+
+        # Exactly 3 output categories for modeling condition 2.
+        if english and not french and not other:
+            return "English"
+        if french and not english and not other:
+            return "French"
+        if english or french or other:
+            return "Other"
+        return "Not specified"
+
+    return df[available].apply(row_to_language, axis=1)
+
+
 def prepare_respondents(
     df: pd.DataFrame, selected_vars: list[str], value_labels: dict
 ) -> pd.DataFrame:
@@ -191,7 +205,7 @@ def prepare_respondents(
 
     rename = {
         "cps21_yob": ("age", lambda: compute_age(df)),
-        "cps21_language_1": ("language", lambda: apply_value_labels(df, value_labels, "cps21_language_1")),
+        "cps21_language_1": ("language", lambda: compute_language_profile(df, value_labels)),
         "cps21_province": ("province", lambda: apply_value_labels(df, value_labels, "cps21_province")),
         "cps21_education": ("education", lambda: apply_value_labels(df, value_labels, "cps21_education")),
         "cps21_genderid": ("gender", lambda: apply_value_labels(df, value_labels, "cps21_genderid")),
@@ -220,6 +234,8 @@ DROP_DOMAINS = {"_drop"}
 
 def get_split(domain: str | None) -> str:
     """Map a thematic domain to train/test/drop."""
+    if domain is None:
+        return "drop"
     if domain in DROP_DOMAINS:
         return "drop"
     if domain in TEST_DOMAINS:
@@ -259,10 +275,13 @@ def prepare_questions(
                 f"{k}: {v}" for k, v in sorted(value_labels[var].items())
             ]
 
-        # French versions
-        label_fr = codebook_fr.get(var, {}).get("label", "")
-        question_fr = codebook_fr.get(var, {}).get("question", "")
-        options_fr = codebook_fr.get(var, {}).get("options", [])
+        # French versions — fallback to parent variable (strip trailing _N suffix)
+        # when the exact variable is absent (e.g. cps21_not_vote_for_1 → cps21_not_vote_for)
+        parent_var = re.sub(r"_+\d+$", "", var)
+        fr_entry = codebook_fr.get(var) or codebook_fr.get(parent_var) or {}
+        label_fr = fr_entry.get("label", "")
+        question_fr = fr_entry.get("question", "")
+        options_fr = fr_entry.get("options", [])
 
         domain_entry = thematic_domains.get(var, {})
         domain = domain_entry.get("domain") if isinstance(domain_entry, dict) else None
