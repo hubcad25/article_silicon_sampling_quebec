@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +17,54 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L12-v2"
 DEFAULT_REVISION = "936af83a2ecce5fe87a09109ff5cbcefe073173a"
+
+STOPWORDS = {
+    "a", "an", "and", "are", "as", "at", "au", "aux", "avec", "be", "by", "ce", "cet", "cette", "ces",
+    "comme", "dans", "de", "des", "do", "does", "du", "elle", "en", "est", "et", "etre", "for", "from",
+    "had", "has", "have", "il", "in", "is", "it", "je", "la", "le", "les", "leur", "leurs", "lui", "mais",
+    "me", "mes", "moi", "mon", "ne", "ni", "nos", "notre", "nous", "of", "on", "or", "ou", "par", "pas",
+    "pour", "qu", "que", "qui", "sa", "sans", "se", "ses", "son", "sont", "sur", "that", "the", "these",
+    "this", "to", "un", "une", "vos", "votre", "vous", "what", "which", "who", "whom", "why", "when",
+    "where", "with", "would", "you", "your",
+}
+
+DISPLAY_CHOICE_RE = re.compile(r"display\s+this\s+choice:?", flags=re.IGNORECASE)
+
+
+def strip_diacritics(value: str) -> str:
+    return "".join(
+        ch for ch in unicodedata.normalize("NFD", value)
+        if unicodedata.category(ch) != "Mn"
+    )
+
+
+def clean_text(value: str | None) -> str:
+    if not value:
+        return ""
+    cleaned = DISPLAY_CHOICE_RE.sub(" ", value)
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned.strip(" :;-\n\t")
+
+
+def extract_content_terms(text: str) -> list[str]:
+    normalized = strip_diacritics(text.lower())
+    tokens = re.split(r"[^a-z0-9]+", normalized)
+
+    seen: set[str] = set()
+    terms: list[str] = []
+    for token in tokens:
+        if len(token) < 2 or token in STOPWORDS or token in seen:
+            continue
+        seen.add(token)
+        terms.append(token)
+    return terms
+
+
+def build_embedding_input(base_text: str) -> str:
+    terms = extract_content_terms(base_text)[:24]
+    if not terms:
+        return base_text
+    return f"{base_text}\n\nkey_terms: {' '.join(terms)}"
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,12 +110,26 @@ def parse_args() -> argparse.Namespace:
 
 
 def best_text(record: dict[str, Any]) -> str:
-    for key in ("question", "label"):
-        value = record.get(key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    fallback = record.get("variable_name") or ""
-    return fallback.strip()
+    question = clean_text(record.get("question"))
+    label = clean_text(record.get("label"))
+
+    base_text = ""
+    if label and question:
+        if question.lower() in label.lower():
+            base_text = label
+        elif label.lower() in question.lower():
+            base_text = question
+        else:
+            base_text = f"{label}. {question}"
+    elif label:
+        base_text = label
+    elif question:
+        base_text = question
+    else:
+        fallback = record.get("variable_name") or ""
+        base_text = str(fallback).strip()
+
+    return build_embedding_input(base_text)
 
 
 def main() -> None:

@@ -1,1 +1,5 @@
-polars>=1.0.0
+# Install base dependencies
+-e .
+
+# Install finetuning dependencies (requires CUDA-enabled torch on GPU machine)
+# pip install -e ".[finetune]"

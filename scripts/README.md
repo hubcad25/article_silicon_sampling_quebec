@@ -110,3 +110,21 @@ You can still output Parquet if needed:
 ```bash
 python scripts/05_build_similarity_index.py --output data/processed/rag_similarity.parquet
 ```
+
+## Generate finetuning train dataset (JSONL)
+
+Script: `scripts/07_generate_finetune_dataset.py`
+
+Builds supervised fine-tuning pairs from train-split CES questions. Child
+variables with `_N` suffix are grouped by parent at generation time:
+- select-all groups keep only selected options in the response
+- battery groups list each target with its value under one parent question
+
+Run from project root:
+
+```bash
+python scripts/07_generate_finetune_dataset.py
+```
+
+Output:
+- `data/processed/finetune_train.jsonl` — one `{"input": ..., "output": ...}` pair per respondent per target train question

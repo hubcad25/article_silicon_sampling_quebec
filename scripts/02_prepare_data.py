@@ -29,6 +29,128 @@ logger = logging.getLogger(__name__)
 
 LANGUAGE_DUMMY_COLS = [f"cps21_language_{i}" for i in range(1, 19)]
 
+MANUAL_PARENT_LABELS: dict[str, dict[str, str]] = {
+    "cps21_groupdiscrim": {
+        "en": "How much discrimination is there in Canada against the following groups?",
+        "fr": "À quel point les groupes suivants font-ils face à de la discrimination au Canada?",
+    },
+    "cps21_covid_sat": {
+        "en": "How satisfied are you with how each of the following have handled the coronavirus outbreak?",
+        "fr": "À quel point êtes-vous satisfait(e) de la façon dont les gouvernements suivants ont géré la pandémie de coronavirus?",
+    },
+    "cps21_vaccine_mandat": {
+        "en": "Should vaccination be required to:",
+        "fr": "La vaccination devrait être requise pour:",
+    },
+    "cps21_groups_therm": {
+        "en": "How do you feel about the following groups?",
+        "fr": "Que pensez-vous des différents groupes ci-dessous?",
+    },
+    "cps21_lr_parties": {
+        "en": "Where would you place the federal political parties on a scale from left (0) to right (10)?",
+        "fr": "Où placeriez-vous les partis politiques fédéraux sur une échelle de 0 (gauche) à 10 (droite)?",
+    },
+    "cps21_most_seats": {
+        "en": "How likely is each party below to win the most House of Commons seats?",
+        "fr": "Quel parti a le plus de chances de gagner le plus grand nombre de sièges à la Chambre des communes?",
+    },
+    "cps21_win_local": {
+        "en": "How likely is each party to win the seat in your own local riding?",
+        "fr": "Quel parti a le plus de chances de gagner le siège de votre circonscription?",
+    },
+    "cps21_covidrelief": {
+        "en": "Applied for any of the following COVID relief programs? (Select all that apply)",
+        "fr": "Avez-vous demandé l'une de ces prestations d'urgence en lien avec la COVID-19? (Sélectionnez toutes celles qui s'appliquent)",
+    },
+}
+
+MANUAL_CHILD_LABELS: dict[str, dict[str, str]] = {
+    "cps21_groupdiscrim_1": {"en": "Indigenous Peoples", "fr": "Peuples autochtones"},
+    "cps21_groupdiscrim_2": {"en": "Black people or people of colour", "fr": "Personnes noires ou racisées"},
+    "cps21_groupdiscrim_3": {"en": "Immigrants", "fr": "Immigrants"},
+    "cps21_groupdiscrim_4": {"en": "Women", "fr": "Femmes"},
+    "cps21_groupdiscrim_5": {"en": "Men", "fr": "Hommes"},
+    "cps21_groupdiscrim_6": {"en": "Gays and lesbians", "fr": "Personnes gaies et lesbiennes"},
+    "cps21_groupdiscrim_7": {"en": "Transgender people", "fr": "Personnes transgenres"},
+    "cps21_groupdiscrim_8": {"en": "White people", "fr": "Personnes blanches"},
+    "cps21_covid_sat_1": {"en": "Federal government", "fr": "Gouvernement fédéral"},
+    "cps21_covid_sat_2": {"en": "Provincial government", "fr": "Gouvernement provincial"},
+    "cps21_covid_sat_3": {"en": "Local public health authorities", "fr": "Autorités locales de santé publique"},
+    "cps21_vaccine_mandat_1": {"en": "Travel by air or rail in Canada", "fr": "Voyager en avion ou en train au Canada"},
+    "cps21_vaccine_mandat_2": {"en": "Go to a bar or restaurant", "fr": "Aller dans un bar ou un restaurant"},
+    "cps21_vaccine_mandat_3": {"en": "Work in a hospital", "fr": "Travailler dans un hôpital"},
+    "cps21_groups_therm_1": {"en": "Racial minorities", "fr": "Minorités racisées"},
+    "cps21_groups_therm_2": {"en": "Immigrants", "fr": "Immigrants"},
+    "cps21_groups_therm_3": {"en": "Francophones", "fr": "Francophones"},
+    "cps21_groups_therm_4": {"en": "Indigenous Peoples", "fr": "Peuples autochtones"},
+    "cps21_groups_therm_6": {"en": "Feminists", "fr": "Féministes"},
+    "cps21_lr_parties_1": {"en": "Liberal Party", "fr": "Parti libéral"},
+    "cps21_lr_parties_2": {"en": "Conservative Party", "fr": "Parti conservateur"},
+    "cps21_lr_parties_3": {"en": "NDP", "fr": "NPD"},
+    "cps21_lr_parties_4": {"en": "Bloc Québécois", "fr": "Bloc québécois"},
+    "cps21_lr_parties_5": {"en": "Green Party", "fr": "Parti vert"},
+    "cps21_lr_parties_7": {"en": "People's Party", "fr": "Parti populaire"},
+    "cps21_most_seats_1": {"en": "Liberal Party", "fr": "Parti libéral"},
+    "cps21_most_seats_2": {"en": "Conservative Party", "fr": "Parti conservateur"},
+    "cps21_most_seats_3": {"en": "NDP", "fr": "NPD"},
+    "cps21_most_seats_4": {"en": "Bloc Québécois", "fr": "Bloc québécois"},
+    "cps21_most_seats_5": {"en": "Green Party", "fr": "Parti vert"},
+    "cps21_win_local_1": {"en": "Liberal Party", "fr": "Parti libéral"},
+    "cps21_win_local_2": {"en": "Conservative Party", "fr": "Parti conservateur"},
+    "cps21_win_local_3": {"en": "NDP", "fr": "NPD"},
+    "cps21_win_local_4": {"en": "Bloc Québécois", "fr": "Bloc québécois"},
+    "cps21_win_local_5": {"en": "Green Party", "fr": "Parti vert"},
+    "cps21_covidrelief__1": {"en": "Canada Emergency Response Benefit (CERB)", "fr": "Prestation canadienne d'urgence (PCU)"},
+    "cps21_covidrelief__2": {"en": "Canada Emergency Student Benefit (CESB)", "fr": "Prestation canadienne d'urgence pour les étudiants (PCUE)"},
+    "cps21_covidrelief__3": {"en": "Canada Recovery Benefit (CRB)", "fr": "Prestation canadienne de la relance économique (PCRE)"},
+    "cps21_covidrelief__4": {"en": "Canada Recovery Sickness Benefit (CRSB)", "fr": "Prestation canadienne de maladie pour la relance économique (PCMRE)"},
+    "cps21_covidrelief__5": {"en": "Canada Recovery Caregiving Benefit (CRCB)", "fr": "Prestation canadienne de la relance économique pour proches aidants (PCREPA)"},
+    "cps21_covidrelief__6": {"en": "Canada Emergency Wage Subsidy (CEWS)", "fr": "Subvention salariale d'urgence du Canada (SSUC)"},
+    "cps21_covidrelief__7": {"en": "Canada Emergency Rent Subsidy (CERS)", "fr": "Subvention d'urgence du Canada pour le loyer (SUCL)"},
+    "cps21_covidrelief__8": {"en": "None", "fr": "Aucune"},
+    "cps21_covidrelief__9": {"en": "Don't know/ Prefer not to answer", "fr": "Je ne sais pas/Préfère ne pas répondre"},
+}
+
+
+def split_parent_child_label(label: str) -> tuple[str, str | None]:
+    """Split labels like 'Parent - Child' into (parent, child)."""
+    text = (label or "").strip()
+    if not text:
+        return "", None
+    if " - " in text:
+        parent, child = text.rsplit(" - ", 1)
+        parent = parent.strip()
+        child = child.strip()
+        if parent and child:
+            return parent, child
+    return text, None
+
+
+def extract_child_label_from_parent_question(question: str, var_name: str) -> str | None:
+    """Extract child label from parent question text when variable marker exists.
+
+    Example expected fragment:
+        ... ▢ Prestation ... (cps21_covidrelief__1) ...
+    """
+    q = (question or "").strip()
+    if not q:
+        return None
+
+    marker = f"({var_name})"
+    idx = q.find(marker)
+    if idx == -1:
+        return None
+
+    prefix = q[:idx]
+    for sep in ("▢", "□", "■", ";"):
+        if sep in prefix:
+            prefix = prefix.rsplit(sep, 1)[-1]
+
+    candidate = prefix.strip(" -:\t")
+    if len(candidate) < 3:
+        return None
+    return candidate
+
 
 def load_stata_data(path: str) -> tuple[pd.DataFrame, dict, dict]:
     """Load Stata file with value labels."""
@@ -289,10 +411,56 @@ def prepare_questions(
         # French versions — fallback to parent variable (strip trailing _N suffix)
         # when the exact variable is absent (e.g. cps21_not_vote_for_1 → cps21_not_vote_for)
         parent_var = re.sub(r"_+\d+$", "", var)
-        fr_entry = codebook_fr.get(var) or codebook_fr.get(parent_var) or {}
+        en_entry = codebook_en.get(var) or codebook_en.get(parent_var) or {}
+        fr_entry_exact = codebook_fr.get(var)
+        fr_entry_parent = codebook_fr.get(parent_var)
+        fr_entry = fr_entry_exact or fr_entry_parent or {}
+
         label_fr = fr_entry.get("label", "")
         question_fr = fr_entry.get("question", "")
         options_fr = fr_entry.get("options", [])
+
+        is_child = bool(re.search(r"_+\d+$", var))
+        if is_child:
+            parent_label_en, child_label_en = split_parent_child_label(label)
+            parent_label_fr, child_label_fr = split_parent_child_label(label_fr)
+
+            manual_parent = MANUAL_PARENT_LABELS.get(parent_var, {})
+            if manual_parent.get("en"):
+                parent_label_en = manual_parent["en"]
+            if manual_parent.get("fr"):
+                parent_label_fr = manual_parent["fr"]
+
+            # If FR child is missing (common when only parent entry exists), try
+            # extracting from parent question text with explicit (variable_name) markers.
+            if not child_label_fr and fr_entry_parent:
+                child_label_fr = extract_child_label_from_parent_question(
+                    fr_entry_parent.get("question", ""),
+                    var,
+                )
+
+            # Mirror behavior for EN when codebook has only parent text.
+            if not child_label_en:
+                child_label_en = extract_child_label_from_parent_question(
+                    en_entry.get("question", ""),
+                    var,
+                )
+
+            manual_child = MANUAL_CHILD_LABELS.get(var, {})
+            if manual_child.get("en"):
+                child_label_en = manual_child["en"]
+            if manual_child.get("fr"):
+                child_label_fr = manual_child["fr"]
+
+            if parent_label_en and child_label_en:
+                label = f"{parent_label_en} - {child_label_en}"
+            if parent_label_fr and child_label_fr:
+                label_fr = f"{parent_label_fr} - {child_label_fr}"
+
+            # Parent-level options are often unusable for child variables (e.g. "e (6)").
+            # Keep child options only when exact variable-level FR entry exists.
+            if fr_entry_exact is None:
+                options_fr = []
 
         domain_entry = thematic_domains.get(var, {})
         domain = domain_entry.get("domain") if isinstance(domain_entry, dict) else None

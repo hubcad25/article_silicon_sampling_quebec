@@ -12,6 +12,13 @@ source .venv/bin/activate  # Linux/macOS
 
 All dependencies (polars, pandas, pyarrow, etc.) are already installed in the venv.
 
+## Data Format Policy
+
+- Default to **CSV** for downloaded, shared, and analysis outputs.
+- Do **not** introduce new Parquet outputs unless there is a clear technical need.
+- Use **Parquet only when justified**, mainly for tables that include high-dimensional embeddings (vector columns) or when performance/memory constraints make CSV impractical.
+- If Parquet is used for a specific step, prefer also exporting a CSV companion when feasible for inspection and manuscript workflows.
+
 ## Issue Tracking
 
 This project uses **bd (beads)** for issue tracking. 
@@ -50,4 +57,3 @@ For full workflow details: `bd prime`
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
-
