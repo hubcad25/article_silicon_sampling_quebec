@@ -49,7 +49,7 @@
     },
     "cps21_vote_2019": {
         "label": "Which party did you vote for in the 2019 Federal election?",
-        "domain": "electoral_participation"
+        "domain": "_drop"
     },
     "cps21_spoil": {
         "label": "Have you ever intentionally spoiled your ballot in an election?",

@@ -196,6 +196,16 @@ def compute_language_profile(df: pd.DataFrame, value_labels: dict) -> pd.Series:
     return df[available].apply(row_to_language, axis=1)
 
 
+def compute_voted_2019(df: pd.DataFrame, value_labels: dict) -> pd.Series:
+    """Compute binary voted_2019 from cps21_vote_2019."""
+    # Convert 'cps21_vote_2019' to its text labels first
+    vote_2019_series = apply_value_labels(df, value_labels, "cps21_vote_2019")
+    # 'yes' if not null and not 'Did not vote', else 'no'
+    return vote_2019_series.apply(
+        lambda x: "yes" if pd.notna(x) and x != "Did not vote" else "no"
+    )
+
+
 def prepare_respondents(
     df: pd.DataFrame, selected_vars: list[str], value_labels: dict
 ) -> pd.DataFrame:
@@ -209,6 +219,7 @@ def prepare_respondents(
         "cps21_province": ("province", lambda: apply_value_labels(df, value_labels, "cps21_province")),
         "cps21_education": ("education", lambda: apply_value_labels(df, value_labels, "cps21_education")),
         "cps21_genderid": ("gender", lambda: apply_value_labels(df, value_labels, "cps21_genderid")),
+        "cps21_vote_2019": ("voted_2019", lambda: compute_voted_2019(df, value_labels)),
     }
 
     # Survey interface language (FR-CA or EN) — used to select prompt language
@@ -339,7 +350,7 @@ def main() -> None:
     # Exclude _drop variables from respondents matrix
     keep_cols = questions.loc[questions["split"] != "drop", "column_name"].tolist()
     # Always keep SES columns and survey metadata (no split assignment)
-    ses_cols = ["survey_language", "age", "province", "education", "gender", "language"]
+    ses_cols = ["survey_language", "age", "province", "education", "gender", "language", "voted_2019"]
     keep_cols = [c for c in respondents.columns if c in ses_cols or c in keep_cols]
     respondents = respondents[keep_cols]
     logger.info(f"Respondents matrix after dropping _drop vars: {len(respondents)} × {len(respondents.columns)}")
