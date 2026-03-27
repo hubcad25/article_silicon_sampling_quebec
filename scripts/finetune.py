@@ -160,6 +160,13 @@ def parse_args() -> argparse.Namespace:
         ),
     )
 
+    # Smoke test: use tiny eval split to keep end-of-run evaluation fast
+    parser.add_argument(
+        "--smoke_test",
+        action="store_true",
+        help="Truncate eval dataset to 100 samples for fast end-to-end validation.",
+    )
+
     return parser.parse_args()
 
 
@@ -183,7 +190,7 @@ def check_finetune_deps() -> None:
         sys.exit(1)
 
 
-def load_dataset_splits(data_path: Path, eval_split: float, seed: int):
+def load_dataset_splits(data_path: Path, eval_split: float, seed: int, smoke_test: bool = False):
     """Load the pre-tokenized dataset from HuggingFace (pushed by tokenize_dataset.py).
 
     The tokenized dataset is pre-split into train/test on HF — no tokenization
@@ -202,7 +209,11 @@ def load_dataset_splits(data_path: Path, eval_split: float, seed: int):
         ds = load_dataset(hf_tokenized_id)
         train_ds = ds["train"]
         eval_ds = ds["test"]
-        logger.info("Train: %d samples | Eval: %d samples", len(train_ds), len(eval_ds))
+        if smoke_test:
+            eval_ds = eval_ds.select(range(100))
+            logger.info("Train: %d samples | Eval: %d samples (smoke_test)", len(train_ds), len(eval_ds))
+        else:
+            logger.info("Train: %d samples | Eval: %d samples", len(train_ds), len(eval_ds))
         return train_ds, eval_ds
 
     except Exception as e:
@@ -403,7 +414,7 @@ def main() -> None:
     check_finetune_deps()
 
     # Load dataset
-    train_ds, eval_ds = load_dataset_splits(args.data, args.eval_split, args.seed)
+    train_ds, eval_ds = load_dataset_splits(args.data, args.eval_split, args.seed, smoke_test=args.smoke_test)
 
     # Dry-run: print summary and exit without touching a GPU
     if args.dry_run:
