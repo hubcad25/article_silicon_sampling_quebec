@@ -184,34 +184,48 @@ def check_finetune_deps() -> None:
 
 
 def load_dataset_splits(data_path: Path, eval_split: float, seed: int):
-    """Load JSONL and split into train/eval."""
+    """Load the pre-tokenized dataset from HuggingFace (pushed by tokenize_dataset.py).
+
+    The tokenized dataset is pre-split into train/test on HF — no tokenization
+    or splitting needed here. This skips the expensive tokenization step on the GPU pod.
+
+    If the tokenized dataset is not available, falls back to raw JSONL with on-the-fly
+    tokenization (slow — run tokenize_dataset.py first to avoid this).
+    """
     from datasets import load_dataset
 
-    hf_dataset_id = "hubcad25/article_silicon_sampling_quebec_data"
-    
+    hf_tokenized_id = "hubcad25/article_silicon_sampling_quebec_tokenized"
+    hf_raw_id = "hubcad25/article_silicon_sampling_quebec_data"
+
+    try:
+        logger.info("Loading pre-tokenized dataset from HF: %s ...", hf_tokenized_id)
+        ds = load_dataset(hf_tokenized_id)
+        train_ds = ds["train"]
+        eval_ds = ds["test"]
+        logger.info("Train: %d samples | Eval: %d samples", len(train_ds), len(eval_ds))
+        return train_ds, eval_ds
+
+    except Exception as e:
+        logger.warning("Could not load tokenized dataset (%s). Falling back to raw JSONL + on-the-fly tokenization.", e)
+        logger.warning("Run scripts/tokenize_dataset.py locally first to avoid this slow path.")
+
+    # Fallback: raw JSONL
     if data_path.exists():
-        logger.info("Loading dataset from local file %s ...", data_path)
+        logger.info("Loading raw dataset from local file %s ...", data_path)
         ds = load_dataset("json", data_files=str(data_path), split="train")
     else:
-        logger.info("Local file %s not found. Downloading from HF repo: %s ...", data_path, hf_dataset_id)
-        # Note: this requires huggingface-cli login or HF_TOKEN env var to be set
-        ds = load_dataset(hf_dataset_id, data_files="finetune_train.jsonl", split="train")
-        
+        logger.info("Loading raw dataset from HF: %s ...", hf_raw_id)
+        ds = load_dataset(hf_raw_id, data_files="finetune_train.jsonl", split="train")
+
     logger.info("Total samples: %d", len(ds))
 
-    # Pre-format: concatenate input + output into a single "text" field
-    # Required by SFTTrainer with completion_only_loss=True (incompatible with formatting_func)
     ds = ds.map(lambda x: {"text": x["input"] + x["output"]}, remove_columns=["input", "output"])
-
-    # Shuffle and split
     ds = ds.shuffle(seed=seed)
     split = ds.train_test_split(test_size=eval_split, seed=seed)
     train_ds = split["train"]
     eval_ds = split["test"]
 
-    logger.info(
-        "Train: %d samples | Eval: %d samples", len(train_ds), len(eval_ds)
-    )
+    logger.info("Train: %d samples | Eval: %d samples", len(train_ds), len(eval_ds))
     return train_ds, eval_ds
 
 
