@@ -315,7 +315,6 @@ def build_training_args(args: argparse.Namespace):
         gradient_accumulation_steps=args.grad_accum,
         learning_rate=args.lr,
         lr_scheduler_type="cosine",
-        warmup_ratio=args.warmup_ratio,
         bf16=True,          # Use bfloat16 (A100/H100). Change to fp16=True on older GPUs.
         optim="paged_adamw_32bit",
         logging_steps=args.logging_steps,
@@ -333,8 +332,6 @@ def build_training_args(args: argparse.Namespace):
         dataset_text_field="text",
         completion_only_loss=True,
         max_length=args.max_seq_len,
-        # warmup_ratio deprecated in trl >= 0.29, use warmup_steps
-        warmup_ratio=None,
         warmup_steps=int(0.03 * (303126 / (args.batch_size * args.grad_accum))),
     )
 
