@@ -187,8 +187,16 @@ def load_dataset_splits(data_path: Path, eval_split: float, seed: int):
     """Load JSONL and split into train/eval."""
     from datasets import load_dataset
 
-    logger.info("Loading dataset from %s ...", data_path)
-    ds = load_dataset("json", data_files=str(data_path), split="train")
+    hf_dataset_id = "hubcad25/article_silicon_sampling_quebec_data"
+    
+    if data_path.exists():
+        logger.info("Loading dataset from local file %s ...", data_path)
+        ds = load_dataset("json", data_files=str(data_path), split="train")
+    else:
+        logger.info("Local file %s not found. Downloading from HF repo: %s ...", data_path, hf_dataset_id)
+        # Note: this requires huggingface-cli login or HF_TOKEN env var to be set
+        ds = load_dataset(hf_dataset_id, data_files="finetune_train.jsonl", split="train")
+        
     logger.info("Total samples: %d", len(ds))
 
     # Shuffle and split
@@ -371,11 +379,6 @@ def main() -> None:
         datefmt="%H:%M:%S",
     )
     args = parse_args()
-
-    # Validate data path
-    if not args.data.exists():
-        logger.error("Data file not found: %s", args.data)
-        sys.exit(1)
 
     # Check finetuning deps (peft, trl, accelerate, datasets)
     check_finetune_deps()
