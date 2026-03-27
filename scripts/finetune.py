@@ -199,6 +199,10 @@ def load_dataset_splits(data_path: Path, eval_split: float, seed: int):
         
     logger.info("Total samples: %d", len(ds))
 
+    # Pre-format: concatenate input + output into a single "text" field
+    # Required by SFTTrainer with completion_only_loss=True (incompatible with formatting_func)
+    ds = ds.map(lambda x: {"text": x["input"] + x["output"]}, remove_columns=["input", "output"])
+
     # Shuffle and split
     ds = ds.shuffle(seed=seed)
     split = ds.train_test_split(test_size=eval_split, seed=seed)
@@ -325,9 +329,13 @@ def build_training_args(args: argparse.Namespace):
         seed=args.seed,
         report_to="none",   # Disable wandb/tensorboard by default; enable manually if needed
         dataloader_num_workers=4,
-        # SFT-specific: compute loss only on answer tokens (replaces DataCollatorForCompletionOnlyLM)
+        # SFT-specific: pre-formatted text field + completion-only loss
+        dataset_text_field="text",
         completion_only_loss=True,
         max_length=args.max_seq_len,
+        # warmup_ratio deprecated in trl >= 0.29, use warmup_steps
+        warmup_ratio=None,
+        warmup_steps=int(0.03 * (303126 / (args.batch_size * args.grad_accum))),
     )
 
 
@@ -405,6 +413,7 @@ def main() -> None:
     training_args = build_training_args(args)
 
     # SFTTrainer handles LoRA application, tokenization, and completion-only loss internally
+    # dataset_text_field="text" set in SFTConfig — no formatting_func needed
     trainer = SFTTrainer(
         model=model,
         args=training_args,
@@ -412,7 +421,6 @@ def main() -> None:
         eval_dataset=eval_ds,
         processing_class=tokenizer,
         peft_config=lora_config,
-        formatting_func=format_sample,
     )
 
     # Train
