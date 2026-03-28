@@ -139,12 +139,12 @@ def parse_args() -> argparse.Namespace:
         "--logging_steps", type=int, default=50, help="Log metrics every N steps"
     )
     parser.add_argument(
-        "--save_steps", type=int, default=500, help="Save checkpoint every N steps"
+        "--save_steps", type=int, default=50, help="Save checkpoint every N steps"
     )
     parser.add_argument(
         "--eval_steps",
         type=int,
-        default=500,
+        default=500,  # Eval less often than save to avoid slowing training
         help="Evaluate on eval split every N steps",
     )
 
@@ -351,6 +351,7 @@ def build_training_args(args: argparse.Namespace):
         optim="paged_adamw_32bit",
         logging_steps=args.logging_steps,
         save_steps=args.save_steps,
+        save_total_limit=2,  # Keep only last 2 checkpoints to save disk space
         eval_steps=args.eval_steps,
         eval_strategy="steps",
         save_strategy="steps",
