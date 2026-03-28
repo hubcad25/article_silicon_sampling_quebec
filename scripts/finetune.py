@@ -294,6 +294,7 @@ def build_model_and_tokenizer(args: argparse.Namespace):
         torch_dtype=torch.bfloat16 if not args.use_4bit else None,
         device_map="auto",
         trust_remote_code=False,
+        attn_implementation="flash_attention_2",
     )
 
     # Required for gradient checkpointing + PEFT compatibility
