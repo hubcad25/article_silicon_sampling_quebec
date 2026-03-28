@@ -119,6 +119,12 @@ def parse_args() -> argparse.Namespace:
         help="Override epochs: stop after this many steps (-1 = use --epochs)",
     )
     parser.add_argument(
+        "--max_train_samples",
+        type=int,
+        default=-1,
+        help="Subsample train dataset to this many samples (-1 = use all)",
+    )
+    parser.add_argument(
         "--eval_split",
         type=float,
         default=DEFAULT_EVAL_SPLIT,
@@ -211,9 +217,7 @@ def load_dataset_splits(data_path: Path, eval_split: float, seed: int, smoke_tes
         eval_ds = ds["test"]
         if smoke_test:
             eval_ds = eval_ds.select(range(100))
-            logger.info("Train: %d samples | Eval: %d samples (smoke_test)", len(train_ds), len(eval_ds))
-        else:
-            logger.info("Train: %d samples | Eval: %d samples", len(train_ds), len(eval_ds))
+        logger.info("Train: %d samples | Eval: %d samples%s", len(train_ds), len(eval_ds), " (smoke_test)" if smoke_test else "")
         return train_ds, eval_ds
 
     except Exception as e:
@@ -417,6 +421,11 @@ def main() -> None:
 
     # Load dataset
     train_ds, eval_ds = load_dataset_splits(args.data, args.eval_split, args.seed, smoke_test=args.smoke_test)
+
+    # Subsample train if requested
+    if args.max_train_samples > 0 and len(train_ds) > args.max_train_samples:
+        train_ds = train_ds.select(range(args.max_train_samples))
+        logger.info("Subsampled train to %d samples", args.max_train_samples)
 
     # Dry-run: print summary and exit without touching a GPU
     if args.dry_run:
