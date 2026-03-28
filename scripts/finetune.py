@@ -354,15 +354,14 @@ def build_training_args(args: argparse.Namespace):
         eval_steps=args.eval_steps,
         eval_strategy="steps",
         save_strategy="steps",
-        load_best_model_at_end=False,
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
         seed=args.seed,
-        report_to="none",   # Disable wandb/tensorboard by default; enable manually if needed
-        # Push checkpoints to HF hub every save_steps to survive pod interruption
-        push_to_hub=True if args.hf_repo else False,
-        hub_model_id=args.hf_repo if args.hf_repo else None,
-        hub_strategy="checkpoint",
+        report_to="none",
         dataloader_num_workers=2,
-        gradient_checkpointing=False,
+        gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={"use_reentrant": False},
         # SFT-specific: packing (faster than completion_only_loss, loss on all tokens)
         dataset_text_field="text",
         packing=True,
