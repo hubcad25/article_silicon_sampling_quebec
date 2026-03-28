@@ -294,7 +294,7 @@ def build_model_and_tokenizer(args: argparse.Namespace):
         args.model,
         quantization_config=bnb_config,
         torch_dtype=torch.bfloat16 if not args.use_4bit else None,
-        device_map={"": 0},  # Force all layers on GPU 0, avoid CPU offloading
+        device_map="auto",
         trust_remote_code=False,
         attn_implementation="flash_attention_2",
     )
