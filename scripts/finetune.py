@@ -436,7 +436,22 @@ def main() -> None:
 
     # --- From here: GPU required ---
 
+    from transformers import TrainerCallback
     from trl import SFTTrainer
+
+    class PushToHubCallback(TrainerCallback):
+        """Push LoRA adapter to HuggingFace Hub every N steps to survive pod interruption."""
+        def __init__(self, repo_id: str, every_n_steps: int = 50):
+            self.repo_id = repo_id
+            self.every_n_steps = every_n_steps
+
+        def on_save(self, args, state, control, **kwargs):
+            if state.global_step % self.every_n_steps == 0:
+                try:
+                    kwargs["model"].push_to_hub(self.repo_id, commit_message=f"checkpoint step {state.global_step}")
+                    logger.info("Pushed checkpoint at step %d to %s", state.global_step, self.repo_id)
+                except Exception as e:
+                    logger.warning("Failed to push checkpoint at step %d: %s", state.global_step, e)
 
     # Load model + tokenizer
     model, tokenizer = build_model_and_tokenizer(args)
@@ -448,7 +463,10 @@ def main() -> None:
     training_args = build_training_args(args)
 
     # SFTTrainer handles LoRA application, tokenization, and completion-only loss internally
-    # dataset_text_field="text" set in SFTConfig — no formatting_func needed
+    callbacks = []
+    if args.hf_repo:
+        callbacks.append(PushToHubCallback(repo_id=args.hf_repo, every_n_steps=args.save_steps))
+
     trainer = SFTTrainer(
         model=model,
         args=training_args,
@@ -456,6 +474,7 @@ def main() -> None:
         eval_dataset=eval_ds,
         processing_class=tokenizer,
         peft_config=lora_config,
+        callbacks=callbacks if callbacks else None,
     )
 
     # Train
