@@ -144,8 +144,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--eval_steps",
         type=int,
-        default=50,
-        help="Evaluate on eval split every N steps (must be a multiple of save_steps)",
+        default=500,
+        help="Evaluate on eval split every N steps",
     )
 
     # HuggingFace Hub
@@ -355,9 +355,7 @@ def build_training_args(args: argparse.Namespace):
         eval_steps=args.eval_steps,
         eval_strategy="steps",
         save_strategy="steps",
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_loss",
-        greater_is_better=False,
+        load_best_model_at_end=False,
         seed=args.seed,
         report_to="none",
         dataloader_num_workers=2,
