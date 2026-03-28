@@ -294,7 +294,7 @@ def build_model_and_tokenizer(args: argparse.Namespace):
         args.model,
         quantization_config=bnb_config,
         torch_dtype=torch.bfloat16 if not args.use_4bit else None,
-        device_map="auto",
+        device_map={"": 0},  # Force all layers on GPU 0, avoid CPU offloading
         trust_remote_code=False,
         attn_implementation="flash_attention_2",
     )
@@ -362,8 +362,7 @@ def build_training_args(args: argparse.Namespace):
         hub_model_id=args.hf_repo if args.hf_repo else None,
         hub_strategy="checkpoint",
         dataloader_num_workers=2,
-        gradient_checkpointing=True,
-        gradient_checkpointing_kwargs={"use_reentrant": False},
+        gradient_checkpointing=False,
         # SFT-specific: packing (faster than completion_only_loss, loss on all tokens)
         dataset_text_field="text",
         packing=True,
