@@ -144,8 +144,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--eval_steps",
         type=int,
-        default=500,  # Eval less often than save to avoid slowing training
-        help="Evaluate on eval split every N steps",
+        default=50,
+        help="Evaluate on eval split every N steps (must be a multiple of save_steps)",
     )
 
     # HuggingFace Hub
