@@ -205,14 +205,16 @@ def load_dataset_splits(data_path: Path, eval_split: float, seed: int, smoke_tes
     If the tokenized dataset is not available, falls back to raw JSONL with on-the-fly
     tokenization (slow — run tokenize_dataset.py first to avoid this).
     """
+    import os
     from datasets import load_dataset
 
     hf_tokenized_id = "hubcad25/article_silicon_sampling_quebec_tokenized"
     hf_raw_id = "hubcad25/article_silicon_sampling_quebec_data"
+    hf_token = os.getenv("HF_TOKEN") or os.getenv("HF_API_KEY")
 
     try:
         logger.info("Loading pre-tokenized dataset from HF: %s ...", hf_tokenized_id)
-        ds = load_dataset(hf_tokenized_id)
+        ds = load_dataset(hf_tokenized_id, token=hf_token)
         train_ds = ds["train"]
         eval_ds = ds["test"]
         if smoke_test:
@@ -230,7 +232,7 @@ def load_dataset_splits(data_path: Path, eval_split: float, seed: int, smoke_tes
         ds = load_dataset("json", data_files=str(data_path), split="train")
     else:
         logger.info("Loading raw dataset from HF: %s ...", hf_raw_id)
-        ds = load_dataset(hf_raw_id, data_files="finetune_train.jsonl", split="train")
+        ds = load_dataset(hf_raw_id, data_files="finetune_train.jsonl", split="train", token=hf_token)
 
     logger.info("Total samples: %d", len(ds))
 
