@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 HF_DATASET_ID_RAW = "hubcad25/article_silicon_sampling_quebec_data"
 HF_DATASET_ID_TOKENIZED = "hubcad25/article_silicon_sampling_quebec_tokenized"
-MODEL_ID = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # Same tokenizer as Llama-3 for local CPU run
+MODEL_ID = "unsloth/Meta-Llama-3.1-8B-Instruct"  # Use the actual training tokenizer
 DEFAULT_DATA = Path("data/processed/finetune_train.jsonl")
 MAX_SEQ_LEN = 3072  # Generous ceiling — samples are ~2600 tokens
 EVAL_SPLIT = 0.05
