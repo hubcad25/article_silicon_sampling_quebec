@@ -359,6 +359,10 @@ def build_training_args(args: argparse.Namespace):
         greater_is_better=False,
         seed=args.seed,
         report_to="none",   # Disable wandb/tensorboard by default; enable manually if needed
+        # Push checkpoints to HF hub every save_steps to survive pod interruption
+        push_to_hub=True if args.hf_repo else False,
+        hub_model_id=args.hf_repo if args.hf_repo else None,
+        hub_strategy="checkpoint",
         dataloader_num_workers=2,
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
