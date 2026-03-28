@@ -35,8 +35,8 @@ print(f"  GPU memory: {torch.cuda.memory_allocated()/1e9:.1f} GB")
 
 # Build a batch of 16
 from torch.nn.utils.rnn import pad_sequence
-ids = [torch.tensor(ds[i]['input_ids'][:2048]) for i in range(16)]
-masks = [torch.tensor(ds[i]['attention_mask'][:2048]) for i in range(16)]
+ids = [torch.tensor(ds[i]['input_ids'][:2048]) for i in range(4)]
+masks = [torch.tensor(ds[i]['attention_mask'][:2048]) for i in range(4)]
 input_ids = pad_sequence(ids, batch_first=True, padding_value=tok.pad_token_id).cuda()
 attention_mask = pad_sequence(masks, batch_first=True, padding_value=0).cuda()
 labels = input_ids.clone()
