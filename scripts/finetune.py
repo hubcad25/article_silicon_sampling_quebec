@@ -354,9 +354,7 @@ def build_training_args(args: argparse.Namespace):
         eval_steps=args.eval_steps,
         eval_strategy="steps",
         save_strategy="steps",
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_loss",
-        greater_is_better=False,
+        load_best_model_at_end=False,
         seed=args.seed,
         report_to="none",   # Disable wandb/tensorboard by default; enable manually if needed
         # Push checkpoints to HF hub every save_steps to survive pod interruption

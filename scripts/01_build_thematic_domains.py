@@ -177,10 +177,12 @@ DOMAIN_MAP: dict[str, str] = {
     "cps21_lr_parties_4":       "political_attitudes",
     "cps21_lr_parties_5":       "political_attitudes",
     "cps21_lr_parties_7":       "political_attitudes",
-    "cps21_fed_id":             "political_attitudes",
-    "cps21_fed_id_str":         "political_attitudes",
-    "cps21_prov_id":            "political_attitudes",
-    "cps21_prov_id_str":        "political_attitudes",
+    # Partisanship identity moved to TEST to avoid direct leakage from
+    # self-reported partisan attachment into vote-choice style outcomes.
+    "cps21_fed_id":             "vote_choice",
+    "cps21_fed_id_str":         "_drop",
+    "cps21_prov_id":            "vote_choice",
+    "cps21_prov_id_str":        "_drop",
     "cps21_minority_gov":       "political_attitudes",
     "cps21_pos_mailtrust":      "political_attitudes",
     "cps21_pos_fptp":           "political_attitudes",

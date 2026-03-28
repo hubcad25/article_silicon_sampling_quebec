@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import random
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -29,6 +30,23 @@ logger = logging.getLogger(__name__)
 
 MISSING_STRINGS = {"", "null", "none", "nan"}
 GROUP_SUFFIX_RE = re.compile(r"_+\d+$")
+
+SES_FIELDS: list[tuple[str, str, str]] = [
+    ("age", "Birth year", "Annee de naissance"),
+    ("gender", "Gender", "Genre"),
+    ("education", "Education", "Scolarite"),
+    ("province", "Province", "Province"),
+    ("language", "Language", "Langue"),
+    ("voted_2019", "Voted in 2019", "A vote en 2019"),
+]
+
+FR_VALUE_OVERRIDES = {
+    "yes": "oui",
+    "no": "non",
+    "French": "Francais",
+    "English": "Anglais",
+    "Other": "Autre",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -52,6 +70,18 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("data/processed/finetune_train.jsonl"),
         help="Output JSONL path",
+    )
+    parser.add_argument(
+        "--shuffle",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Shuffle question order per respondent (default: enabled)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Seed used for deterministic shuffling",
     )
     return parser.parse_args()
 
@@ -101,6 +131,58 @@ def parse_single_option(options_json: Any) -> str | None:
     if not opt:
         return None
     return re.sub(r"^\s*\d+\s*:\s*", "", opt).strip() or None
+
+
+def parse_option_pairs(options_json: Any) -> dict[str, str]:
+    options_text = normalize_text(options_json)
+    if not options_text:
+        return {}
+    try:
+        options = json.loads(options_text)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(options, list):
+        return {}
+
+    out: dict[str, str] = {}
+    for raw in options:
+        opt = normalize_text(raw)
+        if not opt:
+            continue
+        m_colon = re.match(r"^\s*(\d+)\s*:\s*(.+?)\s*$", opt)
+        if m_colon:
+            code, label = m_colon.group(1), m_colon.group(2)
+            out[code] = label.strip()
+            continue
+
+        m_paren = re.match(r"^\s*(.+?)\s*\((\d+)\)\s*$", opt)
+        if m_paren:
+            label, code = m_paren.group(1), m_paren.group(2)
+            out[code] = label.strip()
+    return out
+
+
+def build_en_to_fr_value_map(questions: pl.DataFrame) -> dict[str, str]:
+    value_map: dict[str, str] = {}
+    for row in questions.select(["options", "options_fr"]).to_dicts():
+        en_pairs = parse_option_pairs(row.get("options"))
+        fr_pairs = parse_option_pairs(row.get("options_fr"))
+        if not en_pairs or not fr_pairs:
+            continue
+        for code, en_label in en_pairs.items():
+            fr_label = fr_pairs.get(code)
+            if not fr_label:
+                continue
+            value_map.setdefault(en_label, fr_label)
+    return value_map
+
+
+def localize_value(value: str, is_french: bool, en_to_fr: dict[str, str]) -> str:
+    if not is_french:
+        return value
+    if value in FR_VALUE_OVERRIDES:
+        return FR_VALUE_OVERRIDES[value]
+    return en_to_fr.get(value, value)
 
 
 def split_child_label(raw_label: str) -> tuple[str, str | None]:
@@ -241,17 +323,24 @@ def format_group_answer(
     group: QuestionGroup,
     respondent: dict[str, Any],
     is_french: bool,
+    en_to_fr: dict[str, str],
 ) -> str | None:
     if group.kind == "simple":
         raw = respondent.get(group.items[0].column_name)
-        return normalize_text(raw)
+        value = normalize_text(raw)
+        if not value:
+            return None
+        return localize_value(value, is_french, en_to_fr)
 
     if group.kind == "select_all":
         selected: list[str] = []
         for idx, item in enumerate(group.items, start=1):
             value = normalize_text(respondent.get(item.column_name))
             if value:
-                selected.append(value or child_label(item, is_french, idx))
+                if is_french:
+                    selected.append(child_label(item, is_french, idx))
+                else:
+                    selected.append(localize_value(value, is_french, en_to_fr))
         if not selected:
             return None
         return ", ".join(selected)
@@ -262,6 +351,7 @@ def format_group_answer(
         value = normalize_text(respondent.get(item.column_name))
         if not value:
             continue
+        value = localize_value(value, is_french, en_to_fr)
         battery_parts.append(f"{label}: {value}")
     if not battery_parts:
         return None
@@ -269,14 +359,18 @@ def format_group_answer(
 
 
 def build_input_text(
+    ses_lines: list[str],
     context_lines: list[str],
     target_prompt: str,
     is_french: bool,
 ) -> str:
+    ses_block = "\n".join(ses_lines)
     if is_french:
         body = "\n".join(context_lines)
+        ses_prefix = f"Profil SES:\n{ses_block}\n\n" if ses_block else ""
         return (
             "Voici des reponses du meme repondant au sondage.\n"
+            f"{ses_prefix}"
             f"{body}\n\n"
             "Question cible:\n"
             f"Q: {target_prompt}\n"
@@ -284,8 +378,10 @@ def build_input_text(
         )
 
     body = "\n".join(context_lines)
+    ses_prefix = f"SES profile:\n{ses_block}\n\n" if ses_block else ""
     return (
         "Here are responses from the same survey respondent.\n"
+        f"{ses_prefix}"
         f"{body}\n\n"
         "Target question:\n"
         f"Q: {target_prompt}\n"
@@ -293,17 +389,40 @@ def build_input_text(
     )
 
 
-def generate_examples(groups: list[QuestionGroup], respondents: pl.DataFrame) -> list[dict[str, str]]:
+def build_ses_lines(
+    respondent: dict[str, Any],
+    is_french: bool,
+    en_to_fr: dict[str, str],
+) -> list[str]:
+    lines: list[str] = []
+    for col, label_en, label_fr in SES_FIELDS:
+        value = normalize_text(respondent.get(col))
+        if not value:
+            continue
+        value = localize_value(value, is_french, en_to_fr)
+        label = label_fr if is_french else label_en
+        lines.append(f"- {label}: {value}")
+    return lines
+
+
+def generate_examples(
+    groups: list[QuestionGroup],
+    respondents: pl.DataFrame,
+    en_to_fr: dict[str, str],
+    shuffle: bool,
+    seed: int,
+) -> list[dict[str, str]]:
     rows = respondents.with_row_index("respondent_id").to_dicts()
     examples: list[dict[str, str]] = []
 
     for respondent in rows:
         survey_lang = normalize_text(respondent.get("survey_language")) or "EN"
         is_french = survey_lang.upper().startswith("FR")
+        ses_lines = build_ses_lines(respondent, is_french, en_to_fr)
 
         rendered: dict[str, tuple[str, str]] = {}
         for group in groups:
-            answer = format_group_answer(group, respondent, is_french)
+            answer = format_group_answer(group, respondent, is_french, en_to_fr)
             if answer is None:
                 continue
             prompt = group.prompt_fr if is_french else group.prompt_en
@@ -312,13 +431,20 @@ def generate_examples(groups: list[QuestionGroup], respondents: pl.DataFrame) ->
         if not rendered:
             continue
 
+        respondent_id = int(respondent.get("respondent_id", 0))
         ordered = [g.parent_key for g in groups if g.parent_key in rendered]
-        for target_key in ordered:
+        if shuffle:
+            random.Random(seed + respondent_id).shuffle(ordered)
+
+        for target_idx, target_key in enumerate(ordered):
             target_prompt, target_answer = rendered[target_key]
+
+            context_keys = [ctx_key for ctx_key in ordered if ctx_key != target_key]
+            if shuffle:
+                random.Random(seed + respondent_id * 1009 + target_idx).shuffle(context_keys)
+
             context_lines = []
-            for ctx_key in ordered:
-                if ctx_key == target_key:
-                    continue
+            for ctx_key in context_keys:
                 ctx_prompt, ctx_answer = rendered[ctx_key]
                 context_lines.append(f"Q: {ctx_prompt} R: {ctx_answer}")
 
@@ -327,7 +453,12 @@ def generate_examples(groups: list[QuestionGroup], respondents: pl.DataFrame) ->
 
             examples.append(
                 {
-                    "input": build_input_text(context_lines, target_prompt, is_french),
+                    "input": build_input_text(
+                        ses_lines,
+                        context_lines,
+                        target_prompt,
+                        is_french,
+                    ),
                     "output": target_answer,
                 }
             )
@@ -350,6 +481,8 @@ def main() -> None:
     questions = pl.read_parquet(args.questions)
     logger.info("Loading respondents: %s", args.respondents)
     respondents = pl.read_parquet(args.respondents)
+    en_to_fr = build_en_to_fr_value_map(questions)
+    logger.info("Value localization pairs (EN->FR): %d", len(en_to_fr))
 
     groups = build_groups(questions, respondents)
     n_simple = sum(1 for g in groups if g.kind == "simple")
@@ -363,7 +496,13 @@ def main() -> None:
         n_battery,
     )
 
-    examples = generate_examples(groups, respondents)
+    examples = generate_examples(
+        groups,
+        respondents,
+        en_to_fr,
+        shuffle=args.shuffle,
+        seed=args.seed,
+    )
     if not examples:
         raise SystemExit("No finetuning examples generated")
 

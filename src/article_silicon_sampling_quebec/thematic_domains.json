@@ -49,7 +49,7 @@
     },
     "cps21_vote_2019": {
         "label": "Which party did you vote for in the 2019 Federal election?",
-        "domain": "_drop"
+        "domain": "electoral_participation"
     },
     "cps21_spoil": {
         "label": "Have you ever intentionally spoiled your ballot in an election?",
@@ -417,19 +417,19 @@
     },
     "cps21_fed_id": {
         "label": "In federal politics, do you usually think of yourself as a: ...",
-        "domain": "political_attitudes"
+        "domain": "vote_choice"
     },
     "cps21_fed_id_str": {
         "label": "How strongly [Field-pid_en] [QID39-ChoiceTextEntryValue-7] do you feel?",
-        "domain": "political_attitudes"
+        "domain": "_drop"
     },
     "cps21_prov_id": {
         "label": "In provincial politics, do you usually think of yourself as a: ...",
-        "domain": "political_attitudes"
+        "domain": "vote_choice"
     },
     "cps21_prov_id_str": {
         "label": "How strongly [QID41-ChoiceGroup-SelectedChoicesTextEntry] do you feel?",
-        "domain": "political_attitudes"
+        "domain": "_drop"
     },
     "cps21_minority_gov": {
         "label": "Do you think minority governments are: ...",
