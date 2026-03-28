@@ -352,8 +352,10 @@ def build_training_args(args: argparse.Namespace):
         greater_is_better=False,
         seed=args.seed,
         report_to="none",   # Disable wandb/tensorboard by default; enable manually if needed
-        dataloader_num_workers=4,
-        # SFT-specific: pre-formatted text field + completion-only loss
+        dataloader_num_workers=2,
+        gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={"use_reentrant": False},
+        # SFT-specific: completion-only loss (loss on answer tokens only)
         dataset_text_field="text",
         completion_only_loss=True,
         max_length=args.max_seq_len,
