@@ -362,9 +362,9 @@ def build_training_args(args: argparse.Namespace):
         dataloader_num_workers=2,
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
-        # SFT-specific: packing for speed benchmark (swap completion_only_loss if needed)
+        # SFT-specific: completion-only loss (loss on answer tokens only)
         dataset_text_field="text",
-        packing=True,
+        completion_only_loss=True,
         max_length=args.max_seq_len,
         warmup_steps=int(0.03 * (303126 / (args.batch_size * args.grad_accum))),
     )
