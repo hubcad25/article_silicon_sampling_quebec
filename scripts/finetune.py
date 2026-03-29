@@ -148,6 +148,14 @@ def parse_args() -> argparse.Namespace:
         help="Evaluate on eval split every N steps",
     )
 
+    # Resume from checkpoint
+    parser.add_argument(
+        "--resume_from_checkpoint",
+        type=str,
+        default=None,
+        help="Path to a checkpoint directory to resume training from (e.g. data/models/lora_condition4/checkpoint-4450)",
+    )
+
     # HuggingFace Hub
     parser.add_argument(
         "--hf_repo",
@@ -479,7 +487,7 @@ def main() -> None:
 
     # Train
     logger.info("Starting training...")
-    train_result = trainer.train()
+    train_result = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
 
     # Log training metrics
     logger.info("Training complete.")
