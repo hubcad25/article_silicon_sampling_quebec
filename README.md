@@ -24,13 +24,14 @@ This article extends their framework in three ways:
 
 Four conditions evaluated on the same held-out questions:
 
-| # | Condition | What it tests |
-|---|---|---|
-| 1 | LLM cold | Baseline — intrinsic LLM capacity |
-| 2 | LLM + demographics | Marginal contribution of sociodemographic profile |
-| 3 | LLM + demographics + RAG | Marginal contribution of empirical priors at inference time |
-| 4 | LLM fine-tuned on CES subset | Marginal contribution of training on real survey data |
-| 5 | Fine-tuned LLM + demographics + RAG | Whether RAG still adds value on top of fine-tuning |
+| # | Condition | Generalization target | Knowledge source |
+|---|---|---|---|
+| 1 | LLM cold | — | LLM pretrain only |
+| 2 | LLM + demographics | — | LLM pretrain + respondent profile |
+| 3 | LLM + demographics + RAG | — | LLM pretrain + respondent profile + empirical priors |
+| 4A | Fine-tuned (question generalization) | New questions, known respondents | Fine-tuned on all respondents' answer history |
+| 4B | Fine-tuned (respondent generalization) | New respondents | Fine-tuned on train respondents only |
+| 5B | Fine-tuned + RAG (respondent generalization) | New respondents | Fine-tuned on train respondents + similar respondents retrieved at inference |
 
 The marginal contribution of each layer is the core empirical result. Condition 5 tests whether the two mechanisms are complementary or redundant. Fine-tuned model is evaluated on held-out thematic domains (train/test split by topic, not randomly) to prevent memorization and force genuine generalization.
 
