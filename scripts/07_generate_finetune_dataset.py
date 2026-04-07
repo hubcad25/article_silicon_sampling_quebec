@@ -38,6 +38,7 @@ SES_FIELDS: list[tuple[str, str, str]] = [
     ("province", "Province", "Province"),
     ("language", "Language", "Langue"),
     ("voted_2019", "Voted in 2019", "A vote en 2019"),
+    ("riding", "Riding", "Circonscription"),
 ]
 
 FR_VALUE_OVERRIDES = {
