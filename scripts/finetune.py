@@ -36,7 +36,6 @@ Install finetuning dependencies before running:
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import sys
 from pathlib import Path
@@ -336,7 +335,7 @@ def build_training_args(args: argparse.Namespace):
         report_to="none",
         dataloader_num_workers=2,
         dataset_text_field="text",
-        packing=True,
+        packing=False, # Disable packing to fix Unsloth batch size mismatch
         max_length=args.max_seq_len,
         warmup_steps=int(0.03 * (303126 / (args.batch_size * args.grad_accum))),
     )
@@ -344,7 +343,6 @@ def build_training_args(args: argparse.Namespace):
 
 def print_dry_run_summary(args: argparse.Namespace, train_ds, eval_ds) -> None:
     """Print a summary of data and config for dry-run validation."""
-    from datasets import Dataset
 
     print("\n" + "=" * 60)
     print("DRY-RUN SUMMARY")
@@ -359,7 +357,7 @@ def print_dry_run_summary(args: argparse.Namespace, train_ds, eval_ds) -> None:
     print()
     print("LoRA config:")
     print(f"  r={args.lora_r}, alpha={args.lora_alpha}, dropout={args.lora_dropout}")
-    print(f"  target_modules: q/k/v/o/gate/up/down_proj")
+    print("  target_modules: q/k/v/o/gate/up/down_proj")
     print()
     print("Training config:")
     print(f"  epochs={args.epochs}, batch_size={args.batch_size}, grad_accum={args.grad_accum}")
