@@ -133,6 +133,27 @@ def parse_single_option(options_json: Any) -> str | None:
     return re.sub(r"^\s*\d+\s*:\s*", "", opt).strip() or None
 
 
+def parse_options_list(options_json: Any) -> list[str]:
+    options_text = normalize_text(options_json)
+    if not options_text:
+        return []
+    try:
+        options = json.loads(options_text)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(options, list):
+        return []
+    out: list[str] = []
+    for raw in options:
+        opt = normalize_text(raw)
+        if not opt or "_TEXT" in opt:
+            continue
+        cleaned = re.sub(r"^\s*\d+\s*:\s*", "", opt).strip()
+        if cleaned:
+            out.append(cleaned)
+    return out
+
+
 def parse_option_pairs(options_json: Any) -> dict[str, str]:
     options_text = normalize_text(options_json)
     if not options_text:
@@ -218,6 +239,8 @@ class QuestionItem:
     label_fr: str
     option_single_en: str | None
     option_single_fr: str | None
+    options_en: list[str]
+    options_fr: list[str]
 
 
 @dataclass
@@ -227,6 +250,8 @@ class QuestionGroup:
     items: list[QuestionItem]
     prompt_en: str
     prompt_fr: str
+    options_en: list[str]
+    options_fr: list[str]
 
 
 def infer_group_kind(items: list[QuestionItem], respondents: pl.DataFrame) -> str:
@@ -270,6 +295,8 @@ def build_groups(questions: pl.DataFrame, respondents: pl.DataFrame) -> list[Que
                 label_fr=pick_lang(row, is_french=True),
                 option_single_en=parse_single_option(row.get("options")),
                 option_single_fr=parse_single_option(row.get("options_fr")),
+                options_en=parse_options_list(row.get("options")),
+                options_fr=parse_options_list(row.get("options_fr")),
             )
         )
 
@@ -285,6 +312,9 @@ def build_groups(questions: pl.DataFrame, respondents: pl.DataFrame) -> list[Que
         parent_en, _ = split_child_label(group_items[0].label_en)
         parent_fr, _ = split_child_label(group_items[0].label_fr)
 
+        options_en = group_items[0].options_en
+        options_fr = group_items[0].options_fr
+
         groups.append(
             QuestionGroup(
                 parent_key=p_key,
@@ -292,6 +322,8 @@ def build_groups(questions: pl.DataFrame, respondents: pl.DataFrame) -> list[Que
                 items=group_items,
                 prompt_en=parent_en,
                 prompt_fr=parent_fr,
+                options_en=options_en,
+                options_fr=options_fr,
             )
         )
 
@@ -363,28 +395,33 @@ def build_input_text(
     context_lines: list[str],
     target_prompt: str,
     is_french: bool,
+    choices_line: str | None = None,
 ) -> str:
     ses_block = "\n".join(ses_lines)
     if is_french:
         body = "\n".join(context_lines)
         ses_prefix = f"Profil SES:\n{ses_block}\n\n" if ses_block else ""
+        choices_block = f"{choices_line}\n" if choices_line else ""
         return (
             "Voici des reponses du meme repondant au sondage.\n"
             f"{ses_prefix}"
             f"{body}\n\n"
             "Question cible:\n"
             f"Q: {target_prompt}\n"
+            f"{choices_block}"
             "R:"
         )
 
     body = "\n".join(context_lines)
     ses_prefix = f"SES profile:\n{ses_block}\n\n" if ses_block else ""
+    choices_block = f"{choices_line}\n" if choices_line else ""
     return (
         "Here are responses from the same survey respondent.\n"
         f"{ses_prefix}"
         f"{body}\n\n"
         "Target question:\n"
         f"Q: {target_prompt}\n"
+        f"{choices_block}"
         "R:"
     )
 
@@ -420,13 +457,14 @@ def generate_examples(
         is_french = survey_lang.upper().startswith("FR")
         ses_lines = build_ses_lines(respondent, is_french, en_to_fr)
 
-        rendered: dict[str, tuple[str, str]] = {}
+        rendered: dict[str, tuple[str, str, list[str]]] = {}
         for group in groups:
             answer = format_group_answer(group, respondent, is_french, en_to_fr)
             if answer is None:
                 continue
             prompt = group.prompt_fr if is_french else group.prompt_en
-            rendered[group.parent_key] = (prompt, answer)
+            choices = group.options_fr if is_french else group.options_en
+            rendered[group.parent_key] = (prompt, answer, choices)
 
         if not rendered:
             continue
@@ -437,7 +475,7 @@ def generate_examples(
             random.Random(seed + respondent_id).shuffle(ordered)
 
         for target_idx, target_key in enumerate(ordered):
-            target_prompt, target_answer = rendered[target_key]
+            target_prompt, target_answer, target_choices = rendered[target_key]
 
             context_keys = [ctx_key for ctx_key in ordered if ctx_key != target_key]
             if shuffle:
@@ -445,11 +483,19 @@ def generate_examples(
 
             context_lines = []
             for ctx_key in context_keys:
-                ctx_prompt, ctx_answer = rendered[ctx_key]
+                ctx_prompt, ctx_answer, _ = rendered[ctx_key]
                 context_lines.append(f"Q: {ctx_prompt} R: {ctx_answer}")
 
             if not context_lines:
                 continue
+
+            choices_line = None
+            if target_choices:
+                choices_text = " / ".join(target_choices)
+                if is_french:
+                    choices_line = f"Choix: {choices_text}"
+                else:
+                    choices_line = f"Choices: {choices_text}"
 
             examples.append(
                 {
@@ -458,6 +504,7 @@ def generate_examples(
                         context_lines,
                         target_prompt,
                         is_french,
+                        choices_line,
                     ),
                     "output": target_answer,
                 }
