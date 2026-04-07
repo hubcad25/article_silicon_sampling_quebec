@@ -12,11 +12,13 @@ app = modal.App("finetune-condition4")
 # (1) Environnement GPU: Unsloth et dépendances
 image = (
     modal.Image.debian_slim(python_version="3.11")
-    .apt_install("git")
+    .apt_install("git", "build-essential")
     .pip_install("torch==2.4.0", "huggingface_hub")
     .run_commands(
         "pip install 'unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git'",
-        "pip install --no-deps trl peft accelerate bitsandbytes datasets flash-attn xformers"
+        # flash-attn et xformers ont été retirés car ils nécessitent nvcc (compilateur CUDA) pour compiler.
+        # PyTorch >= 2.0 inclut déjà SDPA (Scaled Dot Product Attention) qui est très performant.
+        "pip install --no-deps trl peft accelerate bitsandbytes datasets"
     )
     # (2) Ajout du script de fine-tuning directement dans l'image
     .add_local_file(local_path="scripts/finetune.py", remote_path="/root/finetune.py")
