@@ -111,6 +111,34 @@ MANUAL_CHILD_LABELS: dict[str, dict[str, str]] = {
     "cps21_covidrelief__9": {"en": "Don't know/ Prefer not to answer", "fr": "Je ne sais pas/Préfère ne pas répondre"},
 }
 
+# Manual FR option lists for variables whose codebook FR entry is missing or
+# garbled (e.g. cps21_groupdiscrim_* where options_fr is null in the JSONL).
+# Keys are parent variable names; the list must mirror the EN options order/codes.
+MANUAL_OPTIONS_FR: dict[str, list[str]] = {
+    "cps21_groupdiscrim": [
+        "1: Énormément",
+        "2: Beaucoup",
+        "3: Modérément",
+        "4: Un peu",
+        "5: Pas du tout",
+        "6: Je ne sais pas/Préfère ne pas répondre",
+    ],
+}
+
+# For some variables the DTA stores value labels in a different case than the
+# codebook options used to build the en_to_fr localization map in downstream
+# scripts.  Map the exact DTA strings to the canonical codebook strings.
+VALUE_LABEL_NORMALIZATIONS: dict[str, dict[str, str]] = {
+    "cps21_econ_retro": {
+        "got better": "Got better",
+        "stayed about the same": "Stayed about the same",
+        "got worse": "Got worse",
+        "don\u2019t know": "Don't know",
+        "dont know": "Don't know",
+        "prefer not to answer": "Prefer not to answer",
+    },
+}
+
 MANUAL_LABEL_OVERRIDES: dict[str, dict[str, str]] = {
     "cps21_fed_id_str": {
         "en": "How strongly do you feel attached to your federal party?",
@@ -487,7 +515,14 @@ def apply_value_labels(df: pd.DataFrame, value_labels: dict, var: str) -> pd.Ser
     """Convert numeric column to text labels. Unmapped values stay as strings."""
     if var not in value_labels:
         return df[var].astype(str)
-    return df[var].map(value_labels[var]).fillna(df[var].astype(str))
+    labels = value_labels[var]
+    # Some DTA label sets store values in a different case than the codebook
+    # options used to build the en_to_fr localization map in downstream scripts.
+    # Apply explicit normalization mappings where needed.
+    if var in VALUE_LABEL_NORMALIZATIONS:
+        norm = VALUE_LABEL_NORMALIZATIONS[var]
+        labels = {k: norm.get(v.lower(), v) for k, v in labels.items()}
+    return df[var].map(labels).fillna(df[var].astype(str))
 
 
 def compute_age(df: pd.DataFrame) -> pd.Series:
@@ -672,6 +707,10 @@ def prepare_questions(
             # Keep child options only when exact variable-level FR entry exists.
             if fr_entry_exact is None:
                 options_fr = []
+            # For certain battery variables the codebook has no FR options at all;
+            # use the manually specified list keyed by parent variable name.
+            if not options_fr and parent_var in MANUAL_OPTIONS_FR:
+                options_fr = MANUAL_OPTIONS_FR[parent_var]
 
         manual_override = MANUAL_LABEL_OVERRIDES.get(var, {})
         if manual_override.get("en"):
