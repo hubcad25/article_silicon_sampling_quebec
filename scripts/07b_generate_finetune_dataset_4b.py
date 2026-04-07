@@ -2,9 +2,16 @@
 """
 Generate SFT dataset for condition 4B.
 
-For each TRAIN respondent, generate exactly 12 examples (one per test question).
-Context: all 108 train question responses as full SES profile.
-Target: the respondent's answer to each test question.
+For each TRAIN respondent, generate one example per virtual target (VD):
+  1. vote_intention  — coalesce of cps21_votechoice / cps21_vote_unlikely / cps21_vote_lean
+  2. not_vote_for    — battery of cps21_not_vote_for_1..5, output = comma-joined positive hits
+  3. cps21_quebec_sov
+  4. cps21_fed_id
+  5. cps21_prov_id   — null → "None" (no provincial party identification)
+  6. cps21_2nd_choice
+
+Context: all 108 train question responses + SES profile.
+Target: the respondent's answer to each virtual VD.
 """
 
 from __future__ import annotations
@@ -40,6 +47,34 @@ FR_VALUE_OVERRIDES = {
     "English": "Anglais",
     "Other": "Autre",
 }
+
+# Virtual target definitions — these replace the raw test questions with
+# merged/derived targets that better reflect the underlying constructs.
+
+# vote_intention: coalesce of the 3 mutually exclusive routing questions
+VOTE_INTENTION_COLS = ["cps21_votechoice", "cps21_vote_unlikely", "cps21_vote_lean"]
+VOTE_INTENTION_PROMPT_EN = "Which party do you intend to vote for?"
+VOTE_INTENTION_PROMPT_FR = "Pour quel parti avez-vous l'intention de voter?"
+
+# not_vote_for: select-all battery — collect party names where column is non-null
+NOT_VOTE_FOR_COLS = [
+    "cps21_not_vote_for_1",  # Liberal Party
+    "cps21_not_vote_for_2",  # Conservative Party
+    "cps21_not_vote_for_3",  # NDP
+    "cps21_not_vote_for_4",  # Bloc Québécois
+    "cps21_not_vote_for_5",  # Green Party
+]
+NOT_VOTE_FOR_PARTY_EN = ["Liberal Party", "Conservative Party", "NDP", "Bloc Québécois", "Green Party"]
+NOT_VOTE_FOR_PARTY_FR = ["Parti libéral", "Parti conservateur", "NPD", "Bloc québécois", "Parti vert"]
+NOT_VOTE_FOR_PROMPT_EN = "Parties that you would absolutely not vote for?"
+NOT_VOTE_FOR_PROMPT_FR = "Y a-t-il un ou des partis pour lesquels vous ne voteriez jamais?"
+
+# raw test questions passed through unchanged (single-column)
+RAW_TEST_VARS = {"cps21_quebec_sov", "cps21_fed_id", "cps21_prov_id", "cps21_2nd_choice"}
+
+# prov_id: fill missing with "None" (no provincial ID)
+PROV_ID_NONE_EN = "None"
+PROV_ID_NONE_FR = "Aucun"
 
 
 def parse_args() -> argparse.Namespace:
@@ -293,23 +328,61 @@ def main() -> None:
             "prompt_fr": prompt_fr.strip(),
         })
 
-    # Precompute test question data: target prompts and choices
-    test_data: list[dict] = []
-    for row in test_q.to_dicts():
-        var_name = row["variable_name"]
-        column_name = row["column_name"]
+    # Build virtual target definitions
+    # Each entry: {kind, prompt_en, prompt_fr, choices_en, choices_fr, ...}
+    # kind = "raw" | "vote_intention" | "not_vote_for" | "prov_id"
+    virtual_targets: list[dict] = []
+
+    # 1. vote_intention (merged routing questions)
+    # Choices: union of options from the 3 source questions
+    vote_choices_en: list[str] = []
+    vote_choices_fr: list[str] = []
+    seen_en: set[str] = set()
+    seen_fr: set[str] = set()
+    for var in VOTE_INTENTION_COLS:
+        row = test_q.filter(pl.col("variable_name") == var)
+        if row.is_empty():
+            continue
+        r = row.to_dicts()[0]
+        for opt in parse_options_list(r.get("options")):
+            if opt not in seen_en:
+                seen_en.add(opt)
+                vote_choices_en.append(opt)
+        for opt in parse_options_list(r.get("options_fr")):
+            if opt not in seen_fr:
+                seen_fr.add(opt)
+                vote_choices_fr.append(opt)
+    virtual_targets.append({
+        "kind": "vote_intention",
+        "prompt_en": VOTE_INTENTION_PROMPT_EN,
+        "prompt_fr": VOTE_INTENTION_PROMPT_FR,
+        "choices_en": vote_choices_en,
+        "choices_fr": vote_choices_fr,
+    })
+
+    # 2. not_vote_for (select-all battery → enumerated output)
+    virtual_targets.append({
+        "kind": "not_vote_for",
+        "prompt_en": NOT_VOTE_FOR_PROMPT_EN,
+        "prompt_fr": NOT_VOTE_FOR_PROMPT_FR,
+        "choices_en": NOT_VOTE_FOR_PARTY_EN,
+        "choices_fr": NOT_VOTE_FOR_PARTY_FR,
+    })
+
+    # 3. raw single-column test questions
+    for row in test_q.filter(pl.col("variable_name").is_in(list(RAW_TEST_VARS))).to_dicts():
         prompt_en = row["label"] or row["question"] or ""
         prompt_fr = row["label_fr"] or row["question_fr"] or ""
-        choices_en = parse_options_list(row.get("options"))
-        choices_fr = parse_options_list(row.get("options_fr"))
-        test_data.append({
-            "var": var_name,
-            "col": column_name,
+        virtual_targets.append({
+            "kind": "prov_id" if row["variable_name"] == "cps21_prov_id" else "raw",
+            "col": row["column_name"],
             "prompt_en": prompt_en.strip(),
             "prompt_fr": prompt_fr.strip(),
-            "choices_en": choices_en,
-            "choices_fr": choices_fr,
+            "choices_en": parse_options_list(row.get("options")),
+            "choices_fr": parse_options_list(row.get("options_fr")),
         })
+
+    logger.info("Virtual targets: %d", len(virtual_targets))
 
     # Generate examples
     examples: list[dict[str, str]] = []
@@ -329,17 +402,47 @@ def main() -> None:
         if not ctx_lines:
             continue
 
-        # For each test question, create an example
-        for test_item in test_data:
-            target_col = test_item["col"]
-            raw_value = respondent.get(target_col)
-            value = normalize_text(raw_value)
-            if not value:
-                continue  # Skip missing answers
+        for target in virtual_targets:
+            kind = target["kind"]
+            target_prompt = target["prompt_fr"] if is_french else target["prompt_en"]
+            target_choices = target["choices_fr"] if is_french else target["choices_en"]
 
-            target_value = localize_value(value, is_french, en_to_fr)
-            target_prompt = test_item["prompt_fr"] if is_french else test_item["prompt_en"]
-            target_choices = test_item["choices_fr"] if is_french else test_item["choices_en"]
+            # --- resolve output value ---
+            if kind == "vote_intention":
+                # coalesce across the 3 routing columns
+                target_value = None
+                for col in VOTE_INTENTION_COLS:
+                    v = normalize_text(respondent.get(col))
+                    if v:
+                        target_value = localize_value(v, is_french, en_to_fr)
+                        break
+                if not target_value:
+                    continue  # respondent has no vote intention answer
+
+            elif kind == "not_vote_for":
+                # collect party names where the binary column is non-null
+                parties = NOT_VOTE_FOR_PARTY_FR if is_french else NOT_VOTE_FOR_PARTY_EN
+                selected = [
+                    parties[i]
+                    for i, col in enumerate(NOT_VOTE_FOR_COLS)
+                    if normalize_text(respondent.get(col))
+                ]
+                if not selected:
+                    continue  # respondent didn't exclude any party
+                target_value = ", ".join(selected)
+
+            elif kind == "prov_id":
+                v = normalize_text(respondent.get(target["col"]))
+                if v:
+                    target_value = localize_value(v, is_french, en_to_fr)
+                else:
+                    target_value = PROV_ID_NONE_FR if is_french else PROV_ID_NONE_EN
+
+            else:  # raw
+                v = normalize_text(respondent.get(target["col"]))
+                if not v:
+                    continue
+                target_value = localize_value(v, is_french, en_to_fr)
 
             input_text = build_input_text(
                 ses_lines,
@@ -348,17 +451,13 @@ def main() -> None:
                 is_french,
                 target_choices,
             )
-
-            examples.append({
-                "input": input_text,
-                "output": target_value,
-            })
+            examples.append({"input": input_text, "output": target_value})
 
     logger.info(
-        "Generated %d examples from %d train respondents × %d test questions",
+        "Generated %d examples from %d train respondents × %d virtual targets",
         len(examples),
         len(rows),
-        len(test_data),
+        len(virtual_targets),
     )
 
     if not examples:
