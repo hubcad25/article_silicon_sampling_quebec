@@ -162,6 +162,12 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="HuggingFace repo ID to push LoRA weights (e.g. your-org/lora-condition4)",
     )
+    parser.add_argument(
+        "--hf_repo_merged",
+        type=str,
+        default=None,
+        help="HuggingFace repo ID to push merged (base+LoRA) model in float16 (e.g. your-org/model-condition4)",
+    )
 
     # Dry-run
     parser.add_argument(
@@ -458,12 +464,18 @@ def main() -> None:
             f.write(f"{k},{v}\n")
     logger.info("Training metrics saved to %s", metrics_path)
 
-    # Push to HuggingFace Hub if requested
+    # Push LoRA adapter to HuggingFace Hub
     if args.hf_repo:
         logger.info("Pushing LoRA weights to HuggingFace: %s ...", args.hf_repo)
         model.push_to_hub(args.hf_repo, private=False)
         tokenizer.push_to_hub(args.hf_repo, private=False)
         logger.info("Pushed to https://huggingface.co/%s", args.hf_repo)
+
+    # Merge LoRA into base model and push merged weights
+    if args.hf_repo_merged:
+        logger.info("Merging LoRA into base model and pushing to HuggingFace: %s ...", args.hf_repo_merged)
+        model.push_to_hub_merged(args.hf_repo_merged, tokenizer, save_method="merged_16bit", private=False)
+        logger.info("Merged model pushed to https://huggingface.co/%s", args.hf_repo_merged)
 
 
 if __name__ == "__main__":

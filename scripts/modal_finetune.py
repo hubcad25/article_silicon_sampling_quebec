@@ -38,12 +38,14 @@ CONDITION_CONFIG = {
         "volume_data": "finetune_train_4a.jsonl",
         "output_dir": "/data/models/lora_condition4a",
         "hf_repo": "hubcad25/llama-3.1-8b-quebec-lora-condition4a",
+        "hf_repo_merged": "hubcad25/llama-3.1-8b-quebec-condition4a",
     },
     "4b": {
         "local_data": "data/processed/finetune_train_4b.jsonl",
         "volume_data": "finetune_train_4b.jsonl",
         "output_dir": "/data/models/lora_condition4b",
         "hf_repo": "hubcad25/llama-3.1-8b-quebec-lora-condition4b",
+        "hf_repo_merged": "hubcad25/llama-3.1-8b-quebec-condition4b",
     },
 }
 
@@ -53,11 +55,11 @@ CONDITION_CONFIG = {
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git", "build-essential")
-    .pip_install("torch==2.4.0", "torchvision==0.19.0", "huggingface_hub")
+    .pip_install("torch==2.6.0", "torchvision==0.21.0", "huggingface_hub")
     .run_commands(
+        # Install unsloth; pin torchao to a version compatible with torch 2.6
         "pip install 'unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git'",
-        "pip install --no-deps trl peft accelerate bitsandbytes datasets",
-        "pip install torchao==0.6.1",
+        "pip install 'torchao==0.8.0'",
     )
     .add_local_file(local_path="scripts/finetune.py", remote_path="/root/finetune.py")
 )
@@ -84,9 +86,10 @@ def run_finetuning(
     volume_data: str,
     output_dir: str,
     hf_repo: str,
+    hf_repo_merged: str,
     smoke_test: bool = False,
 ) -> None:
-    print(f"Fine-tuning | data={volume_data} output={output_dir} repo={hf_repo} smoke={smoke_test}")
+    print(f"Fine-tuning | data={volume_data} output={output_dir} repo={hf_repo} merged={hf_repo_merged} smoke={smoke_test}")
     cmd = [
         "python", "/root/finetune.py",
         "--data", f"/data/{volume_data}",
@@ -99,6 +102,7 @@ def run_finetuning(
         "--lr", "2e-4",
         "--max_seq_len", "4096",
         "--hf_repo", hf_repo,
+        "--hf_repo_merged", hf_repo_merged,
     ]
     if smoke_test:
         cmd.extend(["--max_train_samples", "20", "--smoke_test"])
@@ -128,10 +132,12 @@ def main(
     volume_data = cfg["volume_data"]
     output_dir = cfg["output_dir"]
     repo = hf_repo or cfg["hf_repo"]
+    repo_merged = cfg["hf_repo_merged"]
 
     if smoke_test:
         repo = repo + "-smoke-test"
-        print(f"Smoke-test mode: model will be pushed to {repo}")
+        repo_merged = repo_merged + "-smoke-test"
+        print(f"Smoke-test mode: LoRA -> {repo}, merged -> {repo_merged}")
 
     # Upload dataset to Modal volume
     if os.path.exists(local_data):
@@ -144,5 +150,5 @@ def main(
     else:
         print(f"Warning: {local_data} not found locally — assuming it is already in the volume.")
 
-    print(f"Launching condition {condition} fine-tuning on Modal -> {repo}")
-    run_finetuning.remote(volume_data, output_dir, repo, smoke_test)
+    print(f"Launching condition {condition} fine-tuning on Modal -> LoRA: {repo}, merged: {repo_merged}")
+    run_finetuning.remote(volume_data, output_dir, repo, repo_merged, smoke_test)
