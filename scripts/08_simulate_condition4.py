@@ -246,6 +246,15 @@ def parse_single_option(options_json: Any) -> str | None:
     return re.sub(r"^\s*\d+\s*:\s*", "", opt).strip() or None
 
 
+def strip_option_code(opt: str) -> str:
+    """Remove numeric codes from option labels: '1: Label' or 'Label (1)' -> 'Label'."""
+    # Prefix format: "1: Label"
+    cleaned = re.sub(r"^\s*\d+\s*:\s*", "", opt).strip()
+    # Suffix format: "Label (1)"
+    cleaned = re.sub(r"\s*\(\d+\)\s*$", "", cleaned).strip()
+    return cleaned
+
+
 def parse_options_list(options_json: Any) -> list[str]:
     options_text = normalize_text(options_json)
     if not options_text:
@@ -257,11 +266,15 @@ def parse_options_list(options_json: Any) -> list[str]:
     if not isinstance(options, list):
         return []
     out: list[str] = []
+    seen: set[str] = set()
     for raw in options:
         opt = normalize_text(raw)
         if not opt or "_TEXT" in opt:
             continue
-        out.append(opt)
+        cleaned = strip_option_code(opt)
+        if cleaned and cleaned not in seen:
+            seen.add(cleaned)
+            out.append(cleaned)
     return out
 
 
