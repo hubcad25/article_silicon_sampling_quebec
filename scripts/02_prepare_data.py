@@ -536,26 +536,25 @@ def compute_language_profile(df: pd.DataFrame, value_labels: dict) -> pd.Series:
     """Collapse language dummies into 3 categories: English/French/Other.
 
     Classification rules:
-    1. Purely English (checked English only): → "English"
-    2. Purely French (checked French only): → "French"
-    3. Ambiguous (bilingual EN+FR, or any other combination): fall back to
-       survey interface language (UserLanguage). FR-CA → "French", EN → "English".
-       This resolves the large bilingual EN+FR group via their chosen survey language.
-    4. No language checked at all: → "Not specified"
+    1. Purely English (only EN checked): → "English"
+    2. Purely French (only FR checked): → "French"
+    3. Has EN or FR, but also checked other languages (e.g. EN+FR bilinguals,
+       FR+Italian, EN+Spanish, EN+FR+Arabic, ...): fall back to survey interface
+       language (UserLanguage: FR-CA → "French", EN → "English"). These respondents
+       clearly understand at least one official language; their chosen survey language
+       is the best proxy for their dominant official language.
+    4. Other language only (no EN, no FR checked): → "Other"
+    5. Nothing checked: → "Not specified"
     """
 
     available = [col for col in LANGUAGE_DUMMY_COLS if col in df.columns]
     if not available:
         return pd.Series(["Not specified"] * len(df), index=df.index)
 
-    # Pull survey language once for the fallback
+    cols_for_work = list(available)
     if "UserLanguage" in df.columns:
-        survey_lang = df["UserLanguage"].astype(str)
-    else:
-        survey_lang = pd.Series(["EN"] * len(df), index=df.index)
-
-    cols_for_lang = available + ["UserLanguage"] if "UserLanguage" in df.columns else available
-    work_df = df[cols_for_lang] if "UserLanguage" in df.columns else df[available]
+        cols_for_work.append("UserLanguage")
+    work_df = df[cols_for_work]
 
     def row_to_language(row: pd.Series) -> str:
         english = bool(pd.notna(row.get("cps21_language_1")))
@@ -572,11 +571,15 @@ def compute_language_profile(df: pd.DataFrame, value_labels: dict) -> pd.Series:
         if french and not english and not other:
             return "French"
 
-        # Ambiguous (bilingual EN+FR, or multilingual, or other-language-only):
-        # fall back to the survey interface language as a tiebreaker.
-        if english or french or other:
+        # Has at least one official language (EN or FR) — possibly also others:
+        # use survey interface language as tiebreaker.
+        if english or french:
             ul = str(row.get("UserLanguage", "EN"))
             return "French" if ul == "FR-CA" else "English"
+
+        # No EN or FR at all — genuinely allophone respondent.
+        if other:
+            return "Other"
 
         return "Not specified"
 
