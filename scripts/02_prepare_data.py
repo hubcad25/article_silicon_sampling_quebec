@@ -20,6 +20,7 @@ import logging
 import re
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import polars as pl
 from pandas.io.stata import StataReader
@@ -569,6 +570,62 @@ def compute_voted_2019(df: pd.DataFrame, value_labels: dict) -> pd.Series:
     )
 
 
+def create_respondent_split(respondents: pd.DataFrame, test_size: float = 0.2, random_seed: int = 42) -> pd.Series:
+    """Create a stratified train/test split by language (FR/EN).
+    
+    This split is used only for condition 4B to test generalization to new respondents.
+    The stratification ensures both language groups are represented proportionally in 
+    both train and test sets.
+    
+    Args:
+        respondents: DataFrame with 'language' column
+        test_size: Fraction of data for test set (default 0.2 for 80/20 split)
+        random_seed: Random seed for reproducibility (default 42)
+    
+    Returns:
+        Series with 'train' or 'test' values
+    """
+    from sklearn.model_selection import train_test_split
+    
+    # Create a simplified language column for stratification: group Other as non-French
+    lang_for_split = respondents["language"].apply(
+        lambda x: "FR" if x == "French" else "non-FR"
+    ).values
+    
+    # Generate row positions (0 to n-1)
+    n_respondents = len(respondents)
+    all_positions = np.arange(n_respondents)
+    
+    # Use sklearn's stratified split with positions
+    train_positions, test_positions = train_test_split(
+        all_positions,
+        test_size=test_size,
+        random_state=random_seed,
+        stratify=lang_for_split
+    )
+    
+    # Create split series using position-based indexing
+    split_series = pd.Series("train", index=respondents.index)
+    split_series.iloc[test_positions] = "test"
+    
+    # Log split statistics
+    logger.info(f"Respondent split (condition 4B):")
+    logger.info(f"  Total: {len(respondents)}")
+    logger.info(f"  Train: {(split_series == 'train').sum()} ({100 * (split_series == 'train').sum() / len(respondents):.1f}%)")
+    logger.info(f"  Test: {(split_series == 'test').sum()} ({100 * (split_series == 'test').sum() / len(respondents):.1f}%)")
+    
+    # Log stratification by language
+    for lang in ["French", "English", "Other"]:
+        lang_mask = respondents["language"] == lang
+        if lang_mask.sum() > 0:
+            train_count = (split_series[lang_mask] == "train").sum()
+            test_count = (split_series[lang_mask] == "test").sum()
+            total = lang_mask.sum()
+            logger.info(f"  {lang}: {total} total (train={train_count}, test={test_count})")
+    
+    return split_series
+
+
 def prepare_respondents(
     df: pd.DataFrame, selected_vars: list[str], value_labels: dict
 ) -> pd.DataFrame:
@@ -778,6 +835,10 @@ def main() -> None:
     keep_cols = [c for c in respondents.columns if c in ses_cols or c in keep_cols]
     respondents = respondents[keep_cols]
     logger.info(f"Respondents matrix after dropping _drop vars: {len(respondents)} × {len(respondents.columns)}")
+
+    # Add respondent_split column for condition 4B (train/test split for generalization to new respondents)
+    respondents["respondent_split"] = create_respondent_split(respondents)
+    logger.info(f"Respondents matrix after adding respondent_split: {len(respondents)} × {len(respondents.columns)}")
 
     # Save
     pl.from_pandas(questions).write_parquet(str(processed_dir / "questions.parquet"))
