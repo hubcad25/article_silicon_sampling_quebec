@@ -18,10 +18,14 @@ image = (
     .apt_install("git", "build-essential")
     .pip_install("torch==2.4.0", "huggingface_hub")
     .run_commands(
+        # The torchao package requires torch > 2.4.0 in its recent versions.
+        # Transformers quantizers fails to import if torchao errors out.
+        # We also need transformers and trl specifically pinned or unsloth handles it,
+        # but let's install unsloth first.
         "pip install 'unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git'",
-        # flash-attn et xformers ont été retirés car ils nécessitent nvcc (compilateur CUDA) pour compiler.
-        # PyTorch >= 2.0 inclut déjà SDPA (Scaled Dot Product Attention) qui est très performant.
-        "pip install --no-deps trl peft accelerate bitsandbytes datasets"
+        # Install the rest, but force an older torchao or just rely on unsloth dependencies
+        "pip install --no-deps trl peft accelerate bitsandbytes datasets",
+        "pip install torchao==0.6.1" # Fix for torch.int1 error in transformers/quantizers
     )
     # (2) Ajout du script de fine-tuning directement dans l'image
     .add_local_file(local_path="scripts/finetune.py", remote_path="/root/finetune.py")
