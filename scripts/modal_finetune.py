@@ -1,11 +1,14 @@
 import os
 import subprocess
 
-from dotenv import load_dotenv
 import modal
 
-# Load environment variables (e.g., HF_TOKEN from .env)
-load_dotenv()
+# On charge dotenv localement SEULEMENT (pas dans le conteneur Modal)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 app = modal.App("finetune-condition4")
 
