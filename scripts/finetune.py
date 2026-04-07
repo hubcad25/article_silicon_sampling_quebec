@@ -187,13 +187,12 @@ def parse_args() -> argparse.Namespace:
 def check_finetune_deps() -> None:
     """Fail early with a clear message if finetuning packages are missing."""
     missing = []
-    for pkg in ("peft", "trl", "accelerate", "datasets"):
-        try:
-            __import__(pkg)
-        except ImportError:
+    
+    import importlib.util
+    for pkg in ("unsloth", "trl", "accelerate", "datasets"):
+        if importlib.util.find_spec(pkg) is None:
             missing.append(pkg)
 
-    # bitsandbytes is only needed for QLoRA — checked later
     if missing:
         logger.error(
             "Missing finetuning dependencies: %s\n"
@@ -265,61 +264,24 @@ def format_sample(sample: dict) -> str:
 
 
 def build_model_and_tokenizer(args: argparse.Namespace):
-    """Load base model and tokenizer, apply QLoRA quantization if requested."""
+    """Load base model and tokenizer via Unsloth, apply QLoRA quantization if requested."""
     import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+    from unsloth import FastLanguageModel
 
     logger.info("Loading tokenizer: %s", args.model)
-    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name=args.model,
+        max_seq_length=args.max_seq_len,
+        dtype=torch.bfloat16 if not args.use_4bit else None,
+        load_in_4bit=args.use_4bit,
+    )
 
     # Llama tokenizer has no pad token by default; use eos as pad.
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    # Quantization config (QLoRA)
-    bnb_config = None
-    if args.use_4bit:
-        try:
-            import bitsandbytes  # noqa: F401
-        except ImportError:
-            logger.error(
-                "bitsandbytes is required for --use_4bit.\n"
-                'Install with: pip install -e ".[finetune]"'
-            )
-            sys.exit(1)
-
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16,
-            bnb_4bit_use_double_quant=True,
-        )
-        logger.info("QLoRA NF4 quantization enabled")
-
-    logger.info("Loading base model: %s", args.model)
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model,
-        quantization_config=bnb_config,
-        torch_dtype=torch.bfloat16 if not args.use_4bit else None,
-        device_map="auto",
-        trust_remote_code=False,
-        attn_implementation="flash_attention_2",
-    )
-
-    # Required for gradient checkpointing + PEFT compatibility
-    model.config.use_cache = False
-    model.enable_input_require_grads()
-
-    return model, tokenizer
-
-
-def build_lora_config(args: argparse.Namespace):
-    """Build LoRA config targeting all linear projection layers in Llama."""
-    from peft import LoraConfig, TaskType
-
-    # These are the standard target modules for Llama-3 architecture.
-    # Targeting all projection layers (not just q/v) gives better performance.
+    # Add LoRA adapters
     target_modules = [
         "q_proj",
         "k_proj",
@@ -330,19 +292,24 @@ def build_lora_config(args: argparse.Namespace):
         "down_proj",
     ]
 
-    return LoraConfig(
+    model = FastLanguageModel.get_peft_model(
+        model,
         r=args.lora_r,
+        target_modules=target_modules,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout,
-        target_modules=target_modules,
         bias="none",
-        task_type=TaskType.CAUSAL_LM,
+        use_gradient_checkpointing="unsloth",
+        random_state=args.seed,
     )
+
+    return model, tokenizer
 
 
 def build_training_args(args: argparse.Namespace):
     """Build SFTConfig (trl >= 0.9 replacement for TrainingArguments + SFTTrainer config)."""
     from trl import SFTConfig
+    from unsloth import is_bfloat16_supported
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -355,8 +322,9 @@ def build_training_args(args: argparse.Namespace):
         gradient_accumulation_steps=args.grad_accum,
         learning_rate=args.lr,
         lr_scheduler_type="cosine",
-        bf16=True,          # Use bfloat16 (A100/H100). Change to fp16=True on older GPUs.
-        optim="paged_adamw_32bit",
+        bf16=is_bfloat16_supported(),
+        fp16=not is_bfloat16_supported(),
+        optim="adamw_8bit",
         logging_steps=args.logging_steps,
         save_steps=args.save_steps,
         save_total_limit=2,  # Keep only last 2 checkpoints to save disk space
@@ -367,9 +335,6 @@ def build_training_args(args: argparse.Namespace):
         seed=args.seed,
         report_to="none",
         dataloader_num_workers=2,
-        gradient_checkpointing=True,
-        gradient_checkpointing_kwargs={"use_reentrant": False},
-        # SFT-specific: packing (faster than completion_only_loss, loss on all tokens)
         dataset_text_field="text",
         packing=True,
         max_length=args.max_seq_len,
@@ -469,13 +434,10 @@ def main() -> None:
     # Load model + tokenizer
     model, tokenizer = build_model_and_tokenizer(args)
 
-    # LoRA config (passed directly to SFTTrainer — no need to call get_peft_model manually)
-    lora_config = build_lora_config(args)
-
     # SFTConfig: TrainingArguments + SFT-specific options (completion_only_loss, max_length)
     training_args = build_training_args(args)
 
-    # SFTTrainer handles LoRA application, tokenization, and completion-only loss internally
+    # SFTTrainer handles tokenization, and completion-only loss internally
     callbacks = []
     if args.hf_repo:
         callbacks.append(PushToHubCallback(repo_id=args.hf_repo, every_n_steps=args.save_steps))
@@ -486,7 +448,6 @@ def main() -> None:
         train_dataset=train_ds,
         eval_dataset=eval_ds,
         processing_class=tokenizer,
-        peft_config=lora_config,
         callbacks=callbacks if callbacks else None,
     )
 
