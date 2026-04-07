@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Fine-tune Llama-3.1-8B-Instruct on finetune_train.jsonl with LoRA/QLoRA.
+Fine-tune Llama-3.1-8B on finetune_train.jsonl with LoRA/QLoRA.
 
 Condition 4 of the silicon sampling experiment: SFT on CES 2021 train-domain
 questions, evaluated on held-out test-domain questions.
@@ -43,7 +43,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
+DEFAULT_MODEL = "meta-llama/Llama-3.1-8B"
 DEFAULT_DATA = "data/processed/finetune_train.jsonl"
 DEFAULT_OUTPUT_DIR = "data/models/lora_condition4"
 DEFAULT_EVAL_SPLIT = 0.05  # 5% of data held out for eval loss monitoring
@@ -51,7 +51,7 @@ DEFAULT_EVAL_SPLIT = 0.05  # 5% of data held out for eval loss monitoring
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Fine-tune Llama-3.1-8B-Instruct on CES survey data (condition 4)",
+        description="Fine-tune Llama-3.1-8B on CES survey data (condition 4)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
@@ -104,7 +104,7 @@ def parse_args() -> argparse.Namespace:
         "--lr", type=float, default=2e-4, help="Learning rate (AdamW)"
     )
     parser.add_argument(
-        "--max_seq_len", type=int, default=2048, help="Maximum sequence length in tokens"
+        "--max_seq_len", type=int, default=4096, help="Maximum sequence length in tokens"
     )
     parser.add_argument(
         "--warmup_ratio",
@@ -406,10 +406,15 @@ def print_dry_run_summary(args: argparse.Namespace, train_ds, eval_ds) -> None:
     print()
     print("Sample (train[0]):")
     sample = train_ds[0]
-    formatted = format_sample(sample)
-    print(f"  input  ({len(sample['input'])} chars): {sample['input'][:120]!r}...")
-    print(f"  output ({len(sample['output'])} chars): {sample['output']!r}")
-    print(f"  formatted ({len(formatted)} chars total)")
+    if "input" in sample and "output" in sample:
+        formatted = format_sample(sample)
+        print(f"  input  ({len(sample['input'])} chars): {sample['input'][:120]!r}...")
+        print(f"  output ({len(sample['output'])} chars): {sample['output']!r}")
+        print(f"  formatted ({len(formatted)} chars total)")
+    elif "text" in sample:
+        print(f"  text ({len(sample['text'])} chars): {sample['text'][:120]!r}...")
+    else:
+        print(f"  keys: {list(sample.keys())}")
     print()
     if args.hf_repo:
         print(f"HF repo:         {args.hf_repo}")
