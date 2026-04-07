@@ -36,15 +36,15 @@ secrets = [modal.Secret.from_dict({"HF_TOKEN": hf_token})] if hf_token else []
     volumes={"/data": volume},
     secrets=secrets
 )
-def run_finetuning(hf_repo: str):
-    print("Début du fine-tuning sur Modal...")
+def run_finetuning(hf_repo: str, smoke_test: bool = False):
+    print(f"Début du fine-tuning sur Modal (smoke_test={smoke_test})...")
     
     # (3) Lance le fine-tuning avec les bons paramètres et (4) Push sur HF
     cmd = [
         "python", "/root/finetune.py",
         "--data", "/data/finetune_train.jsonl",
         "--output_dir", "/data/models/lora_condition4",
-        "--epochs", "3",
+        "--epochs", "3" if not smoke_test else "1",
         "--lora_r", "16",
         "--lora_alpha", "32",
         "--batch_size", "4",
@@ -54,18 +54,29 @@ def run_finetuning(hf_repo: str):
         "--hf_repo", hf_repo
     ]
     
+    if smoke_test:
+        print("Mode smoke test activé : entraînement limité à 20 échantillons.")
+        cmd.extend(["--max_train_samples", "20", "--smoke_test"])
+    
     # Lancement du sous-processus de training
     subprocess.run(cmd, check=True)
 
 @app.local_entrypoint()
 def main(
-    hf_repo: str = "hubcad25/llama-3.1-8b-quebec-lora-condition4"
+    hf_repo: str = "hubcad25/llama-3.1-8b-quebec-lora-condition4",
+    smoke_test: bool = False
 ):
     """
     Point d'entrée local.
-    Usage: modal run scripts/modal_finetune.py
+    Usage normal : modal run scripts/modal_finetune.py
+    Usage test   : modal run scripts/modal_finetune.py --smoke-test
     """
     local_data_path = "data/processed/finetune_train.jsonl"
+    
+    if smoke_test:
+        # On renomme le dépôt HF pour ne pas polluer le vrai modèle
+        hf_repo = hf_repo + "-smoke-test"
+        print(f"ATTENTION: Mode smoke_test activé. Le modèle sera poussé sur: {hf_repo}")
     
     # (2) Uploade finetune_train.jsonl dans le volume via la CLI Modal
     if os.path.exists(local_data_path):
@@ -78,4 +89,4 @@ def main(
         print("Veuillez vous assurer que le fichier de données est présent dans le volume, ou qu'il sera téléchargé par finetune.py.")
         
     print(f"Lancement du job de fine-tuning sur Modal (push prévu sur {hf_repo})...")
-    run_finetuning.remote(hf_repo)
+    run_finetuning.remote(hf_repo, smoke_test)
