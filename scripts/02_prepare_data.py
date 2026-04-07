@@ -129,6 +129,111 @@ MANUAL_OPTIONS_FR: dict[str, list[str]] = {
 # For some variables the DTA stores value labels in a different case than the
 # codebook options used to build the en_to_fr localization map in downstream
 # scripts.  Map the exact DTA strings to the canonical codebook strings.
+# Mapping: federal riding name (as stored in DTA fedname column, 2013 boundaries)
+# → administrative region label used to contextualize the riding in prompts.
+# Format in prompt: "<riding name> (<region>)"
+# Source: Wikipedia — Liste des circonscriptions fédérales du Québec par région
+#         (regions correspond to Quebec administrative regions)
+RIDING_REGION: dict[str, str] = {
+    # Abitibi-Témiscamingue
+    "Abitibi-Témiscamingue": "Abitibi-Témiscamingue",
+    # Bas-Saint-Laurent / Côte-du-Sud
+    "Rimouski-Neigette-Témiscouata-Les Basques": "Bas-Saint-Laurent",
+    "Montmagny-L'Islet-Kamouraska-Rivière-du-Loup": "Bas-Saint-Laurent",
+    # Capitale-Nationale
+    "Beauport-Limoilou": "Capitale-Nationale",
+    "Beauport-Côte-de-Beaupré-Île d'Orléans-Charlevoix": "Capitale-Nationale",
+    "Charlesbourg-Haute-Saint-Charles": "Capitale-Nationale",
+    "Louis-Hébert": "Capitale-Nationale",
+    "Louis-Saint-Laurent": "Capitale-Nationale",
+    "Portneuf-Jacques-Cartier": "Capitale-Nationale",
+    "Québec": "Capitale-Nationale",
+    # Centre-du-Québec
+    "Bécancour-Nicolet-Saurel": "Centre-du-Québec",
+    "Drummond": "Centre-du-Québec",
+    "Mégantic-L'Érable": "Centre-du-Québec",
+    "Richmond-Arthabaska": "Centre-du-Québec",
+    # Chaudière-Appalaches
+    "Beauce": "Chaudière-Appalaches",
+    "Bellechasse-Les Etchemins-Lévis": "Chaudière-Appalaches",
+    "Lévis-Lotbinière": "Chaudière-Appalaches",
+    # Côte-Nord
+    "Manicouagan": "Côte-Nord",
+    # Estrie
+    "Compton-Stanstead": "Estrie",
+    "Sherbrooke": "Estrie",
+    "Shefford": "Estrie",
+    "Brome-Missisquoi": "Estrie",
+    # Gaspésie–Îles-de-la-Madeleine
+    "Gaspésie-Les Îles-de-la-Madeleine": "Gaspésie–Îles-de-la-Madeleine",
+    "Avignon-La Mitis-Matane-Matapédia": "Gaspésie–Îles-de-la-Madeleine",
+    # Lanaudière
+    "Berthier-Maskinongé": "Lanaudière",
+    "Joliette": "Lanaudière",
+    "Montcalm": "Lanaudière",
+    "Repentigny": "Lanaudière",
+    "Terrebonne": "Lanaudière",
+    # Laurentides
+    "Argenteuil-La Petite-Nation": "Laurentides",
+    "Laurentides-Labelle": "Laurentides",
+    "Mirabel": "Laurentides",
+    "Rivière-des-Mille-Îles": "Laurentides",
+    "Rivière-du-Nord": "Laurentides",
+    "Thérèse-De Blainville": "Laurentides",
+    # Laval
+    "Alfred-Pellan": "Laval",
+    "Laval-Les Îles": "Laval",
+    "Marc-Aurèle-Fortin": "Laval",
+    "Vimy": "Laval",
+    # Mauricie
+    "Saint-Maurice-Champlain": "Mauricie",
+    "Trois-Rivières": "Mauricie",
+    # Montérégie
+    "Beloeil-Chambly": "Montérégie",
+    "Brossard-Saint-Lambert": "Montérégie",
+    "Châteauguay-Lacolle": "Montérégie",
+    "La Prairie": "Montérégie",
+    "Longueuil-Charles-LeMoyne": "Montérégie",
+    "Longueuil-Saint-Hubert": "Montérégie",
+    "Montarville": "Montérégie",
+    "Pierre-Boucher-Les Patriotes-Verchères": "Montérégie",
+    "Saint-Hyacinthe-Bagot": "Montérégie",
+    "Saint-Jean": "Montérégie",
+    "Salaberry-Suroît": "Montérégie",
+    "Vaudreuil-Soulanges": "Montérégie",
+    # Montréal
+    "Ahuntsic-Cartierville": "Montréal",
+    "Bourassa": "Montréal",
+    "Dorval-Lachine-LaSalle": "Montréal",
+    "Hochelaga": "Montréal",
+    "Honoré-Mercier": "Montréal",
+    "La Pointe-de-l'Île": "Montréal",
+    "LaSalle-Émard-Verdun": "Montréal",
+    "Lac-Saint-Louis": "Montréal",
+    "Laurier-Sainte-Marie": "Montréal",
+    "Mont-Royal / Mount Royal": "Montréal",
+    "Mount Royal": "Montréal",
+    "Notre-Dame-de-Grâce-Westmount": "Montréal",
+    "Outremont": "Montréal",
+    "Papineau": "Montréal",
+    "Pierrefonds-Dollard": "Montréal",
+    "Rosemont-La Petite-Patrie": "Montréal",
+    "Saint-Laurent": "Montréal",
+    "Saint-Léonard-Saint-Michel": "Montréal",
+    "Ville-Marie-Le Sud-Ouest-Île-des-Soeurs": "Montréal",
+    # Nord-du-Québec
+    "Abitibi-Baie-James-Nunavik-Eeyou": "Nord-du-Québec",
+    # Outaouais
+    "Gatineau": "Outaouais",
+    "Hull-Aylmer": "Outaouais",
+    "Pontiac": "Outaouais",
+    # Saguenay–Lac-Saint-Jean
+    "Chicoutimi-Le Fjord": "Saguenay–Lac-Saint-Jean",
+    "Jonquière": "Saguenay–Lac-Saint-Jean",
+    "Lac-Saint-Jean": "Saguenay–Lac-Saint-Jean",
+}
+
+
 VALUE_LABEL_NORMALIZATIONS: dict[str, dict[str, str]] = {
     "cps21_econ_retro": {
         "got better": "Got better",
@@ -586,6 +691,24 @@ def compute_language_profile(df: pd.DataFrame, value_labels: dict) -> pd.Series:
     return work_df.apply(row_to_language, axis=1)
 
 
+def compute_riding(df: pd.DataFrame) -> pd.Series:
+    """Build a contextualized riding string: '<riding name> (<région administrative>)'.
+
+    The fedname column stores riding names with latin-1→utf-8 encoding already fixed
+    by load_stata_data. The RIDING_REGION dict maps each riding to its Quebec
+    administrative region. Unknown ridings fall back to the bare riding name.
+    """
+    def fmt(name: str) -> str:
+        if not isinstance(name, str) or not name.strip():
+            return "Inconnu"
+        region = RIDING_REGION.get(name.strip())
+        if region:
+            return f"{name.strip()} ({region})"
+        return name.strip()
+
+    return df["fedname"].apply(fmt)
+
+
 def compute_voted_2019(df: pd.DataFrame, value_labels: dict) -> pd.Series:
     """Compute binary voted_2019 from cps21_vote_2019."""
     # Convert 'cps21_vote_2019' to its text labels first
@@ -673,6 +796,10 @@ def prepare_respondents(
         respondents["survey_language"] = df["UserLanguage"].astype(str)
     else:
         respondents["survey_language"] = "EN"
+
+    # Federal riding with administrative region context (SES variable, condition-agnostic)
+    if "fedname" in df.columns:
+        respondents["riding"] = compute_riding(df)
 
     for var in selected_vars:
         if var in rename:
@@ -857,7 +984,7 @@ def main() -> None:
     # Exclude _drop variables from respondents matrix
     keep_cols = questions.loc[questions["split"] != "drop", "column_name"].tolist()
     # Always keep SES columns and survey metadata (no split assignment)
-    ses_cols = ["survey_language", "age", "province", "education", "gender", "language", "voted_2019"]
+    ses_cols = ["survey_language", "age", "province", "education", "gender", "language", "voted_2019", "riding"]
     keep_cols = [c for c in respondents.columns if c in ses_cols or c in keep_cols]
     respondents = respondents[keep_cols]
     logger.info(f"Respondents matrix after dropping _drop vars: {len(respondents)} × {len(respondents.columns)}")
