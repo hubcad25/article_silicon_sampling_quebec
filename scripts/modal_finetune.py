@@ -86,8 +86,8 @@ def main(
     # (2) Uploade finetune_train.jsonl dans le volume via la CLI Modal
     if os.path.exists(local_data_path):
         print(f"Upload de {local_data_path} vers le volume Modal 'finetune-data'...")
-        # Lancement de la commande modal volume put
-        subprocess.run(["modal", "volume", "put", "finetune-data", local_data_path, "finetune_train.jsonl"], check=True)
+        # Ajout du flag --force (-f) pour écraser le fichier s'il est déjà présent
+        subprocess.run(["modal", "volume", "put", "-f", "finetune-data", local_data_path, "finetune_train.jsonl"], check=True)
         print("Upload terminé.")
     else:
         print(f"Attention: {local_data_path} non trouvé localement.")
