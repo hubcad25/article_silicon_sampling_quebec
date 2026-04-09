@@ -255,13 +255,17 @@ def load_dataset_splits(
     # --- Cache hit ---
     if tokenized_cache and not smoke_test:
         cache_path = Path(tokenized_cache)
-        if cache_path.exists():
+        # Validate cache: must exist AND contain the dataset_dict.json sentinel file
+        cache_valid = cache_path.exists() and (cache_path / "dataset_dict.json").exists()
+        if cache_valid:
             logger.info("Loading tokenized dataset from cache: %s", cache_path)
             ds_dict = load_from_disk(str(cache_path))
             train_ds = ds_dict["train"]
             eval_ds = ds_dict["eval"]
             logger.info("Train: %d samples | Eval: %d samples (from cache)", len(train_ds), len(eval_ds))
             return train_ds, eval_ds
+        elif cache_path.exists():
+            logger.warning("Cache directory exists but is invalid/empty — re-tokenizing: %s", cache_path)
 
     # --- Cache miss: process from JSONL ---
     if not data_path.exists():
