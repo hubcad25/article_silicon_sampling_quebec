@@ -84,6 +84,24 @@ def parse_args() -> argparse.Namespace:
         default=42,
         help="Seed used for deterministic shuffling",
     )
+    parser.add_argument(
+        "--n-ctx",
+        type=int,
+        default=None,
+        help=(
+            "Number of context questions per example (randomly sampled after shuffle). "
+            "None = use all available context questions (original behaviour)."
+        ),
+    )
+    parser.add_argument(
+        "--train-respondents-only",
+        action="store_true",
+        default=False,
+        help=(
+            "Only include respondents whose respondent_split == 'train'. "
+            "Use for conditions 5A/5B (respondent generalization)."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -460,6 +478,7 @@ def generate_examples(
     en_to_fr: dict[str, str],
     shuffle: bool,
     seed: int,
+    n_ctx: int | None = None,
 ) -> list[dict[str, str]]:
     rows = respondents.with_row_index("respondent_id").to_dicts()
     examples: list[dict[str, str]] = []
@@ -492,6 +511,10 @@ def generate_examples(
             context_keys = [ctx_key for ctx_key in ordered if ctx_key != target_key]
             if shuffle:
                 random.Random(seed + respondent_id * 1009 + target_idx).shuffle(context_keys)
+
+            # Truncate context to n_ctx questions if specified
+            if n_ctx is not None:
+                context_keys = context_keys[:n_ctx]
 
             context_lines = []
             for ctx_key in context_keys:
@@ -540,6 +563,19 @@ def main() -> None:
     questions = pl.read_parquet(args.questions)
     logger.info("Loading respondents: %s", args.respondents)
     respondents = pl.read_parquet(args.respondents)
+
+    if args.train_respondents_only:
+        if "respondent_split" not in respondents.columns:
+            raise SystemExit(
+                "Column 'respondent_split' not found in respondents. "
+                "Run 02_prepare_data.py to add it before using --train-respondents-only."
+            )
+        before = len(respondents)
+        respondents = respondents.filter(pl.col("respondent_split") == "train")
+        logger.info(
+            "Filtered to train respondents only: %d -> %d", before, len(respondents)
+        )
+
     en_to_fr = build_en_to_fr_value_map(questions)
     logger.info("Value localization pairs (EN->FR): %d", len(en_to_fr))
 
@@ -554,6 +590,8 @@ def main() -> None:
         n_select,
         n_battery,
     )
+    if args.n_ctx is not None:
+        logger.info("Context truncated to n_ctx=%d questions per example", args.n_ctx)
 
     examples = generate_examples(
         groups,
@@ -561,6 +599,7 @@ def main() -> None:
         en_to_fr,
         shuffle=args.shuffle,
         seed=args.seed,
+        n_ctx=args.n_ctx,
     )
     if not examples:
         raise SystemExit("No finetuning examples generated")
