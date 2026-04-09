@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
-Simulate Condition 4: fine-tuned LLM with respondent context.
+Simulate Condition 4A: fine-tuned LLM with respondent context (question generalization, n_ctx=10).
 
 For each respondent, we build a prompt in the same format used for SFT:
   - SES profile lines
-  - all train-split question answers from the same respondent
+  - n_ctx randomly sampled train-split question answers from the same respondent
   - one held-out test question as the target
 
 The prompt is sent to the Hugging Face inference endpoint hosting the
-fine-tuned model.
+fine-tuned model (condition 4A).
 
 Outputs:
-    data/results/condition4_samples.parquet
-    data/results/condition4_samples.csv
+    data/results/condition4a_samples.parquet
+    data/results/condition4a_samples.csv
 
 Checkpoint:
-    data/results/condition4_samples.checkpoint.jsonl
+    data/results/condition4a_samples.checkpoint.jsonl
 """
 
 from __future__ import annotations
@@ -43,8 +43,8 @@ load_dotenv()
 DEFAULT_ENDPOINT = (
     "https://n9yxdvjrydaws7a6.us-east-1.aws.endpoints.huggingface.cloud"
 )
-DEFAULT_OUTPUT = Path("data/results/condition4_samples.parquet")
-DEFAULT_CHECKPOINT = Path("data/results/condition4_samples.checkpoint.jsonl")
+DEFAULT_OUTPUT = Path("data/results/condition4a_samples.parquet")
+DEFAULT_CHECKPOINT = Path("data/results/condition4a_samples.checkpoint.jsonl")
 DEFAULT_MAX_WORKERS = 4
 DEFAULT_MAX_NEW_TOKENS = 12
 DEFAULT_TEMPERATURE = 0.0
@@ -73,7 +73,7 @@ FR_VALUE_OVERRIDES = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Simulate condition 4 using the fine-tuned Hugging Face endpoint",
+        description="Simulate condition 4A (question gen, n_ctx=10) using the fine-tuned HF endpoint",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(

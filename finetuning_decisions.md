@@ -1,6 +1,6 @@
-# Décisions fine-tuning (condition 4)
+# Décisions fine-tuning (conditions 4 et 5)
 
-**Modèle** : Llama-3.1-8B-Instruct pour le SFT (conditions 4-5) ; le 70B reste pour les conditions 1-3. Un 8B fine-tuné sur des données locales suffit pour apprendre des distributions de réponses — le 70B est le plafond généraliste contre lequel on compare (silicon sampling simple).
+**Modèle** : Llama-3.1-8B pour le SFT (conditions 4A/4B/5A/5B) ; le 70B reste pour les conditions 1-3. Un 8B fine-tuné sur des données locales suffit pour apprendre des distributions de réponses — le 70B est le plafond généraliste contre lequel on compare (silicon sampling simple).
 
 **Méthode** : LoRA si A100+, QLoRA (NF4) si GPU consumer. Pas de QLoRA par défaut — seulement si le modèle ne rentre pas en mémoire.
 

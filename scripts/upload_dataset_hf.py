@@ -6,11 +6,11 @@ Usage:
     # Upload everything (shared files + all available finetune datasets)
     python scripts/upload_dataset_hf.py
 
-    # Upload only condition 4A finetune dataset
+    # Upload only condition 4A finetune dataset (question gen, n_ctx=10)
     python scripts/upload_dataset_hf.py --condition 4a
 
-    # Upload only condition 4B finetune dataset
-    python scripts/upload_dataset_hf.py --condition 4b
+    # Upload only condition 5B finetune dataset (respondent gen, n_ctx=15)
+    python scripts/upload_dataset_hf.py --condition 5b
 """
 
 import argparse
@@ -43,15 +43,21 @@ SHARED_FILES = [
 ]
 
 # Finetune datasets keyed by condition
+# 4A/4B: question generalization (all respondents, n_ctx=10/15)
+# 5A/5B: respondent generalization (train respondents only, n_ctx=10/15)
 FINETUNE_FILES = {
-    "4a": "data/processed/finetune_train.jsonl",
+    "4a": "data/processed/finetune_train_4a.jsonl",
     "4b": "data/processed/finetune_train_4b.jsonl",
+    "5a": "data/processed/finetune_train_5a.jsonl",
+    "5b": "data/processed/finetune_train_5b.jsonl",
 }
 
 # Destination name in the HF repo for each finetune file
 FINETUNE_REPO_NAMES = {
-    "4a": "finetune_train.jsonl",
+    "4a": "finetune_train_4a.jsonl",
     "4b": "finetune_train_4b.jsonl",
+    "5a": "finetune_train_5a.jsonl",
+    "5b": "finetune_train_5b.jsonl",
 }
 
 
@@ -75,7 +81,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Upload processed datasets to HuggingFace")
     parser.add_argument(
         "--condition",
-        choices=["4a", "4b"],
+        choices=["4a", "4b", "5a", "5b"],
         default=None,
         help="Upload only the finetune dataset for a specific condition (default: all available)",
     )

@@ -722,7 +722,7 @@ def compute_voted_2019(df: pd.DataFrame, value_labels: dict) -> pd.Series:
 def create_respondent_split(respondents: pd.DataFrame, test_size: float = 0.2, random_seed: int = 42) -> pd.Series:
     """Create a stratified train/test split by language (FR/EN).
     
-    This split is used only for condition 4B to test generalization to new respondents.
+    This split is used for conditions 5A/5B to test generalization to new respondents.
     The stratification ensures both language groups are represented proportionally in 
     both train and test sets.
     
@@ -758,7 +758,7 @@ def create_respondent_split(respondents: pd.DataFrame, test_size: float = 0.2, r
     split_series.iloc[test_positions] = "test"
     
     # Log split statistics
-    logger.info(f"Respondent split (condition 4B):")
+    logger.info(f"Respondent split (conditions 5A/5B):")
     logger.info(f"  Total: {len(respondents)}")
     logger.info(f"  Train: {(split_series == 'train').sum()} ({100 * (split_series == 'train').sum() / len(respondents):.1f}%)")
     logger.info(f"  Test: {(split_series == 'test').sum()} ({100 * (split_series == 'test').sum() / len(respondents):.1f}%)")
@@ -989,7 +989,7 @@ def main() -> None:
     respondents = respondents[keep_cols]
     logger.info(f"Respondents matrix after dropping _drop vars: {len(respondents)} × {len(respondents.columns)}")
 
-    # Add respondent_split column for condition 4B (train/test split for generalization to new respondents)
+    # Add respondent_split column for conditions 5A/5B (train/test split for generalization to new respondents)
     respondents["respondent_split"] = create_respondent_split(respondents)
     logger.info(f"Respondents matrix after adding respondent_split: {len(respondents)} × {len(respondents.columns)}")
 

@@ -22,18 +22,22 @@ This article extends their framework in three ways:
 
 ## Experimental design
 
-Four conditions evaluated on the same held-out questions:
+| # | Condition | Generalization target | Context at fine-tuning | Context at inference |
+|---|---|---|---|---|
+| 1 | LLM cold | — | — | SES profile only |
+| 2 | LLM + demographics | — | — | SES profile only |
+| 3 | LLM + demographics + RAG | — | — | SES profile + retrieved Q&A |
+| 4A | SFT, question gen, 10-ctx | New questions, known respondents | 10 random context questions | 10 context questions |
+| 4B | SFT, question gen, 15-ctx | New questions, known respondents | 15 random context questions | 15 context questions |
+| 5A | SFT, respondent gen, 10-ctx | New respondents, known questions | 10 random context questions | 10 context questions |
+| 5B | SFT, respondent gen, 15-ctx | New respondents, known questions | 15 random context questions | 15 context questions |
+| 6 | SFT + RAG, respondent gen | New respondents, known questions | 15 context questions | fine-tuned + retrieved Q&A |
 
-| # | Condition | Generalization target | Knowledge source |
-|---|---|---|---|
-| 1 | LLM cold | — | LLM pretrain only |
-| 2 | LLM + demographics | — | LLM pretrain + respondent profile |
-| 3 | LLM + demographics + RAG | — | LLM pretrain + respondent profile + empirical priors |
-| 4A | Fine-tuned (question generalization) | New questions, known respondents | Fine-tuned on all respondents' answer history |
-| 4B | Fine-tuned (respondent generalization) | New respondents | Fine-tuned on train respondents only |
-| 5B | Fine-tuned + RAG (respondent generalization) | New respondents | Fine-tuned on train respondents + similar respondents retrieved at inference |
+**A/B within conditions 4 and 5** tests the effect of context size on generalization performance — a methodological contribution on how much respondent history is needed.
 
-The marginal contribution of each layer is the core empirical result. Condition 5 tests whether the two mechanisms are complementary or redundant. Fine-tuned model is evaluated on held-out thematic domains (train/test split by topic, not randomly) to prevent memorization and force genuine generalization.
+**Condition 6** tests whether fine-tuning and RAG are complementary or redundant for respondent generalization. Treated as an extension.
+
+The marginal contribution of each layer is the core empirical result. Fine-tuned models are evaluated on held-out thematic domains (train/test split by topic, not randomly) to prevent memorization and force genuine generalization.
 
 ## Data
 
@@ -122,8 +126,10 @@ python -m pip install -r requirements.txt
 - [ ] Embeddings for all CES 2021 questions
 - [ ] Thematic domain split (train/test split by topic, not random)
 - [ ] Simulation pipeline — conditions 1, 2, 3 (cold / demographics / RAG)
-- [ ] Fine-tuning pipeline — condition 4 (open-source LLM on CES thematic subset)
-- [ ] Combined pipeline — condition 5 (fine-tuned LLM + RAG)
+- [ ] Regenerate SFT datasets with n_ctx=10 and n_ctx=15 (conditions 4A/4B, 5A/5B)
+- [ ] Fine-tuning pipeline — conditions 4A, 4B (question generalization, 10/15-ctx)
+- [ ] Fine-tuning pipeline — conditions 5A, 5B (respondent generalization, 10/15-ctx)
+- [ ] Combined pipeline — condition 6 (fine-tuned + RAG, respondent gen)
 - [ ] Validation study (held-out questions, distribution-level metrics)
 - [ ] Subgroup analysis (sociodemographic stratification)
 - [ ] Writing (Quarto)

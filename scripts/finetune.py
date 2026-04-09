@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """
-Fine-tune Llama-3.1-8B on finetune_train.jsonl with LoRA/QLoRA.
+Fine-tune Llama-3.1-8B on CES survey data with LoRA/QLoRA.
 
-Condition 4 of the silicon sampling experiment: SFT on CES 2021 train-domain
-questions, evaluated on held-out test-domain questions.
+Shared training script for all SFT conditions (4A, 4B, 5A, 5B).
+Only --data, --output_dir, and --hf_repo differ across conditions.
+
+Conditions:
+    4A  question generalization, n_ctx=10  (all respondents)
+    4B  question generalization, n_ctx=15  (all respondents)
+    5A  respondent generalization, n_ctx=10 (train respondents only)
+    5B  respondent generalization, n_ctx=15 (train respondents only)
 
 Training data format (flat input/output):
     {"input": "Voici des reponses ...\n\nQuestion cible:\nQ: ...\nR:", "output": "..."}
@@ -17,13 +23,13 @@ Usage:
     python scripts/finetune.py --dry_run
 
     # Full training on GPU (LoRA, full precision)
-    python scripts/finetune.py --output_dir data/models/lora_condition4
+    python scripts/finetune.py --output_dir data/models/lora_condition4a
 
     # QLoRA (4-bit, for consumer GPUs < 40 GB VRAM)
-    python scripts/finetune.py --use_4bit --output_dir data/models/lora_condition4
+    python scripts/finetune.py --use_4bit --output_dir data/models/lora_condition4a
 
     # Push LoRA weights to HuggingFace
-    python scripts/finetune.py --hf_repo your-org/lora-condition4
+    python scripts/finetune.py --hf_repo your-org/lora-condition4a
 
 GPU requirements:
     - LoRA full precision: ~20 GB VRAM (A100 40GB or equivalent)
@@ -43,14 +49,14 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "meta-llama/Llama-3.1-8B"
-DEFAULT_DATA = "data/processed/finetune_train.jsonl"
-DEFAULT_OUTPUT_DIR = "data/models/lora_condition4"
+DEFAULT_DATA = "data/processed/finetune_train_4a.jsonl"
+DEFAULT_OUTPUT_DIR = "data/models/lora_condition4a"
 DEFAULT_EVAL_SPLIT = 0.05  # 5% of data held out for eval loss monitoring
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Fine-tune Llama-3.1-8B on CES survey data (condition 4)",
+        description="Fine-tune Llama-3.1-8B on CES survey data (conditions 4A/4B/5A/5B)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
@@ -85,7 +91,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lora_r", type=int, default=16, help="LoRA rank")
     parser.add_argument("--lora_alpha", type=int, default=32, help="LoRA alpha")
     parser.add_argument(
-        "--lora_dropout", type=float, default=0.05, help="LoRA dropout"
+        "--lora_dropout", type=float, default=0.0,
+        help="LoRA dropout (0 = Unsloth applies full kernel optimizations)"
     )
 
     # Training hyperparams
@@ -152,7 +159,7 @@ def parse_args() -> argparse.Namespace:
         "--resume_from_checkpoint",
         type=str,
         default=None,
-        help="Path to a checkpoint directory to resume training from (e.g. data/models/lora_condition4/checkpoint-4450)",
+        help="Path to a checkpoint directory to resume training from (e.g. data/models/lora_condition4a/checkpoint-4450)",
     )
 
     # HuggingFace Hub
@@ -160,13 +167,25 @@ def parse_args() -> argparse.Namespace:
         "--hf_repo",
         type=str,
         default=None,
-        help="HuggingFace repo ID to push LoRA weights (e.g. your-org/lora-condition4)",
+        help="HuggingFace repo ID to push LoRA weights (e.g. your-org/lora-condition4a)",
     )
     parser.add_argument(
         "--hf_repo_merged",
         type=str,
         default=None,
-        help="HuggingFace repo ID to push merged (base+LoRA) model in float16 (e.g. your-org/model-condition4)",
+        help="HuggingFace repo ID to push merged (base+LoRA) model in float16 (e.g. your-org/model-condition4a)",
+    )
+
+    # Tokenized dataset cache (Arrow format on Modal volume)
+    parser.add_argument(
+        "--tokenized_cache",
+        type=str,
+        default=None,
+        help=(
+            "Path to save/load the tokenized dataset in Arrow format. "
+            "If the path exists, skip tokenization and load from cache. "
+            "If not, tokenize and save to this path for future runs."
+        ),
     )
 
     # Dry-run
@@ -184,6 +203,16 @@ def parse_args() -> argparse.Namespace:
         "--smoke_test",
         action="store_true",
         help="Truncate eval dataset to 100 samples for fast end-to-end validation.",
+    )
+
+    # Benchmark: run exactly N steps and report s/step to estimate full run time
+    parser.add_argument(
+        "--benchmark",
+        action="store_true",
+        help=(
+            "Run 20 warmup + 30 timed steps, report s/step, then exit. "
+            "Use this to estimate full training time before committing to a long run."
+        ),
     )
 
     return parser.parse_args()
@@ -208,14 +237,33 @@ def check_finetune_deps() -> None:
         sys.exit(1)
 
 
-def load_dataset_splits(data_path: Path, eval_split: float, seed: int, smoke_test: bool = False):
+def load_dataset_splits(
+    data_path: Path,
+    eval_split: float,
+    seed: int,
+    smoke_test: bool = False,
+    tokenized_cache: str | None = None,
+):
     """Load the JSONL dataset from --data path (Modal volume or local file).
 
-    Reads input/output pairs from the JSONL, concatenates them into a single
-    'text' field for causal LM training, then splits into train/eval.
+    If tokenized_cache is set and the cache directory exists, load the pre-tokenized
+    Arrow dataset directly (skips ~2 min of map+shuffle+split). Otherwise process
+    the JSONL and save to cache for future runs.
     """
-    from datasets import load_dataset
+    from datasets import load_dataset, load_from_disk, DatasetDict
 
+    # --- Cache hit ---
+    if tokenized_cache and not smoke_test:
+        cache_path = Path(tokenized_cache)
+        if cache_path.exists():
+            logger.info("Loading tokenized dataset from cache: %s", cache_path)
+            ds_dict = load_from_disk(str(cache_path))
+            train_ds = ds_dict["train"]
+            eval_ds = ds_dict["eval"]
+            logger.info("Train: %d samples | Eval: %d samples (from cache)", len(train_ds), len(eval_ds))
+            return train_ds, eval_ds
+
+    # --- Cache miss: process from JSONL ---
     if not data_path.exists():
         raise FileNotFoundError(
             f"Dataset not found: {data_path}\n"
@@ -236,6 +284,15 @@ def load_dataset_splits(data_path: Path, eval_split: float, seed: int, smoke_tes
         eval_ds = eval_ds.select(range(min(100, len(eval_ds))))
 
     logger.info("Train: %d samples | Eval: %d samples%s", len(train_ds), len(eval_ds), " (smoke_test)" if smoke_test else "")
+
+    # --- Save cache ---
+    if tokenized_cache and not smoke_test:
+        cache_path = Path(tokenized_cache)
+        cache_path.mkdir(parents=True, exist_ok=True)
+        logger.info("Saving dataset cache to %s ...", cache_path)
+        DatasetDict({"train": train_ds, "eval": eval_ds}).save_to_disk(str(cache_path))
+        logger.info("Dataset cache saved.")
+
     return train_ds, eval_ds
 
 
@@ -320,9 +377,9 @@ def build_training_args(args: argparse.Namespace):
         load_best_model_at_end=False,
         seed=args.seed,
         report_to="none",
-        dataloader_num_workers=2,
+        dataloader_num_workers=0,  # dataset is in RAM after tokenization; workers add overhead
         dataset_text_field="text",
-        packing=False, # Disable packing to fix Unsloth batch size mismatch
+        packing=False,  # Packing causes batch_size mismatch in loss with Unsloth+trl 0.24
         max_length=args.max_seq_len,
         warmup_steps=int(0.03 * (303126 / (args.batch_size * args.grad_accum))),
     )
@@ -384,8 +441,12 @@ def main() -> None:
     # Check finetuning deps (peft, trl, accelerate, datasets)
     check_finetune_deps()
 
-    # Load dataset
-    train_ds, eval_ds = load_dataset_splits(args.data, args.eval_split, args.seed, smoke_test=args.smoke_test)
+    # Load dataset (from cache if available)
+    train_ds, eval_ds = load_dataset_splits(
+        args.data, args.eval_split, args.seed,
+        smoke_test=args.smoke_test,
+        tokenized_cache=args.tokenized_cache,
+    )
 
     # Subsample train if requested
     if args.max_train_samples > 0 and len(train_ds) > args.max_train_samples:
@@ -398,6 +459,11 @@ def main() -> None:
         sys.exit(0)
 
     # --- From here: GPU required ---
+
+    # Unsloth MUST be imported before trl/transformers/peft to apply its patches.
+    # Importing it here (before SFTTrainer) satisfies that requirement even though
+    # the model isn't loaded yet.
+    from unsloth import FastLanguageModel  # noqa: F401 — side-effect import
 
     from transformers import TrainerCallback
     from trl import SFTTrainer
@@ -435,6 +501,65 @@ def main() -> None:
         processing_class=tokenizer,
         callbacks=callbacks if callbacks else None,
     )
+
+    # Benchmark: measure s/step on 20 warmup + 30 timed steps, then exit
+    if args.benchmark:
+        import time
+        from transformers import TrainerCallback
+
+        WARMUP_STEPS = 20
+        TIMED_STEPS = 30
+
+        class BenchmarkCallback(TrainerCallback):
+            def __init__(self):
+                self.step_times: list[float] = []
+                self._t: float | None = None
+
+            def on_step_begin(self, args, state, control, **kwargs):
+                if state.global_step >= WARMUP_STEPS:
+                    self._t = time.perf_counter()
+
+            def on_step_end(self, args, state, control, **kwargs):
+                if self._t is not None:
+                    self.step_times.append(time.perf_counter() - self._t)
+                    self._t = None
+                if state.global_step >= WARMUP_STEPS + TIMED_STEPS:
+                    control.should_training_stop = True
+
+        bench_cb = BenchmarkCallback()
+        trainer.add_callback(bench_cb)
+
+        logger.info("Benchmark mode: %d warmup + %d timed steps ...", WARMUP_STEPS, TIMED_STEPS)
+        trainer.train()
+
+        times = bench_cb.step_times
+        if times:
+            avg = sum(times) / len(times)
+            mn, mx = min(times), max(times)
+            logger.info("Benchmark results (%d steps): avg=%.2fs  min=%.2fs  max=%.2fs", len(times), avg, mn, mx)
+
+            # Extrapolate to full run
+            train_samples = len(train_ds)
+            effective_batch = args.batch_size * args.grad_accum
+            steps_per_epoch = train_samples // effective_batch
+            total_steps = steps_per_epoch * args.epochs
+            checkpoint_saves = total_steps // args.save_steps
+            checkpoint_overhead = checkpoint_saves * 5  # ~5s per LoRA checkpoint save
+
+            print("\n" + "=" * 60)
+            print("BENCHMARK EXTRAPOLATION")
+            print("=" * 60)
+            print(f"Measured:          {avg:.2f}s/step ({mn:.2f}-{mx:.2f}s)")
+            print(f"Train samples:     {train_samples:,}")
+            print(f"Steps/epoch:       {steps_per_epoch:,}")
+            print(f"Total steps:       {total_steps:,}  ({args.epochs} epochs)")
+            print(f"Checkpoint saves:  {checkpoint_saves}  (every {args.save_steps} steps, ~5s each)")
+            total_sec = total_steps * avg + checkpoint_overhead
+            print(f"Estimated time:    {total_sec/3600:.1f}h  ({total_sec/60:.0f}min)")
+            print("=" * 60 + "\n")
+        else:
+            logger.warning("No timed steps recorded — increase dataset size or timed steps.")
+        sys.exit(0)
 
     # Train
     logger.info("Starting training...")

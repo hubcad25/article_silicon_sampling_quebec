@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate SFT dataset for condition 4B.
+Generate SFT dataset for conditions 5A/5B (respondent generalization).
 
 For each TRAIN respondent, generate one example per virtual target (VD):
   1. vote_intention  — coalesce of cps21_votechoice / cps21_vote_unlikely / cps21_vote_lean
@@ -10,8 +10,10 @@ For each TRAIN respondent, generate one example per virtual target (VD):
   5. cps21_prov_id   — null → "None" (no provincial party identification)
   6. cps21_2nd_choice
 
-Context: all 108 train question responses + SES profile.
+Context: n_ctx randomly sampled train question responses + SES profile.
 Target: the respondent's answer to each virtual VD.
+
+Use --n_ctx 10 for condition 5A, --n_ctx 15 for condition 5B.
 """
 
 from __future__ import annotations
@@ -79,7 +81,7 @@ PROV_ID_NONE_FR = "Aucun"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate finetuning dataset for condition 4B"
+        description="Generate finetuning dataset for conditions 5A/5B (respondent generalization)"
     )
     parser.add_argument(
         "--questions",
@@ -96,7 +98,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("data/processed/finetune_train_4b.jsonl"),
+        default=Path("data/processed/finetune_train_5a.jsonl"),
         help="Output JSONL path",
     )
     parser.add_argument(
@@ -282,7 +284,7 @@ def main() -> None:
     logger.info("Loading respondents: %s", args.respondents)
     respondents = pl.read_parquet(args.respondents)
 
-    # Filter to train respondents only (condition 4B specific)
+    # Filter to train respondents only (conditions 5A/5B: respondent generalization)
     if "respondent_split" not in respondents.columns:
         raise SystemExit("ERROR: respondents.parquet missing 'respondent_split' column")
     train_respondents = respondents.filter(pl.col("respondent_split") == "train")
