@@ -121,6 +121,7 @@ secrets = [modal.Secret.from_dict({"HF_TOKEN": hf_token})] if hf_token else []
 
 # Paths inside the Modal volume
 BASE_MODEL_ID = "meta-llama/Llama-3.1-8B"
+DEFAULT_GPU = "A100-80GB"
 VOLUME_HF_CACHE = "/data/hf_cache"  # HF_HOME inside the volume — survives across runs
 
 
@@ -185,6 +186,7 @@ def run_finetuning(
     output_dir: str,
     hf_repo: str,
     hf_repo_merged: str,
+    base_model: str,
     smoke_test: bool = False,
     benchmark: bool = False,
     max_train_samples: int = -1,
@@ -192,7 +194,7 @@ def run_finetuning(
     import os
     from pathlib import Path
 
-    print(f"Fine-tuning | data={volume_data} output={output_dir} repo={hf_repo} merged={hf_repo_merged} smoke={smoke_test} benchmark={benchmark}")
+    print(f"Fine-tuning | data={volume_data} output={output_dir} model={base_model} repo={hf_repo} merged={hf_repo_merged} smoke={smoke_test} benchmark={benchmark}")
 
     # Point HF_HOME to the volume so the cached model is found automatically
     os.environ["HF_HOME"] = VOLUME_HF_CACHE
@@ -205,6 +207,7 @@ def run_finetuning(
     cmd = [
         "python", "/root/finetune.py",
         "--data", f"/data/{volume_data}",
+        "--model", base_model,
         "--output_dir", output_dir,
         "--epochs", "1" if (smoke_test or benchmark) else "3",
         "--lora_r", "16",
@@ -235,6 +238,7 @@ def run_finetuning(
 def main(
     condition: str = "4a",
     hf_repo: str = "",
+    base_model: str = "",
     smoke_test: bool = False,
     benchmark: bool = False,
     max_train_samples: int = -1,
@@ -244,6 +248,7 @@ def main(
     Args:
         condition:          Which SFT condition to train (4a, 4b, 5a, 5b).
         hf_repo:            Override the default HF model repo for this condition.
+        base_model:         Override base model (e.g. meta-llama/Llama-3.2-3B-Instruct).
         smoke_test:         1 epoch / 20 samples, pushes to <hf_repo>-smoke-test.
         benchmark:          20 warmup + 30 timed steps, prints s/step estimate, exits.
         max_train_samples:  Subsample train set to this many samples (-1 = all).
@@ -254,6 +259,8 @@ def main(
         download_base_model.remote()
         print("Done. Base model is now cached in the volume.")
         return
+
+    model_id = base_model or BASE_MODEL_ID
 
     if condition not in CONDITION_CONFIG:
         raise SystemExit(f"Unknown condition '{condition}'. Valid: {list(CONDITION_CONFIG)}")
@@ -284,5 +291,5 @@ def main(
     else:
         print(f"Warning: {local_data} not found locally — assuming it is already in the volume.")
 
-    print(f"Launching condition {condition} fine-tuning on Modal -> LoRA: {repo}, merged: {repo_merged}")
-    run_finetuning.remote(volume_data, output_dir, repo, repo_merged, smoke_test, benchmark, max_train_samples)
+    print(f"Launching condition {condition} fine-tuning on Modal -> model={model_id} LoRA={repo}")
+    run_finetuning.remote(volume_data, output_dir, repo, repo_merged, model_id, smoke_test, benchmark, max_train_samples)

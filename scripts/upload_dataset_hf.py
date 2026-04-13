@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | 
 logger = logging.getLogger(__name__)
 
 load_dotenv()
-token = os.getenv("HF_API_KEY")
+token = os.getenv("HF_API_KEY") or os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_API_TOKEN")
 
 if not token:
     logger.error("Missing HF_API_KEY in .env file.")
