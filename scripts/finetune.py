@@ -198,6 +198,14 @@ def parse_args() -> argparse.Namespace:
         ),
     )
 
+    parser.add_argument(
+        "--report_to",
+        type=str,
+        default=None,
+        choices=["none", "wandb", "all"],
+        help="Where to log metrics. 'wandb' requires WANDB_API_KEY env var. Default: 'none'.",
+    )
+
     # Smoke test: use tiny eval split to keep end-of-run evaluation fast
     parser.add_argument(
         "--smoke_test",
@@ -380,7 +388,7 @@ def build_training_args(args: argparse.Namespace):
         save_strategy="steps",
         load_best_model_at_end=False,
         seed=args.seed,
-        report_to="none",
+        report_to=args.report_to or "none",
         dataloader_num_workers=0,  # dataset is in RAM after tokenization; workers add overhead
         dataset_text_field="text",
         packing=False,  # Packing causes batch_size mismatch in loss with Unsloth+trl 0.24

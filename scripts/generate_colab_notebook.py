@@ -24,31 +24,39 @@ nb.cells = [
         "# ============================================================\n\n"
         "# Your HF token (https://huggingface.co/settings/tokens)\n"
         'HF_TOKEN = ""  # <-- SET YOUR TOKEN HERE\n\n'
+        "# Your W&B API key (https://wandb.ai/authorize) — leave empty to disable\n"
+        'WANDB_API_KEY = ""  # <-- SET YOUR KEY HERE\n\n'
         "# Model options (BASE models — not Instruct):\n"
-        "#   meta-llama/Llama-3.2-1B              (~4GB VRAM)\n"
-        "#   meta-llama/Llama-3.2-3B              (~8GB VRAM, RECOMMENDED)\n"
-        "#   Qwen/Qwen2.5-0.5B                    (~3GB VRAM)\n"
+        "#   Qwen/Qwen2.5-0.5B                    (~3GB VRAM, RECOMMENDED for publication)\n"
         "#   Qwen/Qwen2.5-1.5B                    (~5GB VRAM)\n"
         "#   Qwen/Qwen2.5-3B                      (~8GB VRAM)\n"
-        'MODEL_NAME = "meta-llama/Llama-3.2-3B"\n\n'
+        "#   meta-llama/Llama-3.2-1B              (~4GB VRAM)\n"
+        "#   meta-llama/Llama-3.2-3B              (~8GB VRAM)\n"
+        'MODEL_NAME = "Qwen/Qwen2.5-0.5B"\n\n'
         "# Dataset condition (from huggingface.co/datasets/hubcad25/article_silicon_sampling_quebec_data)\n"
         "# Options: finetune_train_4a.jsonl, 4b.jsonl, 5a.jsonl, 5b.jsonl\n"
         'DATASET_FILE = "finetune_train_4a.jsonl"\n\n'
         "# Training params\n"
         "EPOCHS = 1          # 1 for smoke test, 3 for full run\n"
         "MAX_TRAIN_SAMPLES = 5000  # Remove/comment for full dataset\n"
-        'HF_REPO = "hubcad25/llama-3.2-3b-quebec-lora-condition4a"  # Output HF repo\n'
+        'HF_REPO = "hubcad25/qwen-0.5b-lora-4a"  # Output HF repo\n'
         "# ============================================================\n"
         "import os\n"
         'os.environ["HF_TOKEN"] = HF_TOKEN\n'
+        "if WANDB_API_KEY:\n"
+        '    os.environ["WANDB_API_KEY"] = WANDB_API_KEY\n'
         "print(f\"Model: {MODEL_NAME}\")\n"
         "print(f\"Dataset: {DATASET_FILE}\")\n"
-        "print(f\"Epochs: {EPOCHS}, max_train_samples: {MAX_TRAIN_SAMPLES or 'ALL'}\")"
+        "print(f\"Epochs: {EPOCHS}, max_train_samples: {MAX_TRAIN_SAMPLES or 'ALL'}\")\n"
+        "print(f\"W&B: {'enabled' if WANDB_API_KEY else 'disabled'}\")"
     ),
     new_code_cell(
         "# Install dependencies\n"
-        "!pip install -q unsloth trl transformers accelerate peft datasets huggingface_hub\n"
-        "!pip install -q polars"
+        "!pip install -q unsloth trl transformers accelerate peft datasets huggingface_hub wandb\n"
+        "!pip install -q polars\n\n"
+        "# Login to W&B if key is set\n"
+        "if WANDB_API_KEY:\n"
+        "    !wandb login $WANDB_API_KEY"
     ),
     new_code_cell(
         "# Clone repo + download dataset\n"
@@ -84,6 +92,9 @@ nb.cells = [
         "]\n"
         "if MAX_TRAIN_SAMPLES:\n"
         "    cmd.extend([\"--max_train_samples\", str(MAX_TRAIN_SAMPLES)])\n\n"
+        "if WANDB_API_KEY:\n"
+        "    cmd.append(\"--report_to\")\n"
+        "    cmd.append(\"wandb\")\n\n"
         "print(f\"Running: {' '.join(cmd[:8])} ...\")\n"
         "env = os.environ.copy()\n"
         "result = subprocess.run(cmd, env=env, capture_output=True, text=True)\n"
