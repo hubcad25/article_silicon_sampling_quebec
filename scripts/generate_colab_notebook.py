@@ -47,7 +47,7 @@ nb.cells = [
     ),
     new_code_cell(
         "# Install dependencies\n"
-        "!pip install -q unsloth \"unsloth[cu124-torch241]\" trl transformers accelerate peft datasets huggingface_hub\n"
+        "!pip install -q unsloth trl transformers accelerate peft datasets huggingface_hub\n"
         "!pip install -q polars"
     ),
     new_code_cell(
@@ -84,9 +84,35 @@ nb.cells = [
         "]\n"
         "if MAX_TRAIN_SAMPLES:\n"
         "    cmd.extend([\"--max_train_samples\", str(MAX_TRAIN_SAMPLES)])\n\n"
+        "print(f\"Running: {' '.join(cmd[:8])} ...\")\n"
         "env = os.environ.copy()\n"
-        "result = subprocess.run(cmd, env=env)\n"
-        'print("Done." if result.returncode == 0 else f"Failed: {result.returncode}")'
+        "result = subprocess.run(cmd, env=env, capture_output=True, text=True)\n"
+        "if result.returncode == 0:\n"
+        "    print(\"Done. LoRA pushed to HF.\")\n"
+        "else:\n"
+        "    print(f\"Failed (exit {result.returncode})\")\n"
+        "    print(\"=== STDERR ===\")\n"
+        "    print(result.stderr[-4000:])\n"
+        "    print(\"=== STDOUT ===\")\n"
+        "    print(result.stdout[-2000:])"
+    ),
+    new_markdown_cell(
+        "---\n\n"
+        "## Monitoring (run while fine-tuning is running)\n\n"
+        "Run this cell in a **new cell** to monitor progress."
+    ),
+    new_code_cell(
+        "# Monitor GPU usage while fine-tuning runs\n"
+        "!nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader\n\n"
+        "# Check for checkpoint files (shows if training is progressing)\n"
+        "import os, glob\n"
+        "if os.path.exists(\"/content/model_output\"):\n"
+        "    checkpoints = sorted(glob.glob(\"/content/model_output/checkpoint-*\"))\n"
+        "    print(f\"Checkpoints: {len(checkpoints)}\")\n"
+        "    if checkpoints:\n"
+        "        print(f\"Latest: {checkpoints[-1]}\")\n"
+        "else:\n"
+        "    print(\"No output yet — still initializing\")"
     ),
 ]
 
