@@ -1,0 +1,96 @@
+import nbformat
+from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
+
+nb = new_notebook()
+nb.metadata = {
+    "colab": {"provenance": [], "gpuType": "T4"},
+    "kernelspec": {"name": "python3", "display_name": "Python 3"},
+    "language_info": {"name": "python"},
+}
+
+nb.cells = [
+    new_markdown_cell(
+        "# Fine-tune on CES Survey Data (QLoRA, Colab)\n\n"
+        "**Runtime → Change runtime type → GPU**\n\n"
+        "Edit the CONFIG cell below to change model, condition, and training params.\n\n"
+        "**To pull latest changes** after initial clone:\n"
+        "```python\n"
+        "!git -C article_silicon_sampling_quebec pull origin main\n"
+        "```"
+    ),
+    new_code_cell(
+        "# ============================================================\n"
+        "# CONFIG — edit these before running\n"
+        "# ============================================================\n\n"
+        "# Your HF token (https://huggingface.co/settings/tokens)\n"
+        'HF_TOKEN = ""  # <-- SET YOUR TOKEN HERE\n\n'
+        "# Model options (BASE models — not Instruct):\n"
+        "#   meta-llama/Llama-3.2-1B              (~4GB VRAM)\n"
+        "#   meta-llama/Llama-3.2-3B              (~8GB VRAM, RECOMMENDED)\n"
+        "#   Qwen/Qwen2.5-0.5B                    (~3GB VRAM)\n"
+        "#   Qwen/Qwen2.5-1.5B                    (~5GB VRAM)\n"
+        "#   Qwen/Qwen2.5-3B                      (~8GB VRAM)\n"
+        'MODEL_NAME = "meta-llama/Llama-3.2-3B"\n\n'
+        "# Dataset condition (from huggingface.co/datasets/hubcad25/article_silicon_sampling_quebec_data)\n"
+        "# Options: finetune_train_4a.jsonl, 4b.jsonl, 5a.jsonl, 5b.jsonl\n"
+        'DATASET_FILE = "finetune_train_4a.jsonl"\n\n'
+        "# Training params\n"
+        "EPOCHS = 1          # 1 for smoke test, 3 for full run\n"
+        "MAX_TRAIN_SAMPLES = 5000  # Remove/comment for full dataset\n"
+        'HF_REPO = "hubcad25/llama-3.2-3b-quebec-lora-condition4a"  # Output HF repo\n'
+        "# ============================================================\n"
+        "import os\n"
+        'os.environ["HF_TOKEN"] = HF_TOKEN\n'
+        "print(f\"Model: {MODEL_NAME}\")\n"
+        "print(f\"Dataset: {DATASET_FILE}\")\n"
+        "print(f\"Epochs: {EPOCHS}, max_train_samples: {MAX_TRAIN_SAMPLES or 'ALL'}\")"
+    ),
+    new_code_cell(
+        "# Install dependencies\n"
+        "!pip install -q unsloth \"unsloth[cu124-torch241]\" trl transformers accelerate peft datasets huggingface_hub\n"
+        "!pip install -q polars"
+    ),
+    new_code_cell(
+        "# Clone repo + download dataset\n"
+        "!git clone https://github.com/hubcad25/article_silicon_sampling_quebec.git\n"
+        "import os\n"
+        'os.chdir("article_silicon_sampling_quebec")\n\n'
+        "from huggingface_hub import hf_hub_download\n"
+        "dataset_local = hf_hub_download(\n"
+        '    repo_id="hubcad25/article_silicon_sampling_quebec_data",\n'
+        "    filename=DATASET_FILE,\n"
+        "    token=HF_TOKEN,\n"
+        '    repo_type="dataset",\n'
+        ")\n"
+        'print(f"Dataset: {dataset_local}")\n'
+        "!wc -l {dataset_local}"
+    ),
+    new_code_cell(
+        "# Run fine-tuning\n"
+        'OUTPUT_DIR = "/content/model_output"\n'
+        "import subprocess\n\n"
+        "cmd = [\n"
+        '    "python", "scripts/finetune.py",\n'
+        "    \"--data\", dataset_local,\n"
+        "    \"--model\", MODEL_NAME,\n"
+        '    "--output_dir", OUTPUT_DIR,\n'
+        "    \"--use_4bit\",\n"
+        "    \"--epochs\", str(EPOCHS),\n"
+        '    "--batch_size", "4",\n'
+        '    "--grad_accum", "8",\n'
+        '    "--lr", "2e-4",\n'
+        '    "--max_seq_len", "2048",\n'
+        "    \"--hf_repo\", HF_REPO,\n"
+        "]\n"
+        "if MAX_TRAIN_SAMPLES:\n"
+        "    cmd.extend([\"--max_train_samples\", str(MAX_TRAIN_SAMPLES)])\n\n"
+        "env = os.environ.copy()\n"
+        "result = subprocess.run(cmd, env=env)\n"
+        'print("Done." if result.returncode == 0 else f"Failed: {result.returncode}")'
+    ),
+]
+
+nbformat.validate(nb)
+with open("notebooks/finetune_colab.ipynb", "w") as f:
+    nbformat.write(nb, f)
+print("Notebook written successfully")
