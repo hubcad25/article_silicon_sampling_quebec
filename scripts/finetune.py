@@ -505,6 +505,15 @@ def main() -> None:
     if args.hf_repo:
         callbacks.append(PushToHubCallback(repo_id=args.hf_repo, every_n_steps=args.save_steps))
 
+    class ProgressCallback(TrainerCallback):
+        def on_step_end(self, args, state, control, **kwargs):
+            step = state.global_step
+            total = state.max_steps
+            if step % 10 == 0 or step == 1:
+                print(f"Step {step}/{total} ({100*step//total}%)")
+
+    callbacks.append(ProgressCallback())
+
     trainer = SFTTrainer(
         model=model,
         args=training_args,
