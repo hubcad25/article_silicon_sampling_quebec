@@ -1,53 +1,44 @@
 #!/bin/bash
-# jobs/sft_runner.sh - Unified Slurm template for 2x4x4 SFT Matrix
-#
-# Logic:
-# 1. Sources .env for ACCOUNT and base paths.
-# 2. Uses TARGET, SIZE, CTX from environment (passed via command line or .env).
-# 3. Sets Slurm resources dynamically based on SIZE.
+# jobs/sft_runner.sh - Unified SFT Pipeline: Data Gen + Slurm Submission
+# Usage:
+#   TARGET=q SIZE=0.5b CTX=10 bash jobs/sft_runner.sh --submit
 
-# Source configuration
+# 1. Load configuration from .env
 if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
 fi
 
-# Validation of mandatory matrix variables
+# 2. Validation
 if [ -z "$TARGET" ] || [ -z "$SIZE" ] || [ -z "$CTX" ]; then
-    echo "Error: TARGET, SIZE, and CTX must be set (in .env or as environment variables)."
-    echo "Example: TARGET=q SIZE=8b CTX=15 sbatch jobs/sft_runner.sh"
+    echo "Error: TARGET, SIZE, and CTX must be set."
     exit 1
 fi
 
-# Resource profiling (Narval/Beluga optimized)
+DATA_FILE="data/processed/sft_${TARGET}_${CTX}.jsonl"
+
+# 3. Data Generation (if missing)
+if [ ! -f "$DATA_FILE" ]; then
+    echo "Data file $DATA_FILE not found. Generating..."
+    source .venv/bin/activate
+    python scripts/generate_sft_data.py --target "$TARGET" --n-ctx "$CTX"
+    if [ $? -ne 0 ]; then
+        echo "Error: Data generation failed."
+        exit 1
+    fi
+fi
+
+# 4. Resource Profiling
 case $SIZE in
-    "0.5b"|"1b")
-        GPU="a100:1"
-        MEM="32G"
-        TIME="03:00:00"
-        CPUS=8
-        ;;
-    "8b")
-        GPU="a100:1"
-        MEM="64G"
-        TIME="08:00:00"
-        CPUS=12
-        ;;
-    "70b")
-        GPU="a100:1" 
-        MEM="128G"
-        TIME="24:00:00"
-        CPUS=16
-        ;;
-    *)
-        GPU="a100:1"
-        MEM="32G"
-        TIME="03:00:00"
-        CPUS=8
-        ;;
+    "0.5b"|"1b") GPU="a100:1"; MEM="32G"; TIME="03:00:00"; CPUS=8 ;;
+    "8b")        GPU="a100:1"; MEM="64G"; TIME="08:00:00"; CPUS=12 ;;
+    "70b")       GPU="a100:1"; MEM="128G"; TIME="24:00:00"; CPUS=16 ;;
+    *)           GPU="a100:1"; MEM="32G"; TIME="03:00:00"; CPUS=8 ;;
 esac
 
-# If running as a submission wrapper
+# 5. Handle Submission
 if [[ "$1" == "--submit" ]]; then
+    mkdir -p logs
+    echo "Submitting SFT job: TARGET=$TARGET, SIZE=$SIZE, CTX=$CTX"
     sbatch --account=${SLURM_ACCOUNT} \
            --gres=gpu:${GPU} \
            --cpus-per-task=${CPUS} \
@@ -59,14 +50,13 @@ if [[ "$1" == "--submit" ]]; then
     exit 0
 fi
 
-# Execution on Compute Node
-module load python/3.10 cuda/12.1 2>/dev/null || echo "Running outside Slurm/Narval environment"
-
+# 6. Execution (Compute Node)
+echo "Running SFT Job..."
+module load python/3.10 cuda/12.1 2>/dev/null
 export HF_HOME=${HF_HOME:-"/scratch/$USER/hf_cache"}
 mkdir -p "$HF_HOME"
 
 source .venv/bin/activate
-
 python scripts/finetune.py \
     --target "$TARGET" \
     --model_size "$SIZE" \
