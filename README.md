@@ -22,22 +22,31 @@ This article extends their framework in three ways:
 
 ## Experimental design
 
-| # | Condition | Generalization target | Context at fine-tuning | Context at inference |
-|---|---|---|---|---|
-| 1 | LLM cold | — | — | SES profile only |
-| 2 | LLM + demographics | — | — | SES profile only |
-| 3 | LLM + demographics + RAG | — | — | SES profile + retrieved Q&A |
-| 4A | SFT, question gen, 10-ctx | New questions, known respondents | 10 random context questions | 10 context questions |
-| 4B | SFT, question gen, 15-ctx | New questions, known respondents | 15 random context questions | 15 context questions |
-| 5A | SFT, respondent gen, 10-ctx | New respondents, known questions | 10 random context questions | 10 context questions |
-| 5B | SFT, respondent gen, 15-ctx | New respondents, known questions | 15 random context questions | 15 context questions |
-| 6 | SFT + RAG, respondent gen | New respondents, known questions | 15 context questions | fine-tuned + retrieved Q&A |
+The study follows a **2 × 4 × 4 factorial design** for the fine-tuning (SFT) conditions, compared against 3 baseline conditions.
 
-**A/B within conditions 4 and 5** tests the effect of context size on generalization performance — a methodological contribution on how much respondent history is needed.
+### Baselines (No Fine-Tuning)
+| # | Condition | Context at inference | Target |
+|---|---|---|---|
+| 1 | LLM Cold | None (Zero-shot) | Baseline baseline |
+| 2 | LLM + Demographics | SES profile only | Argyle et al. (2023) replication |
+| 3 | LLM + Demographics + RAG | SES profile + Retrieved Q&A | Extension of Argyle (Empirical Prior) |
 
-**Condition 6** tests whether fine-tuning and RAG are complementary or redundant for respondent generalization. Treated as an extension.
+### SFT Experimental Matrix (32 conditions)
+We systematicallly vary three dimensions to evaluate SFT performance:
 
-The marginal contribution of each layer is the core empirical result. Fine-tuned models are evaluated on held-out thematic domains (train/test split by topic, not randomly) to prevent memorization and force genuine generalization.
+1.  **Generalization Target**: 
+    - **Q** (Question): New questions, known respondents (Internalization of personal styles).
+    - **R** (Respondent): New respondents, known questions (Internalization of population patterns).
+2.  **Model Size**: 0.5B, 1B, 8B, 70B.
+3.  **Context Size (n_ctx)**: 10, 15, 25, 50 context questions.
+
+| Dim | Levels | Models / Values |
+|---|---|---|
+| **Generalization** | 2 | Questions (Q), Respondents (R) |
+| **Model Size** | 4 | 0.5B (Qwen2.5), 1B (Llama3.2), 8B (Llama3.1), 70B (Llama3.1) |
+| **Context (n_ctx)** | 4 | 10, 15, 25, 50 |
+
+**Condition 6 (SFT + RAG)** is maintained as an extension to test if RAG provides marginal gains on top of the best-performing SFT model.
 
 ## Data
 

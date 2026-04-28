@@ -48,309 +48,39 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "meta-llama/Llama-3.1-8B"
-DEFAULT_DATA = "data/processed/finetune_train_4a.jsonl"
-DEFAULT_OUTPUT_DIR = "data/models/lora_condition4a"
-DEFAULT_EVAL_SPLIT = 0.05  # 5% of data held out for eval loss monitoring
+DEFAULT_MODEL = "meta-llama/Llama-3.2-1B"
+DEFAULT_DATA = "data/processed/finetune_train_q_nctx10.jsonl"
+DEFAULT_OUTPUT_DIR = "data/models/sft_q_1b_ctx10"
 
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Fine-tune Llama-3.1-8B on CES survey data (conditions 4A/4B/5A/5B)",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-
-    # Paths
-    parser.add_argument(
-        "--data",
-        type=Path,
-        default=Path(DEFAULT_DATA),
-        help="Path to finetune_train.jsonl",
-    )
-    parser.add_argument(
-        "--output_dir",
-        type=Path,
-        default=Path(DEFAULT_OUTPUT_DIR),
-        help="Directory to save LoRA weights and tokenizer",
-    )
-
-    # Model
-    parser.add_argument(
-        "--model",
-        type=str,
-        default=DEFAULT_MODEL,
-        help="HuggingFace model ID (or local path)",
-    )
-    parser.add_argument(
-        "--use_4bit",
-        action="store_true",
-        help="Use QLoRA NF4 quantization (for GPUs < 40 GB VRAM)",
-    )
-
-    # LoRA hyperparams
-    parser.add_argument("--lora_r", type=int, default=16, help="LoRA rank")
-    parser.add_argument("--lora_alpha", type=int, default=32, help="LoRA alpha")
-    parser.add_argument(
-        "--lora_dropout", type=float, default=0.0,
-        help="LoRA dropout (0 = Unsloth applies full kernel optimizations)"
-    )
-
-    # Training hyperparams
-    parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
-    parser.add_argument(
-        "--batch_size", type=int, default=4, help="Per-device training batch size"
-    )
-    parser.add_argument(
-        "--grad_accum",
-        type=int,
-        default=8,
-        help="Gradient accumulation steps (effective batch = batch_size * grad_accum)",
-    )
-    parser.add_argument(
-        "--lr", type=float, default=2e-4, help="Learning rate (AdamW)"
-    )
-    parser.add_argument(
-        "--max_seq_len", type=int, default=4096, help="Maximum sequence length in tokens"
-    )
-    parser.add_argument(
-        "--warmup_ratio",
-        type=float,
-        default=0.03,
-        help="Fraction of steps used for LR warmup",
-    )
-    parser.add_argument(
-        "--max_steps",
-        type=int,
-        default=-1,
-        help="Override epochs: stop after this many steps (-1 = use --epochs)",
-    )
-    parser.add_argument(
-        "--max_train_samples",
-        type=int,
-        default=-1,
-        help="Subsample train dataset to this many samples (-1 = use all)",
-    )
-    parser.add_argument(
-        "--eval_split",
-        type=float,
-        default=DEFAULT_EVAL_SPLIT,
-        help="Fraction of data to use for eval loss monitoring",
-    )
-    parser.add_argument(
-        "--seed", type=int, default=42, help="Random seed for reproducibility"
-    )
-
-    # Logging / checkpointing
-    parser.add_argument(
-        "--logging_steps", type=int, default=50, help="Log metrics every N steps"
-    )
-    parser.add_argument(
-        "--save_steps", type=int, default=50, help="Save checkpoint every N steps"
-    )
-    parser.add_argument(
-        "--eval_steps",
-        type=int,
-        default=500,
-        help="Evaluate on eval split every N steps",
-    )
-
-    # Resume from checkpoint
-    parser.add_argument(
-        "--resume_from_checkpoint",
-        type=str,
-        default=None,
-        help="Path to a checkpoint directory to resume training from (e.g. data/models/lora_condition4a/checkpoint-4450)",
-    )
-
-    # HuggingFace Hub
-    parser.add_argument(
-        "--hf_repo",
-        type=str,
-        default=None,
-        help="HuggingFace repo ID to push LoRA weights (e.g. your-org/lora-condition4a)",
-    )
-    parser.add_argument(
-        "--hf_repo_merged",
-        type=str,
-        default=None,
-        help="HuggingFace repo ID to push merged (base+LoRA) model in float16 (e.g. your-org/model-condition4a)",
-    )
-
-    # Tokenized dataset cache (Arrow format on Modal volume)
-    parser.add_argument(
-        "--tokenized_cache",
-        type=str,
-        default=None,
-        help=(
-            "Path to save/load the tokenized dataset in Arrow format. "
-            "If the path exists, skip tokenization and load from cache. "
-            "If not, tokenize and save to this path for future runs."
-        ),
-    )
-
-    # Dry-run
-    parser.add_argument(
-        "--dry_run",
-        action="store_true",
-        help=(
-            "Validate data loading and config without training. "
-            "Runs on CPU, no GPU required."
-        ),
-    )
-
-    parser.add_argument(
-        "--report_to",
-        type=str,
-        default=None,
-        choices=["none", "wandb", "all"],
-        help="Where to log metrics. 'wandb' requires WANDB_API_KEY env var. Default: 'none'.",
-    )
-
-    # Smoke test: use tiny eval split to keep end-of-run evaluation fast
-    parser.add_argument(
-        "--smoke_test",
-        action="store_true",
-        help="Truncate eval dataset to 100 samples for fast end-to-end validation.",
-    )
-
-    # Benchmark: run exactly N steps and report s/step to estimate full run time
-    parser.add_argument(
-        "--benchmark",
-        action="store_true",
-        help=(
-            "Run 20 warmup + 30 timed steps, report s/step, then exit. "
-            "Use this to estimate full training time before committing to a long run."
-        ),
-    )
-
-    return parser.parse_args()
-
-
-def check_finetune_deps() -> None:
-    """Fail early with a clear message if finetuning packages are missing."""
-    missing = []
-    
-    import importlib.util
-    for pkg in ("unsloth", "trl", "accelerate", "datasets"):
-        if importlib.util.find_spec(pkg) is None:
-            missing.append(pkg)
-
-    if missing:
-        logger.error(
-            "Missing finetuning dependencies: %s\n"
-            "Install them with:\n"
-            '    pip install -e ".[finetune]"',
-            ", ".join(missing),
-        )
-        sys.exit(1)
-
-
-def load_dataset_splits(
-    data_path: Path,
-    eval_split: float,
-    seed: int,
-    smoke_test: bool = False,
-    tokenized_cache: str | None = None,
-):
-    """Load the JSONL dataset from --data path (Modal volume or local file).
-
-    If tokenized_cache is set and the cache directory exists, load the pre-tokenized
-    Arrow dataset directly (skips ~2 min of map+shuffle+split). Otherwise process
-    the JSONL and save to cache for future runs.
-    """
-    from datasets import load_dataset, load_from_disk, DatasetDict
-
-    # --- Cache hit ---
-    if tokenized_cache and not smoke_test:
-        cache_path = Path(tokenized_cache)
-        # Validate cache: must exist AND contain the dataset_dict.json sentinel file
-        cache_valid = cache_path.exists() and (cache_path / "dataset_dict.json").exists()
-        if cache_valid:
-            logger.info("Loading tokenized dataset from cache: %s", cache_path)
-            ds_dict = load_from_disk(str(cache_path))
-            train_ds = ds_dict["train"]
-            eval_ds = ds_dict["eval"]
-            logger.info("Train: %d samples | Eval: %d samples (from cache)", len(train_ds), len(eval_ds))
-            return train_ds, eval_ds
-        elif cache_path.exists():
-            logger.warning("Cache directory exists but is invalid/empty — re-tokenizing: %s", cache_path)
-
-    # --- Cache miss: process from JSONL ---
-    if not data_path.exists():
-        raise FileNotFoundError(
-            f"Dataset not found: {data_path}\n"
-            "Make sure the file is present in the Modal volume or local path."
-        )
-
-    logger.info("Loading dataset from %s ...", data_path)
-    ds = load_dataset("json", data_files=str(data_path), split="train")
-    logger.info("Total samples: %d", len(ds))
-
-    ds = ds.map(lambda x: {"text": x["input"] + x["output"]}, remove_columns=["input", "output"])
-    ds = ds.shuffle(seed=seed)
-    split = ds.train_test_split(test_size=eval_split, seed=seed)
-    train_ds = split["train"]
-    eval_ds = split["test"]
-
-    if smoke_test:
-        eval_ds = eval_ds.select(range(min(100, len(eval_ds))))
-
-    logger.info("Train: %d samples | Eval: %d samples%s", len(train_ds), len(eval_ds), " (smoke_test)" if smoke_test else "")
-
-    # --- Save cache ---
-    if tokenized_cache and not smoke_test:
-        cache_path = Path(tokenized_cache)
-        cache_path.mkdir(parents=True, exist_ok=True)
-        logger.info("Saving dataset cache to %s ...", cache_path)
-        DatasetDict({"train": train_ds, "eval": eval_ds}).save_to_disk(str(cache_path))
-        logger.info("Dataset cache saved.")
-
-    return train_ds, eval_ds
-
-
-def format_sample(sample: dict) -> str:
-    """Concatenate input and output into a single string for causal LM training.
-
-    The DataCollatorForCompletionOnlyLM will find RESPONSE_TEMPLATE ("\nR:")
-    and mask all tokens before the last occurrence — only the final answer
-    tokens contribute to the loss.
-    """
-    return sample["input"] + sample["output"]
-
+def get_model_family(model_id: str) -> str:
+    if "qwen" in model_id.lower():
+        return "qwen"
+    return "llama"
 
 def build_model_and_tokenizer(args: argparse.Namespace):
     """Load base model and tokenizer via Unsloth, apply QLoRA quantization if requested."""
     import torch
     from unsloth import FastLanguageModel
 
-    logger.info("Loading tokenizer: %s", args.model)
+    logger.info("Loading model: %s", args.model)
+    
+    # Auto-adjust sequence length for large contexts
+    # n_ctx=50 + SES + Prompt can reach ~1500-2000 tokens
+    max_seq_length = args.max_seq_len
+    
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=args.model,
-        max_seq_length=args.max_seq_len,
-        dtype=torch.bfloat16 if not args.use_4bit else None,
+        max_seq_length=max_seq_length,
+        dtype=None, # Auto detection
         load_in_4bit=args.use_4bit,
     )
 
-    # Llama tokenizer has no pad token by default; use eos as pad.
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-        tokenizer.pad_token_id = tokenizer.eos_token_id
-
     # Add LoRA adapters
-    target_modules = [
-        "q_proj",
-        "k_proj",
-        "v_proj",
-        "o_proj",
-        "gate_proj",
-        "up_proj",
-        "down_proj",
-    ]
-
     model = FastLanguageModel.get_peft_model(
         model,
         r=args.lora_r,
-        target_modules=target_modules,
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
+                        "gate_proj", "up_proj", "down_proj"],
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout,
         bias="none",
@@ -359,6 +89,7 @@ def build_model_and_tokenizer(args: argparse.Namespace):
     )
 
     return model, tokenizer
+
 
 
 def build_training_args(args: argparse.Namespace):

@@ -37,9 +37,9 @@ nb.cells = [
         "# Options: finetune_train_4a.jsonl, 4b.jsonl, 5a.jsonl, 5b.jsonl\n"
         'DATASET_FILE = "finetune_train_4a.jsonl"\n\n'
         "# Training params\n"
-        "EPOCHS = 1          # 1 for smoke test, 3 for full run\n"
-        "MAX_TRAIN_SAMPLES = 5000  # Remove/comment for full dataset\n"
-        'HF_REPO = "hubcad25/qwen-0.5b-lora-4a"  # Output HF repo\n'
+        "EPOCHS = 1          # 1 for quick eval, 3 for full run\n"
+        "MAX_TRAIN_SAMPLES = 30000  # Remove/comment for full dataset (~1h on T4)\n"
+        'HF_REPO = "hubcad25/qwen-0.5b-lora-4a-30k"  # Output HF repo\n'
         "# ============================================================\n"
         "import os\n"
         'os.environ["HF_TOKEN"] = HF_TOKEN\n'
@@ -63,6 +63,8 @@ nb.cells = [
         "!git clone https://github.com/hubcad25/article_silicon_sampling_quebec.git\n"
         "import os\n"
         'os.chdir("article_silicon_sampling_quebec")\n\n'
+        "# Pull latest changes to get updated finetune.py with progress callback\n"
+        "!git -C article_silicon_sampling_quebec pull origin main\n\n"
         "from huggingface_hub import hf_hub_download\n"
         "dataset_local = hf_hub_download(\n"
         '    repo_id="hubcad25/article_silicon_sampling_quebec_data",\n'
@@ -72,6 +74,22 @@ nb.cells = [
         ")\n"
         'print(f"Dataset: {dataset_local}")\n'
         "!wc -l {dataset_local}"
+    ),
+    new_code_cell(
+        "# Check GPU availability\n"
+        "import torch\n"
+        "print(f\"CUDA available: {torch.cuda.is_available()}\")\n"
+        "print(f\"GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'None'}\")\n"
+        "import subprocess\n"
+        "result = subprocess.run([\"nvidia-smi\", \"--query-gpu=name,memory.total\", \"--format=csv,noheader\"], capture_output=True, text=True)\n"
+        "print(result.stdout if result.returncode == 0 else result.stderr)"
+    ),
+    new_code_cell(
+        "# Fix for Colab: ensure GPU is visible to subprocess\n"
+        "import os\n"
+        "if 'CUDA_VISIBLE_DEVICES' not in os.environ:\n"
+        "    os.environ['CUDA_VISIBLE_DEVICES'] = '0'\n"
+        "print(f\"CUDA_VISIBLE_DEVICES: {os.environ.get('CUDA_VISIBLE_DEVICES')}\")"
     ),
     new_code_cell(
         "# Run fine-tuning\n"
@@ -97,6 +115,7 @@ nb.cells = [
         "    cmd.append(\"wandb\")\n\n"
         "print(f\"Running: {' '.join(cmd[:8])} ...\")\n"
         "env = os.environ.copy()\n"
+        "env[\"CUDA_VISIBLE_DEVICES\"] = \"0\"\n"
         "result = subprocess.run(cmd, env=env, capture_output=True, text=True)\n"
         "if result.returncode == 0:\n"
         "    print(\"Done. LoRA pushed to HF.\")\n"
