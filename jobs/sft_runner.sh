@@ -86,16 +86,20 @@ if [[ "$1" == "--submit" ]]; then
 fi
 
 # 6. Execution (Compute Node)
-<<<<<<< HEAD
 echo "Running SFT Job... (SMOKE=$SMOKE)"
-=======
-echo "Running SFT Job..."
->>>>>>> 4d45a8d4bc49606c419c2b90f68870dafa2b8ff2
 module load python/3.10 cuda/12.1 2>/dev/null
+
+# Auto-setup check
+if [ ! -d ".venv" ]; then
+    echo "Environment .venv not found. Running setup..."
+    bash scripts/setup_narval.sh
+fi
+
 export HF_HOME=${HF_HOME:-"/scratch/$USER/hf_cache"}
 mkdir -p "$HF_HOME"
 
 source .venv/bin/activate
+
 python scripts/finetune.py \
     --target "$TARGET" \
     --model_size "$SIZE" \
