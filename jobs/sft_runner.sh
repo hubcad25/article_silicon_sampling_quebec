@@ -15,6 +15,7 @@ if [ -z "$TARGET" ] || [ -z "$SIZE" ] || [ -z "$CTX" ]; then
 fi
 
 DATA_FILE="data/processed/sft_${TARGET}_${CTX}.jsonl"
+<<<<<<< HEAD
 
 # 3. Data Generation (if missing)
 if [ ! -f "$DATA_FILE" ]; then
@@ -47,6 +48,32 @@ fi
 if [[ "$1" == "--submit" ]]; then
     mkdir -p logs
     echo "Submitting SFT job: TARGET=$TARGET, SIZE=$SIZE, CTX=$CTX (SMOKE=$SMOKE)"
+=======
+
+# 3. Data Generation (if missing)
+if [ ! -f "$DATA_FILE" ]; then
+    echo "Data file $DATA_FILE not found. Generating..."
+    source .venv/bin/activate
+    python scripts/generate_sft_data.py --target "$TARGET" --n-ctx "$CTX"
+    if [ $? -ne 0 ]; then
+        echo "Error: Data generation failed."
+        exit 1
+    fi
+fi
+
+# 4. Resource Profiling
+case $SIZE in
+    "0.5b"|"1b") GPU="a100:1"; MEM="32G"; TIME="03:00:00"; CPUS=8 ;;
+    "8b")        GPU="a100:1"; MEM="64G"; TIME="08:00:00"; CPUS=12 ;;
+    "70b")       GPU="a100:1"; MEM="128G"; TIME="24:00:00"; CPUS=16 ;;
+    *)           GPU="a100:1"; MEM="32G"; TIME="03:00:00"; CPUS=8 ;;
+esac
+
+# 5. Handle Submission
+if [[ "$1" == "--submit" ]]; then
+    mkdir -p logs
+    echo "Submitting SFT job: TARGET=$TARGET, SIZE=$SIZE, CTX=$CTX"
+>>>>>>> 4d45a8d4bc49606c419c2b90f68870dafa2b8ff2
     sbatch --account=${SLURM_ACCOUNT} \
            --gres=gpu:${GPU} \
            --cpus-per-task=${CPUS} \
@@ -59,7 +86,11 @@ if [[ "$1" == "--submit" ]]; then
 fi
 
 # 6. Execution (Compute Node)
+<<<<<<< HEAD
 echo "Running SFT Job... (SMOKE=$SMOKE)"
+=======
+echo "Running SFT Job..."
+>>>>>>> 4d45a8d4bc49606c419c2b90f68870dafa2b8ff2
 module load python/3.10 cuda/12.1 2>/dev/null
 export HF_HOME=${HF_HOME:-"/scratch/$USER/hf_cache"}
 mkdir -p "$HF_HOME"
