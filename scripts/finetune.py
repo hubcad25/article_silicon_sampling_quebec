@@ -1,359 +1,318 @@
 #!/usr/bin/env python3
 """
-Fine-tune Llama-3.1-8B on CES survey data with LoRA/QLoRA.
+Generic SFT training script supporting Qwen and Llama via Unsloth.
+Optimized for Calcul Canada (Alliance) environment.
 
-Shared training script for all SFT conditions (4A, 4B, 5A, 5B).
-Only --data, --output_dir, and --hf_repo differ across conditions.
-
-Conditions:
-    4A  question generalization, n_ctx=10  (all respondents)
-    4B  question generalization, n_ctx=15  (all respondents)
-    5A  respondent generalization, n_ctx=10 (train respondents only)
-    5B  respondent generalization, n_ctx=15 (train respondents only)
-
-Training data format (flat input/output):
-    {"input": "Voici des reponses ...\n\nQuestion cible:\nQ: ...\nR:", "output": "..."}
-
-The model is trained to complete the input by generating the output (answer).
-Loss is computed only on the output tokens (via SFTConfig completion_only_loss=True,
-which replaces the deprecated DataCollatorForCompletionOnlyLM from trl < 0.9).
+Features:
+- Auto-resourcing: Detects GPU VRAM and adjusts batch size/accumulation.
+- Unified Model Mapping: supports 0.5b, 1b, 8b, 70b.
+- Structured Output: Saves to data/models/sft_{target}_{size}_ctx{n_ctx}/
+- Offline Ready: Designed to use pre-cached models from HF_HOME.
+- Tensorboard Logging: Default for CC monitoring.
 
 Usage:
-    # Dry-run to validate data loading and config
-    python scripts/finetune.py --dry_run
+    # Dry-run to check paths and config
+    python scripts/finetune.py --target q --model_size 1b --n_ctx 10 --dry_run
 
-    # Full training on GPU (LoRA, full precision)
-    python scripts/finetune.py --output_dir data/models/lora_condition4a
-
-    # QLoRA (4-bit, for consumer GPUs < 40 GB VRAM)
-    python scripts/finetune.py --use_4bit --output_dir data/models/lora_condition4a
-
-    # Push LoRA weights to HuggingFace
-    python scripts/finetune.py --hf_repo your-org/lora-condition4a
-
-GPU requirements:
-    - LoRA full precision: ~20 GB VRAM (A100 40GB or equivalent)
-    - QLoRA NF4:           ~10 GB VRAM (RTX 3090 / A10 / etc.)
-
-Install finetuning dependencies before running:
-    pip install -e ".[finetune]"
+    # Full training
+    python scripts/finetune.py --target q --model_size 1b --n_ctx 10
 """
 
 from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
+from typing import Any
+
+import torch
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "meta-llama/Llama-3.2-1B"
-DEFAULT_DATA = "data/processed/finetune_train_q_nctx10.jsonl"
-DEFAULT_OUTPUT_DIR = "data/models/sft_q_1b_ctx10"
+# --- Configuration & Mapping ---
 
-def get_model_family(model_id: str) -> str:
-    if "qwen" in model_id.lower():
-        return "qwen"
-    return "llama"
+MODEL_MAP = {
+    "0.5b": "unsloth/Qwen2.5-0.5B-bnb-4bit",
+    "1b": "unsloth/Llama-3.2-1B-bnb-4bit",
+    "8b": "unsloth/Llama-3.1-8B-bnb-4bit",
+    "70b": "unsloth/Llama-3.1-70B-bnb-4bit",
+}
+
+# Default training config
+DEFAULT_LR = 2e-4
+DEFAULT_EPOCHS = 3
+TARGET_BATCH_SIZE = 128  # Global effective batch size
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Generic SFT Engine")
+    
+    # Core Matrix Params
+    parser.add_argument("--target", type=str, choices=["q", "r"], help="Target condition: q (question) or r (respondent)")
+    parser.add_argument("--model_size", type=str, choices=["0.5b", "1b", "8b", "70b"], default="1b")
+    parser.add_argument("--n_ctx", type=int, default=10, help="Context size (number of previous questions)")
+    
+    # Overrides
+    parser.add_argument("--model", type=str, default=None, help="Explicit model ID (overrides model_size mapping)")
+    parser.add_argument("--data", type=Path, default=None, help="Path to JSONL training data")
+    parser.add_argument("--output_dir", type=Path, default=None, help="Output directory for model weights")
+    
+    # Training Hyperparams
+    parser.add_argument("--epochs", type=int, default=DEFAULT_EPOCHS)
+    parser.add_argument("--batch_size", type=int, default=None, help="Manual local batch size (auto-detected if None)")
+    parser.add_argument("--grad_accum", type=int, default=None, help="Manual grad accumulation (auto-detected if None)")
+    parser.add_argument("--lr", type=float, default=DEFAULT_LR)
+    parser.add_argument("--max_seq_len", type=int, default=None, help="Max sequence length (auto-adjusted if None)")
+    parser.add_argument("--seed", type=int, default=42)
+    
+    # Infrastructure
+    parser.add_argument("--dry_run", action="store_true", help="Print summary and exit without loading GPU")
+    parser.add_argument("--use_4bit", action="store_true", default=True, help="Use 4-bit quantization (Unsloth default)")
+    parser.add_argument("--hf_repo", type=str, default=None, help="HF repo to push to (optional)")
+    parser.add_argument("--report_to", type=str, default="tensorboard", help="Logging tool (tensorboard, none)")
+    parser.add_argument("--resume_from_checkpoint", type=str, default=None)
+    parser.add_argument("--benchmark", action="store_true", help="Run benchmark steps and exit")
+    parser.add_argument("--smoke_test", action="store_true", help="Run with tiny data and 1 epoch")
+
+    args = parser.parse_args()
+
+    # 1. Infer Model
+    if args.model is None:
+        args.model = MODEL_MAP.get(args.model_size)
+
+    # 2. Infer Data Path
+    if args.data is None:
+        # Try a few common patterns based on existing files
+        patterns = [
+            f"data/processed/sft_{args.target}_{args.n_ctx}.jsonl",
+            f"data/processed/finetune_train_{args.target}_ctx{args.n_ctx}.jsonl",
+            f"data/processed/finetune_train_{args.target}.jsonl", # Fallback
+        ]
+        for p in patterns:
+            if Path(p).exists():
+                args.data = Path(p)
+                break
+        
+        if args.data is None:
+            # If still None, default to the most likely one even if it doesn't exist (will fail later with clear error)
+            args.data = Path(f"data/processed/sft_{args.target}_{args.n_ctx}.jsonl")
+
+    # 3. Infer Output Dir
+    if args.output_dir is None:
+        args.output_dir = Path(f"data/models/sft_{args.target}_{args.model_size}_ctx{args.n_ctx}")
+
+    # 4. Infer Max Seq Len if not provided
+    if args.max_seq_len is None:
+        # Heuristic: n_ctx=10 -> ~2048, n_ctx=15 -> ~3072
+        args.max_seq_len = 2048 if args.n_ctx <= 10 else 3072
+
+    return args
+
+def check_finetune_deps(dry_run: bool = False):
+    """Verify that required libraries are installed."""
+    if dry_run:
+        # Skip GPU-heavy imports during dry-run if no GPU is present
+        try:
+            import transformers
+            import datasets
+            return
+        except ImportError:
+            pass
+
+    try:
+        import unsloth
+        import trl
+        import transformers
+        import peft
+        import datasets
+    except ImportError as e:
+        logger.error(f"Missing dependency: {e}. Please run 'pip install -e \".[finetune]\"'")
+        sys.exit(1)
+
+def load_dataset_splits(data_path: Path, seed: int, smoke_test: bool = False):
+    """Load JSONL data and split into train/eval."""
+    from datasets import load_dataset
+    
+    if not data_path.exists():
+        logger.error(f"Data file not found: {data_path}")
+        sys.exit(1)
+        
+    dataset = load_dataset("json", data_files=str(data_path), split="train")
+    
+    if smoke_test:
+        dataset = dataset.select(range(min(len(dataset), 50)))
+        
+    # Split: 95% train, 5% eval
+    ds_split = dataset.train_test_split(test_size=0.05, seed=seed)
+    return ds_split["train"], ds_split["test"]
+
+def format_sample(sample: dict[str, Any]) -> str:
+    """Format a sample for printing."""
+    inp = sample.get("input", "")
+    out = sample.get("output", "")
+    return f"INPUT:\n{inp[:200]}...\n\nOUTPUT:\n{out}"
+
+def get_vram_config(model_size: str):
+    """Auto-detect GPU VRAM and return optimal batch/accum."""
+    if not torch.cuda.is_available():
+        return 1, 128 # Fallback for dry-run
+        
+    vram_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
+    logger.info(f"Detected GPU with {vram_gb:.1f} GB VRAM")
+    
+    # Heuristics for Unsloth 4-bit
+    if vram_gb > 70: # A100 80GB
+        batch_size = 8 if "70b" not in model_size else 2
+    elif vram_gb > 30: # A100 40GB or RTX 3090/4090
+        batch_size = 4 if "70b" not in model_size else 1
+    else: # V100 16/32GB or smaller
+        batch_size = 2 if "8b" in model_size else 4
+        
+    grad_accum = max(1, TARGET_BATCH_SIZE // batch_size)
+    return batch_size, grad_accum
 
 def build_model_and_tokenizer(args: argparse.Namespace):
-    """Load base model and tokenizer via Unsloth, apply QLoRA quantization if requested."""
-    import torch
     from unsloth import FastLanguageModel
-
-    logger.info("Loading model: %s", args.model)
     
-    # Auto-adjust sequence length for large contexts
-    # n_ctx=50 + SES + Prompt can reach ~1500-2000 tokens
-    max_seq_length = args.max_seq_len
-    
+    logger.info(f"Loading model: {args.model}")
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=args.model,
-        max_seq_length=max_seq_length,
-        dtype=None, # Auto detection
+        max_seq_length=args.max_seq_len,
+        dtype=None, # Auto
         load_in_4bit=args.use_4bit,
     )
-
-    # Add LoRA adapters
+    
     model = FastLanguageModel.get_peft_model(
         model,
-        r=args.lora_r,
+        r=16,
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
                         "gate_proj", "up_proj", "down_proj"],
-        lora_alpha=args.lora_alpha,
-        lora_dropout=args.lora_dropout,
+        lora_alpha=32,
+        lora_dropout=0,
         bias="none",
         use_gradient_checkpointing="unsloth",
         random_state=args.seed,
     )
-
+    
     return model, tokenizer
 
-
-
-def build_training_args(args: argparse.Namespace):
-    """Build SFTConfig (trl >= 0.9 replacement for TrainingArguments + SFTTrainer config)."""
+def build_training_args(args: argparse.Namespace, batch_size: int, grad_accum: int):
     from trl import SFTConfig
     from unsloth import is_bfloat16_supported
-
+    
     args.output_dir.mkdir(parents=True, exist_ok=True)
-
+    
     return SFTConfig(
         output_dir=str(args.output_dir),
         num_train_epochs=args.epochs,
-        max_steps=args.max_steps,
-        per_device_train_batch_size=args.batch_size,
-        per_device_eval_batch_size=args.batch_size,
-        gradient_accumulation_steps=args.grad_accum,
+        per_device_train_batch_size=batch_size,
+        gradient_accumulation_steps=grad_accum,
         learning_rate=args.lr,
         lr_scheduler_type="cosine",
         bf16=is_bfloat16_supported(),
         fp16=not is_bfloat16_supported(),
         optim="adamw_8bit",
-        logging_steps=args.logging_steps,
-        save_steps=args.save_steps,
-        save_total_limit=2,  # Keep only last 2 checkpoints to save disk space
-        eval_steps=args.eval_steps,
+        logging_steps=10,
+        save_steps=100,
+        save_total_limit=2,
         eval_strategy="steps",
-        save_strategy="steps",
-        load_best_model_at_end=False,
+        eval_steps=100,
         seed=args.seed,
-        report_to=args.report_to or "none",
-        dataloader_num_workers=0,  # dataset is in RAM after tokenization; workers add overhead
-        dataset_text_field="text",
-        packing=False,  # Packing causes batch_size mismatch in loss with Unsloth+trl 0.24
-        max_length=args.max_seq_len,
-        warmup_steps=int(0.03 * (303126 / (args.batch_size * args.grad_accum))),
+        report_to=args.report_to,
+        dataset_text_field="text", # Unsloth handles formatting via a mapping usually
+        max_seq_length=args.max_seq_len,
+        packing=False,
     )
 
-
-def print_dry_run_summary(args: argparse.Namespace, train_ds, eval_ds) -> None:
-    """Print a summary of data and config for dry-run validation."""
-
-    print("\n" + "=" * 60)
-    print("DRY-RUN SUMMARY")
-    print("=" * 60)
-    print(f"Model:           {args.model}")
-    print(f"Data:            {args.data}")
-    print(f"Output dir:      {args.output_dir}")
-    print(f"Use 4-bit:       {args.use_4bit}")
-    print()
-    print(f"Train samples:   {len(train_ds)}")
-    print(f"Eval samples:    {len(eval_ds)}")
-    print()
-    print("LoRA config:")
-    print(f"  r={args.lora_r}, alpha={args.lora_alpha}, dropout={args.lora_dropout}")
-    print("  target_modules: q/k/v/o/gate/up/down_proj")
-    print()
-    print("Training config:")
-    print(f"  epochs={args.epochs}, batch_size={args.batch_size}, grad_accum={args.grad_accum}")
-    effective_batch = args.batch_size * args.grad_accum
-    print(f"  effective_batch_size={effective_batch}")
-    print(f"  lr={args.lr}, warmup_ratio={args.warmup_ratio}")
-    print(f"  max_seq_len={args.max_seq_len}")
-    print(f"  max_steps={args.max_steps} (-1 = use epochs)")
-    print()
-    print("Sample (train[0]):")
-    sample = train_ds[0]
-    if "input" in sample and "output" in sample:
-        formatted = format_sample(sample)
-        print(f"  input  ({len(sample['input'])} chars): {sample['input'][:120]!r}...")
-        print(f"  output ({len(sample['output'])} chars): {sample['output']!r}")
-        print(f"  formatted ({len(formatted)} chars total)")
-    elif "text" in sample:
-        print(f"  text ({len(sample['text'])} chars): {sample['text'][:120]!r}...")
-    else:
-        print(f"  keys: {list(sample.keys())}")
-    print()
-    if args.hf_repo:
-        print(f"HF repo:         {args.hf_repo}")
-    print("=" * 60)
-    print("Dry-run complete. No training performed.")
-    print("=" * 60 + "\n")
-
-
-def main() -> None:
+def main():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)-8s | %(message)s",
         datefmt="%H:%M:%S",
     )
+    
     args = parse_args()
+    check_finetune_deps(dry_run=args.dry_run)
+    
+    # 1. Load Data
+    train_ds, eval_ds = load_dataset_splits(args.data, args.seed, args.smoke_test)
+    logger.info(f"Dataset loaded: {len(train_ds)} train, {len(eval_ds)} eval")
+    
+    # 2. Auto-resourcing
+    batch_size, grad_accum = get_vram_config(args.model_size)
+    if args.batch_size: batch_size = args.batch_size
+    if args.grad_accum: grad_accum = args.grad_accum
+    
+    logger.info(f"Config: batch_size={batch_size}, grad_accum={grad_accum} (Effective: {batch_size*grad_accum})")
 
-    # Check finetuning deps (peft, trl, accelerate, datasets)
-    check_finetune_deps()
-
-    # Load dataset (from cache if available)
-    train_ds, eval_ds = load_dataset_splits(
-        args.data, args.eval_split, args.seed,
-        smoke_test=args.smoke_test,
-        tokenized_cache=args.tokenized_cache,
-    )
-
-    # Subsample train if requested
-    if args.max_train_samples > 0 and len(train_ds) > args.max_train_samples:
-        train_ds = train_ds.select(range(args.max_train_samples))
-        logger.info("Subsampled train to %d samples", args.max_train_samples)
-
-    # Dry-run: print summary and exit without touching a GPU
+    # 3. Dry-Run Summary
     if args.dry_run:
-        print_dry_run_summary(args, train_ds, eval_ds)
-        sys.exit(0)
+        print("\n" + "="*40)
+        print("DRY RUN SUMMARY")
+        print("="*40)
+        print(f"Target:      {args.target}")
+        print(f"Model:       {args.model}")
+        print(f"Data:        {args.data}")
+        print(f"Output:      {args.output_dir}")
+        print(f"Max Seq Len: {args.max_seq_len}")
+        print(f"Batch/Accum: {batch_size}/{grad_accum}")
+        print("\nSAMPLE DATA:")
+        print(format_sample(train_ds[0]))
+        print("="*40 + "\n")
+        return
 
-    # --- From here: GPU required ---
-
-    # Unsloth MUST be imported before trl/transformers/peft to apply its patches.
-    # Importing it here (before SFTTrainer) satisfies that requirement even though
-    # the model isn't loaded yet.
-    from unsloth import FastLanguageModel  # noqa: F401 — side-effect import
-
-    from transformers import TrainerCallback
-    from trl import SFTTrainer
-
-    class PushToHubCallback(TrainerCallback):
-        """Push LoRA adapter to HuggingFace Hub every N steps to survive pod interruption."""
-        def __init__(self, repo_id: str, every_n_steps: int = 50):
-            self.repo_id = repo_id
-            self.every_n_steps = every_n_steps
-
-        def on_save(self, args, state, control, **kwargs):
-            if state.global_step % self.every_n_steps == 0:
-                try:
-                    kwargs["model"].push_to_hub(self.repo_id, commit_message=f"checkpoint step {state.global_step}")
-                    logger.info("Pushed checkpoint at step %d to %s", state.global_step, self.repo_id)
-                except Exception as e:
-                    logger.warning("Failed to push checkpoint at step %d: %s", state.global_step, e)
-
-    # Load model + tokenizer
+    # 4. Load Model (GPU Required)
+    from unsloth import FastLanguageModel
     model, tokenizer = build_model_and_tokenizer(args)
+    
+    # Formatting for Unsloth/TRL
+    # CES data has 'input' and 'output'
+    def format_prompts(examples):
+        texts = []
+        for i, o in zip(examples["input"], examples["output"]):
+            # Ensure there is a space or newline after R: if not present
+            # and append EOS
+            prompt = i
+            if not prompt.endswith(" ") and not prompt.endswith("\n"):
+                prompt += " "
+            texts.append(prompt + o + tokenizer.eos_token)
+        return {"text": texts}
+    
+    train_ds = train_ds.map(format_prompts, batched=True)
+    eval_ds = eval_ds.map(format_prompts, batched=True)
 
-    # SFTConfig: TrainingArguments + SFT-specific options (completion_only_loss, max_length)
-    training_args = build_training_args(args)
-
-    # SFTTrainer handles tokenization, and completion-only loss internally
-    callbacks = []
-    if args.hf_repo:
-        callbacks.append(PushToHubCallback(repo_id=args.hf_repo, every_n_steps=args.save_steps))
-
-    class ProgressCallback(TrainerCallback):
-        def on_step_end(self, args, state, control, **kwargs):
-            step = state.global_step
-            total = state.max_steps
-            if step % 10 == 0 or step == 1:
-                print(f"Step {step}/{total} ({100*step//total}%)")
-
-    callbacks.append(ProgressCallback())
-
+    # 5. Training
+    from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
+    training_args = build_training_args(args, batch_size, grad_accum)
+    
+    # Response template for completion-only loss
+    # Our prompt ends with "R:" or "R: "
+    response_template = "R:"
+    collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer)
+    
     trainer = SFTTrainer(
         model=model,
-        args=training_args,
         train_dataset=train_ds,
         eval_dataset=eval_ds,
-        processing_class=tokenizer,
-        callbacks=callbacks if callbacks else None,
+        dataset_text_field="text",
+        max_seq_length=args.max_seq_len,
+        data_collator=collator,
+        args=training_args,
     )
-
-    # Benchmark: measure s/step on 20 warmup + 30 timed steps, then exit
-    if args.benchmark:
-        import time
-        from transformers import TrainerCallback
-
-        WARMUP_STEPS = 20
-        TIMED_STEPS = 30
-
-        class BenchmarkCallback(TrainerCallback):
-            def __init__(self):
-                self.step_times: list[float] = []
-                self._t: float | None = None
-
-            def on_step_begin(self, args, state, control, **kwargs):
-                if state.global_step >= WARMUP_STEPS:
-                    self._t = time.perf_counter()
-
-            def on_step_end(self, args, state, control, **kwargs):
-                if self._t is not None:
-                    self.step_times.append(time.perf_counter() - self._t)
-                    self._t = None
-                if state.global_step >= WARMUP_STEPS + TIMED_STEPS:
-                    control.should_training_stop = True
-
-        bench_cb = BenchmarkCallback()
-        trainer.add_callback(bench_cb)
-
-        logger.info("Benchmark mode: %d warmup + %d timed steps ...", WARMUP_STEPS, TIMED_STEPS)
-        trainer.train()
-
-        times = bench_cb.step_times
-        if times:
-            avg = sum(times) / len(times)
-            mn, mx = min(times), max(times)
-            logger.info("Benchmark results (%d steps): avg=%.2fs  min=%.2fs  max=%.2fs", len(times), avg, mn, mx)
-
-            # Extrapolate to full run
-            train_samples = len(train_ds)
-            effective_batch = args.batch_size * args.grad_accum
-            steps_per_epoch = train_samples // effective_batch
-            total_steps = steps_per_epoch * args.epochs
-            checkpoint_saves = total_steps // args.save_steps
-            checkpoint_overhead = checkpoint_saves * 5  # ~5s per LoRA checkpoint save
-
-            print("\n" + "=" * 60)
-            print("BENCHMARK EXTRAPOLATION")
-            print("=" * 60)
-            print(f"Measured:          {avg:.2f}s/step ({mn:.2f}-{mx:.2f}s)")
-            print(f"Train samples:     {train_samples:,}")
-            print(f"Steps/epoch:       {steps_per_epoch:,}")
-            print(f"Total steps:       {total_steps:,}  ({args.epochs} epochs)")
-            print(f"Checkpoint saves:  {checkpoint_saves}  (every {args.save_steps} steps, ~5s each)")
-            total_sec = total_steps * avg + checkpoint_overhead
-            print(f"Estimated time:    {total_sec/3600:.1f}h  ({total_sec/60:.0f}min)")
-            print("=" * 60 + "\n")
-        else:
-            logger.warning("No timed steps recorded — increase dataset size or timed steps.")
-        sys.exit(0)
-
-    # Train
+    
     logger.info("Starting training...")
-    train_result = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
-
-    # Log training metrics
-    logger.info("Training complete.")
-    metrics = train_result.metrics
-    for k, v in metrics.items():
-        logger.info("  %s: %s", k, v)
-
-    # Save LoRA weights + tokenizer
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    logger.info("Saving model to %s ...", args.output_dir)
+    trainer.train()
+    
+    # 6. Save
+    logger.info(f"Saving model to {args.output_dir}")
     trainer.save_model(str(args.output_dir))
     tokenizer.save_pretrained(str(args.output_dir))
-    logger.info("Model saved.")
-
-    # Save training metrics to CSV for manuscript workflows
-    results_dir = Path("data/results")
-    results_dir.mkdir(parents=True, exist_ok=True)
-    condition_tag = args.output_dir.name.replace("lora_", "")  # e.g. "condition4a"
-    metrics_path = results_dir / f"{condition_tag}_train_metrics.csv"
-    with open(metrics_path, "w") as f:
-        f.write("metric,value\n")
-        for k, v in metrics.items():
-            f.write(f"{k},{v}\n")
-    logger.info("Training metrics saved to %s", metrics_path)
-
-    # Push LoRA adapter to HuggingFace Hub
+    
     if args.hf_repo:
-        logger.info("Pushing LoRA weights to HuggingFace: %s ...", args.hf_repo)
-        model.push_to_hub(args.hf_repo, private=False)
-        tokenizer.push_to_hub(args.hf_repo, private=False)
-        logger.info("Pushed to https://huggingface.co/%s", args.hf_repo)
-
-    # Merge LoRA into base model and push merged weights
-    if args.hf_repo_merged:
-        logger.info("Merging LoRA into base model and pushing to HuggingFace: %s ...", args.hf_repo_merged)
-        model.push_to_hub_merged(args.hf_repo_merged, tokenizer, save_method="merged_16bit", private=False)
-        logger.info("Merged model pushed to https://huggingface.co/%s", args.hf_repo_merged)
-
+        logger.info(f"Pushing to HF Hub: {args.hf_repo}")
+        model.push_to_hub(args.hf_repo)
+        tokenizer.push_to_hub(args.hf_repo)
 
 if __name__ == "__main__":
     main()
