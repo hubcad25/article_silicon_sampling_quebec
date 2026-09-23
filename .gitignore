@@ -16,6 +16,11 @@ data/processed/*
 !data/processed/.gitkeep
 !data/processed/*.parquet
 
+# Recovered CES question wording: the override table that undoes Stata's
+# 80-character cap on variable labels (scripts/09_extract_ces_full_wording.py).
+# Small, text, and an input of the item table — it belongs in the repo.
+!data/ces_full_wording.json
+
 !data/raw/
 data/raw/*
 !data/raw/ces_2021/
@@ -26,3 +31,17 @@ data/raw/ces_2021/*
 !data/interim/
 data/interim/*
 !data/interim/.gitkeep
+
+# Pre-registered split — §4 of docs/plan_article.md requires a committed,
+# timestamped file BEFORE any training. Only this directory escapes `data/*`:
+# it holds the item list, the manifest and the diagnostics, no microdata.
+# heldout_respondents.parquet carries respondent ids and their strata cell,
+# nothing else — no answers.
+!data/split/
+!data/split/heldout_items.json
+!data/split/split_manifest.json
+!data/split/split_diagnostics.csv
+!data/split/heldout_respondents.parquet
+
+# Microdata Parquet cache (never committed)
+data/cache/

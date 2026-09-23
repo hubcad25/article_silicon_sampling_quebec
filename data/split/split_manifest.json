@@ -1,0 +1,312 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-09-22",
+  "seed": 20260922,
+  "plan_reference": "docs/plan_article.md §4 (phase 2)",
+  "generated_by": "scripts/14_build_split.py",
+  "input_hashes": {
+    "data/items.parquet": "2ef6d32efb419942d27808cff2714eb66adf3ab6d51803813eaf6068daf6b063",
+    "data/item_similarity.parquet": "36d34b6c81415d3d817d22ec4738d6ee39b0f4d0103e95817f1c89bd4f8d2bb0",
+    "data/item_embeddings.parquet": "4957a3b4ff2f70c2a0bf6e3f25703a1a75e215c0bdda4d5aa86190a6e19168b4",
+    "data/strata_definition.json": "d9d8e9156f5ea706e02d73cdbeaf20abd3650b2af4edd7720aba6f74b4ba2c73"
+  },
+  "parameters": {
+    "distance_bins": [
+      {
+        "name": "isolated",
+        "cos_lo": 0.0,
+        "cos_hi": 0.7
+      },
+      {
+        "name": "far",
+        "cos_lo": 0.7,
+        "cos_hi": 0.775
+      },
+      {
+        "name": "moderate",
+        "cos_lo": 0.775,
+        "cos_hi": 0.85
+      },
+      {
+        "name": "near",
+        "cos_lo": 0.85,
+        "cos_hi": 0.95
+      },
+      {
+        "name": "quasi_duplicate",
+        "cos_lo": 0.95,
+        "cos_hi": 1.01
+      }
+    ],
+    "languages": [
+      "en",
+      "fr"
+    ],
+    "items_per_design_cell": 6,
+    "max_items_per_survey": 7,
+    "test_pair_max_cosine": 0.7,
+    "min_estimable_cells": 8,
+    "cell_n_contrast": 30,
+    "cell_n_absolute": 100,
+    "large_survey_n": 10000,
+    "holdout_fraction_large": 0.25,
+    "holdout_fraction_small": 0.5,
+    "review_cosine": 0.97,
+    "review_cosine_wide": 0.9,
+    "n_excluded_test_items": 7,
+    "n_context_only_items": 145,
+    "context_max_cosine": 0.95
+  },
+  "item_selection_rule": "Eligible candidates = items of data/items.parquet (already purged upstream by scripts/10_build_item_table.py of paradata, respondent attributes, factual-knowledge questions, derived recodes, open-list questions, all-non-response items and stems still carrying an unresolved Qualtrics placeholder), minus TEST_ITEM_EXCLUSIONS, minus the items flagged is_context_only (reported behaviour: never a target, at test or at training), minus the items with no display_label (their stem alone is elliptical and unreadable), whose origin survey has >= 8 strata cells holding >= 30 held-out respondents with a valid answer to that item, cells being defined by data/strata_definition.json (per-survey dimensions). Candidates are crossed into 5 distance bins x 2 languages; 6 items are drawn uniformly at random per design cell with numpy.random.default_rng(SEED=20260922), subject to two constraints: at most 7 items per survey, and pairwise cosine between any two test items < 0.7. Design cells are visited in a fixed order (bins low to high, 'en' then 'fr'); a candidate violating a constraint is skipped, never swapped in later. Distance bins are assigned on the cosine to the nearest item of the FINAL training corpus, recomputed exactly from data/item_embeddings.parquet after selection.",
+  "context_leak_rule": "Anti-leak rule on C1/C2 context retrieval, enforced in prompts.nearest_context_items: no item at cosine >= 0.95 of the target may be injected as a context item, in any condition, at training or at inference. Without it the training twin of a test item is a legal context for the same respondent and the model is handed the answer (ces_2021 cps21_votechoice / cps21_v_advance sit at 0.967, same survey, same respondents). It is a property of the retrieval policy, not of the split: it applies to every target, test or training.",
+  "context_leak_effect": {
+    "k": 6,
+    "max_cosine": 0.95,
+    "n_items": 1778,
+    "n_items_under_k_without_rule": 164,
+    "n_items_under_k_with_rule": 167,
+    "n_items_pushed_under_k_by_rule": 3,
+    "n_items_losing_at_least_one_neighbour": 8,
+    "items_pushed_under_k": [
+      {
+        "survey_id": "ces_2019_online",
+        "variable": "cps19_demsat",
+        "n_context_without_rule": 6,
+        "n_context_with_rule": 5,
+        "is_test_item": false
+      },
+      {
+        "survey_id": "ces_2019_online",
+        "variable": "pes19_dem_sat",
+        "n_context_without_rule": 6,
+        "n_context_with_rule": 5,
+        "is_test_item": false
+      },
+      {
+        "survey_id": "ces_2021",
+        "variable": "pes21_ethid_1",
+        "n_context_without_rule": 6,
+        "n_context_with_rule": 5,
+        "is_test_item": false
+      }
+    ]
+  },
+  "respondent_selection_rule": "Per survey, respondents that resolve to a strata cell are ranked by a seeded uniform draw within their cell and the first floor(frac * cell_n) are held out, with frac = 0.25 for surveys of >= 10000 respondents and 0.5 otherwise. Respondents that resolve to no cell (coarse or missing on any dimension) stay in training: they can never appear in an evaluation, so holding them out would only cost training data and leaks nothing.",
+  "counts": {
+    "n_corpus_items": 1778,
+    "n_eligible_candidates": 1264,
+    "n_test_items": 60,
+    "n_training_items": 1718,
+    "n_training_targets": 1573,
+    "n_context_only_items": 145,
+    "n_items_without_display_label": 6,
+    "by_distance_bin": {
+      "isolated": 12,
+      "far": 12,
+      "moderate": 12,
+      "near": 12,
+      "quasi_duplicate": 12
+    },
+    "by_language": {
+      "en": 30,
+      "fr": 30
+    },
+    "by_design_cell": {
+      "isolated|en": 6,
+      "isolated|fr": 6,
+      "far|en": 6,
+      "far|fr": 6,
+      "moderate|en": 6,
+      "moderate|fr": 6,
+      "near|en": 6,
+      "near|fr": 6,
+      "quasi_duplicate|en": 6,
+      "quasi_duplicate|fr": 6
+    },
+    "by_survey": {
+      "cecd_sante_can_usa": 3,
+      "ces_2019_online": 7,
+      "ces_2019_phone": 6,
+      "ces_2021": 7,
+      "ces_2025": 7,
+      "cecd_elxn_qc_1998": 2,
+      "cecd_elxn_qc_2007": 5,
+      "eeq_2018": 7,
+      "provincial_qc_2012": 6,
+      "eeq_2012": 5,
+      "eeq_2007": 3,
+      "eeq_2008": 1,
+      "eeq_2014": 1
+    },
+    "n_items_with_cells_ge30": 60,
+    "n_items_with_cells_ge100": 27,
+    "median_heldout_cells_ge30": 11.0,
+    "median_heldout_cells_ge100": 0.0,
+    "n_review_pairs": 5,
+    "n_review_pairs_wide": 36,
+    "shortfall": {},
+    "n_respondents_total": 108199,
+    "n_respondents_heldout": 30144
+  },
+  "by_survey_respondents": [
+    {
+      "survey_id": "cecd_charte_2013_10",
+      "dimensions": "age+gender",
+      "n_respondents": 1000,
+      "holdout_fraction": 0.5,
+      "n_heldout": 497,
+      "n_training": 503,
+      "n_heldout_cells": 14
+    },
+    {
+      "survey_id": "cecd_elxn_can_2011",
+      "dimensions": "age+gender",
+      "n_respondents": 715,
+      "holdout_fraction": 0.5,
+      "n_heldout": 355,
+      "n_training": 360,
+      "n_heldout_cells": 14
+    },
+    {
+      "survey_id": "cecd_elxn_qc_1998",
+      "dimensions": "age+gender",
+      "n_respondents": 1483,
+      "holdout_fraction": 0.5,
+      "n_heldout": 622,
+      "n_training": 861,
+      "n_heldout_cells": 10
+    },
+    {
+      "survey_id": "cecd_elxn_qc_2007",
+      "dimensions": "age+gender",
+      "n_respondents": 2442,
+      "holdout_fraction": 0.5,
+      "n_heldout": 1008,
+      "n_training": 1434,
+      "n_heldout_cells": 10
+    },
+    {
+      "survey_id": "cecd_elxn_qc_2012",
+      "dimensions": "age+gender",
+      "n_respondents": 844,
+      "holdout_fraction": 0.5,
+      "n_heldout": 314,
+      "n_training": 530,
+      "n_heldout_cells": 10
+    },
+    {
+      "survey_id": "cecd_sante_can_usa",
+      "dimensions": "age+gender+education",
+      "n_respondents": 7064,
+      "holdout_fraction": 0.5,
+      "n_heldout": 2127,
+      "n_training": 4937,
+      "n_heldout_cells": 41
+    },
+    {
+      "survey_id": "ces_2019_online",
+      "dimensions": "age+gender+education",
+      "n_respondents": 37822,
+      "holdout_fraction": 0.25,
+      "n_heldout": 8463,
+      "n_training": 29359,
+      "n_heldout_cells": 95
+    },
+    {
+      "survey_id": "ces_2019_phone",
+      "dimensions": "age+gender+education",
+      "n_respondents": 4021,
+      "holdout_fraction": 0.5,
+      "n_heldout": 1812,
+      "n_training": 2209,
+      "n_heldout_cells": 69
+    },
+    {
+      "survey_id": "ces_2021",
+      "dimensions": "age+gender+education",
+      "n_respondents": 20968,
+      "holdout_fraction": 0.25,
+      "n_heldout": 4622,
+      "n_training": 16346,
+      "n_heldout_cells": 79
+    },
+    {
+      "survey_id": "ces_2025",
+      "dimensions": "age+gender+education",
+      "n_respondents": 20180,
+      "holdout_fraction": 0.25,
+      "n_heldout": 4550,
+      "n_training": 15630,
+      "n_heldout_cells": 82
+    },
+    {
+      "survey_id": "eeq_2007",
+      "dimensions": "age+gender",
+      "n_respondents": 2175,
+      "holdout_fraction": 0.5,
+      "n_heldout": 1064,
+      "n_training": 1111,
+      "n_heldout_cells": 14
+    },
+    {
+      "survey_id": "eeq_2008",
+      "dimensions": "age+gender",
+      "n_respondents": 1151,
+      "holdout_fraction": 0.5,
+      "n_heldout": 571,
+      "n_training": 580,
+      "n_heldout_cells": 14
+    },
+    {
+      "survey_id": "eeq_2012",
+      "dimensions": "age+gender",
+      "n_respondents": 1505,
+      "holdout_fraction": 0.5,
+      "n_heldout": 749,
+      "n_training": 756,
+      "n_heldout_cells": 14
+    },
+    {
+      "survey_id": "eeq_2014",
+      "dimensions": "age+gender",
+      "n_respondents": 1517,
+      "holdout_fraction": 0.5,
+      "n_heldout": 756,
+      "n_training": 761,
+      "n_heldout_cells": 14
+    },
+    {
+      "survey_id": "eeq_2018",
+      "dimensions": "gender+education",
+      "n_respondents": 3072,
+      "holdout_fraction": 0.5,
+      "n_heldout": 1521,
+      "n_training": 1551,
+      "n_heldout_cells": 10
+    },
+    {
+      "survey_id": "provincial_qc_2012",
+      "dimensions": "age+gender",
+      "n_respondents": 990,
+      "holdout_fraction": 0.5,
+      "n_heldout": 493,
+      "n_training": 497,
+      "n_heldout_cells": 14
+    },
+    {
+      "survey_id": "provincial_qc_2018",
+      "dimensions": "gender+education",
+      "n_respondents": 1250,
+      "holdout_fraction": 0.5,
+      "n_heldout": 620,
+      "n_training": 630,
+      "n_heldout_cells": 10
+    }
+  ],
+  "circularity": {
+    "problem": "The distance of a test item to the training corpus depends on which items are in training, hence on the split itself.",
+    "method": "Constraint, not iteration: any two test items sit pairwise below cosine 0.7, the 'isolated' threshold. A neighbour at or above 0.70 of a test item is therefore always a training item, so the nearest-training-neighbour cosine equals the nearest-corpus-neighbour cosine exactly for every bin above 'isolated'; an isolated item can only lose a neighbour and move further away, staying isolated. Published distances are still recomputed exactly against the final training corpus, from data/item_embeddings.parquet (full 2070x2070 cosine matrix, not the k=50 index, which truncation could otherwise bias).",
+    "max_abs_shift_cos": 0.057428,
+    "n_items_changing_bin": 0
+  }
+}
