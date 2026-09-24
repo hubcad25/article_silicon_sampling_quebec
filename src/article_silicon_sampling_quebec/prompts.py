@@ -90,6 +90,7 @@ __all__ = [
     "build_item_specs",
     "guess_language",
     "strip_variable_prefix",
+    "strip_question_number",
     "repair_mojibake",
     "has_mojibake",
     "clean_wording",
@@ -522,6 +523,32 @@ def strip_variable_prefix(text: str, variable: str) -> str:
     return text[match.end():]
 
 
+#: A questionnaire number in front of the wording: ``Q13.  Dans la campagne…``,
+#: ``7a. S'il y avait…``, ``S11.  Combien…``, ``3)  Et êtes-vous…``. An optional
+#: upper-case letter prefix, one to three digits, an optional sub-item letter,
+#: then ``.``, ``)``, ``:`` or ``--`` and whitespace before a letter, a quote or
+#: a bracket. ``18 ans`` or ``1.5 million`` never match: no separator + space.
+_QUESTION_NUMBER = re.compile(
+    r"^\s*[A-Z]{0,3}\d{1,3}[a-z]?\s*(?:\.|\)|:|--)\s+(?=[^\W\d_]|[\"«“'(\[¿¡])"
+)
+
+
+def strip_question_number(text: str) -> str:
+    """Drop a leading questionnaire number (``Q10.``, ``7a.``, ``25.``).
+
+    Same reason as :func:`strip_variable_prefix`: the number is layout, not
+    wording, and a new question at inference carries none. Unlike a variable
+    name it cannot be checked against anything, so the pattern is narrow —
+    see ``_QUESTION_NUMBER``. Text that would be left empty is kept whole.
+    """
+    if not text:
+        return text or ""
+    match = _QUESTION_NUMBER.match(text)
+    if not match or not text[match.end():].strip():
+        return text
+    return text[match.end():]
+
+
 #: A letter followed by a spacing grave accent is a dead-key sequence that was
 #: never composed (``A` chaque élection``). Only the vowels French puts a grave
 #: on are repaired: ``à è ù`` and their capitals — no other reading exists.
@@ -557,8 +584,10 @@ def repair_mojibake(text: str | None) -> str:
 
 
 def clean_wording(text: str | None, variable: str = "") -> str:
-    """The wording as rendered: variable prefix off, mojibake repaired."""
-    return repair_mojibake(strip_variable_prefix(text or "", variable))
+    """The wording as rendered: variable prefix and question number off,
+    mojibake repaired."""
+    return repair_mojibake(
+        strip_question_number(strip_variable_prefix(text or "", variable)))
 
 
 _SENTENCE_END = re.compile(r"(?<=[.?!])\s+(?=[\"«“'(\[A-ZÀ-ÖØ-Þ0-9¿¡])")

@@ -23,24 +23,18 @@
 - La langue du répondant est déjà un champ du persona (`Langue maternelle`), tiré du crosswalk.
 - Choix de vote déclaré de l'élection en cours = cible valide ; participation déclarée = contexte seulement.
 
-### ⚠️ À FAIRE AVANT LE PREMIER RUN — 3 correctifs de rendu, commencés, NON TERMINÉS
-Un agent a été arrêté en cours de route. `prompts.py` contient déjà des fonctions pour les trois
-(`guess_language`, `shorten_wording`, `label_speaks`, `strip_variable_prefix`, `repair_mojibake`,
-`clean_wording`, `build_item_specs`) mais **sans tests dédiés, non vérifiées de bout en bout, et les
-datasets n'ont PAS été régénérés avec**. Il faut relire ces fonctions, les tester, puis régénérer.
+### Correctifs de rendu — FAITS (24 septembre)
+Vérifiés sur le corpus et sur les JSONL régénérés (tests : `tests/test_wording_hygiene.py`, 238 verts).
+1. **Langue du contexte** : ligne dérivée du `question_text` (raccourci déterministe, libellé de batterie
+   conservé en fin de ligne) ; `display_label` seulement si sa langue = celle de l'item. **0 / 87 824**
+   lignes de contexte dans la mauvaise langue (C1 20k).
+2. **Identifiants** : nom de variable (`q6_02.`, `p33 --`) **et numéro de questionnaire** (`Q13.`, `7a.`,
+   `25.` — ~70 items CECD/EEQ non couverts par la première version) retirés au rendu. 122 énoncés touchés,
+   0 cible restante avec préfixe.
+3. **Mojibake** : seul cas du corpus (`rts_q1`, ``A` ``) réparé ; 0 dans les fichiers.
 
-1. **Lignes de contexte dans la mauvaise langue** — 30 % des lignes de contexte des prompts anglais
-   sont en français (12 543 / 42 010), parce qu'elles utilisent `display_label` (résumé LLM parfois
-   dans l'autre langue). Biais contre C1 anglais. Correctif : dériver la ligne de contexte du
-   `question_text` de l'item (dans sa langue par construction), raccourci de façon déterministe —
-   **attention aux batteries** dont le discriminant est en fin de chaîne (`… - Big Corporations`).
-   `display_label` seulement si sa langue = celle de l'item. Cible : ~0 % de lignes dans la mauvaise langue.
-2. **Identifiant de variable dans l'énoncé** — 8,7 % des cibles commencent par `q6_02.`, `p33 --`…
-   Retirer au rendu (cibles et contexte).
-3. **Mojibake** — `A\`` pour `À` dans `provincial_qc_2018` au moins. Réparer au rendu, sans deviner.
-
-Puis : `scripts/16_generate_dataset.py`, revérifier les garanties sur les fichiers (aucune cible de
-test, aucun répondant tenu à l'écart, aucun contexte ≥ 0,95, byte-identique), `pytest -q`.
+Datasets régénérés, audit OK, régénération byte-identique. Coût révisé : **4 runs ≈ 14,0 M tokens ≈ 77 $ US**
+(C0 8k 7,5 $ · C0 20k 18,7 $ · C1 8k 14,5 $ · C1 20k 36,2 $).
 
 ### Ensuite
 1. Premier run : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).
