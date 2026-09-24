@@ -45,6 +45,13 @@ seed 20260924 · suffixe `c0-8k`. Fichiers : train `file-2aa8d829…`, valid `fi
 Loss : train 4,68 → ~0,8 dès le pas 16 puis plateau 0,66-0,82 ; moyenne 0,816 ; **eval 0,716** (fin). Métriques :
 `logs/ft_c0_8k_metrics.csv`. Suivi : `python scratch/watch_job.py <job>`.
 
+### 🚀 Run 2 lancé — 24 septembre
+`ftjob-61f3591bd70a4c1c89bad9775842c6d5` · C0 20k · mêmes hyperparamètres et seed que le run 1 · suffixe `c0-20k`.
+Train `file-760dd8aa…`, même fichier de validation. Lancé **sans attendre le delta du run 1** : le solde
+portail (CA$ 907) n'avait pas bougé plusieurs heures après, et l'API de consommation renvoie des champs
+vides sur l'abonnement sponsorisé. Pire cas (×3 le tarif Qwen) sur les 3 runs restants ≈ CA$ 290 < solde.
+Le delta couvrira les runs 1+2 ensemble : répartir au prorata des `trained_tokens`.
+
 ### Ensuite
 1. Premier run : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).
    **Relever le solde Azure credits juste avant et après** (CA$ 907,63 au dernier relevé) — seul
