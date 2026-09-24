@@ -1,0 +1,23 @@
+== 1. repeated draws, T=1.0
+  [Certaines personnes croient que les Québécois ont des valeurs et prior]
+     valid 20/20 | truth=10 | 5:5 2:4 0:3 6:2 1:2 8:1
+  [Peut-être n'êtes-vous pas complètement décidé(e), mais actuellement po]
+     valid 20/20 | truth=9 | 3:5 9:3 2:3 1:3 5:3 4:2
+  [Et pour quel parti diriez-vous que vous auriez tendance à voter?]
+     valid 20/20 | truth=7 | 1:8 2:4 5:3 7:2 3:2 6:1
+  [Would you say that any of the federal parties in Canada represent your]
+     valid 15/20 | truth=-9 | 1:9 2:5 RATELIMIT:5 -8:1
+  [How much should the federal government spend on affordable housing?]
+     valid 14/20 | truth=3 | 3:9 RATELIMIT:6 2:5
+  [Which party do you think people from the LGBTQ community feel the most]
+     valid 14/20 | truth=8 | 3:6 RATELIMIT:6 1:3 2:2 7:1 6:1
+
+== 2. one draw on 100 validation examples, T=1.0
+  valid codes     67/100
+  on the 98 examples whose item is in c0_train_8000.jsonl:
+    T=1.0 model hit   14%   vs draw from item marginal 29%
+    T=0.0 model hit   22%   vs item modal answer 27%
+  (all 100: T=1.0 hit 14%)
+  uniform chance  17%
+
+222s

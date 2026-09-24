@@ -52,6 +52,12 @@ portail (CA$ 907) n'avait pas bougé plusieurs heures après, et l'API de consom
 vides sur l'abonnement sponsorisé. Pire cas (×3 le tarif Qwen) sur les 3 runs restants ≈ CA$ 290 < solde.
 Le delta couvrira les runs 1+2 ensemble : répartir au prorata des `trained_tokens`.
 
+### Test rapide du modèle C0 8k — 24 septembre (validation, pas test)
+Déployé 16:11 → supprimé 16:16. Format appris : **100 % de codes valides** sur les appels aboutis ; pas
+d'effondrement à T=1 (5-6 modalités sur 20 tirages). Taux de réussite **non concluants** : ~1/3 des appels en
+429 comptés comme erreurs par la 1re version du script (corrigée : `scratch/quick_eval.py`, 3 fils, 429 exclus,
+réponses sauvegardées dans `logs/quick_eval_<dep>.json`).
+
 ### Ensuite
 1. Premier run : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).
    **Relever le solde Azure credits juste avant et après** (CA$ 907,63 au dernier relevé) — seul
@@ -161,7 +167,7 @@ POST {endpoint}/openai/fine_tuning/jobs?api-version=2025-04-01-preview
   "method": {"type":"supervised","supervised":{"hyperparameters":{"n_epochs":1}}} }
 ```
 
-Déploiement en SKU **`DeveloperTier`** (le moins cher) ; **supprimer le déploiement immédiatement après chaque campagne** — facturation horaire, et l'abonnement bascule sur la carte de crédit après le 4 octobre.
+Déploiement d'un 70B fine-tuné (vérifié 24 sept.) : `az cognitiveservices account deployment create -g rg-opubliq-sondages -n info-4552-resource --model-name <ft> --model-version 1 --model-format **Meta** --sku-name **GlobalStandard** --sku-capacity 50` — prêt en < 1 min. `--model-format OpenAI` → erreur trompeuse « no hosting capacity » ; `DeveloperTier` refusé pour ce modèle. À capacité 50, ~1/3 des appels en 429 avec 8 fils ; **supprimer le déploiement immédiatement après chaque campagne** — facturation horaire, et l'abonnement bascule sur la carte de crédit après le 4 octobre.
 
 Plancher de durée : **~40 min par job**, file d'attente comprise, quelle que soit la taille du dataset.
 
