@@ -1,6 +1,54 @@
 # Plan de recherche — Échantillonnage silicone par strate, ancré sur un corpus de sondages
 
-**Version** : 2026-09-21 (soir) · **Statut** : phase 1 terminée, smoke tests faits, phase 2 à démarrer
+**Version** : 2026-09-24 · **Statut** : split gelé, datasets générés, 3 correctifs de rendu à finir avant le premier run
+
+---
+
+## ⏩ REPRENDRE ICI — état au 24 septembre 2026
+
+**Échéance dure : 4 octobre 2026** (expiration des crédits Azure).
+
+### Fait depuis le 21 septembre
+| | |
+|---|---|
+| **Phase 2 — split gelé** | commit `eeb7e87` (pré-enregistrement). 60 items de test (6 par cellule bin × langue, 30 FR / 30 EN), 30 144 répondants tenus à l'écart, 5 paires ≥ 0,97 signées. **Ne plus y toucher.** |
+| Wording complet des CES | 440/440 items tronqués récupérés depuis les `.qsf` et codebooks (`data/ces_full_wording.json`, script 09) |
+| Corpus | 1 778 items, dont 145 **contexte-seulement** (comportement déclaré : participation, dons, pétitions… — jamais cible) → 1 573 cibles d'entraînement |
+| **Phase 3.1 — gabarit** | `prompts.py`. **Année du sondage** en en-tête du bloc system (`… mené en 2018.`), jamais abandonnée ; `year_override` pour l'inférence. Échelles annotées en contexte (`→ 4 sur 7 (1 = …, 7 = …)`). Déduplication du contexte au rendu (`select_context`). |
+| **Phase 3.2 — générateur** | `dataset.py` + `scripts/16_generate_dataset.py` → `data/datasets/` (gitignoré, régénérable). C0 et C1 × 8 000 et 20 000 paires + validation 500. Stratifié sondage/langue/thème (thème = k-means sur embeddings, la colonne `themes` du catalogue est vide). 8k = préfixe du 20k ; C0 et C1 = mêmes paires. **4 runs ≈ 12,5 M tokens ≈ 69 $ US.** |
+
+### Décisions prises (ne pas rouvrir)
+- **C2 abandonné** : l'entraînement est purement par répondant ; la strate n'existe qu'à l'inférence (contexte de strate + marges d'erreur injectés à l'inférence seulement).
+- **Pas de traduction** : le wording est la variable indépendante.
+- La langue du répondant est déjà un champ du persona (`Langue maternelle`), tiré du crosswalk.
+- Choix de vote déclaré de l'élection en cours = cible valide ; participation déclarée = contexte seulement.
+
+### ⚠️ À FAIRE AVANT LE PREMIER RUN — 3 correctifs de rendu, commencés, NON TERMINÉS
+Un agent a été arrêté en cours de route. `prompts.py` contient déjà des fonctions pour les trois
+(`guess_language`, `shorten_wording`, `label_speaks`, `strip_variable_prefix`, `repair_mojibake`,
+`clean_wording`, `build_item_specs`) mais **sans tests dédiés, non vérifiées de bout en bout, et les
+datasets n'ont PAS été régénérés avec**. Il faut relire ces fonctions, les tester, puis régénérer.
+
+1. **Lignes de contexte dans la mauvaise langue** — 30 % des lignes de contexte des prompts anglais
+   sont en français (12 543 / 42 010), parce qu'elles utilisent `display_label` (résumé LLM parfois
+   dans l'autre langue). Biais contre C1 anglais. Correctif : dériver la ligne de contexte du
+   `question_text` de l'item (dans sa langue par construction), raccourci de façon déterministe —
+   **attention aux batteries** dont le discriminant est en fin de chaîne (`… - Big Corporations`).
+   `display_label` seulement si sa langue = celle de l'item. Cible : ~0 % de lignes dans la mauvaise langue.
+2. **Identifiant de variable dans l'énoncé** — 8,7 % des cibles commencent par `q6_02.`, `p33 --`…
+   Retirer au rendu (cibles et contexte).
+3. **Mojibake** — `A\`` pour `À` dans `provincial_qc_2018` au moins. Réparer au rendu, sans deviner.
+
+Puis : `scripts/16_generate_dataset.py`, revérifier les garanties sur les fichiers (aucune cible de
+test, aucun répondant tenu à l'écart, aucun contexte ≥ 0,95, byte-identique), `pytest -q`.
+
+### Ensuite
+1. Premier run : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).
+   **Relever le solde Azure credits juste avant et après** (CA$ 907,63 au dernier relevé) — seul
+   moyen de connaître le prix réel du fine-tuning 70B, non publié.
+2. Ajuster puis lancer les 3 autres runs **en séquence**.
+3. Phase 5 : évaluation (déploiement, 80 tirages par cellule, balayage de température, **supprimer
+   le déploiement immédiatement après**).
 
 ---
 

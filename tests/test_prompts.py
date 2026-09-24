@@ -29,6 +29,7 @@ from article_silicon_sampling_quebec.prompts import (
     example_rng,
     item_text,
     nearest_context_items,
+    numeric_scale,
     parse_options,
 )
 
@@ -276,8 +277,11 @@ def test_c0_ignores_any_context_passed_by_mistake():
 
 def test_context_is_truncated_to_k():
     tpl = PromptTemplate(condition="C1", k=2)
+    # Distinct wordings: six identical ones would be collapsed by the
+    # deduplication of the block below before k ever applied.
     ctx = [ContextAnswer.from_item(
-        ItemSpec(**{**NEIGHBOUR.__dict__, "variable": f"q{i:02d}"}), "1")
+        ItemSpec(**{**NEIGHBOUR.__dict__, "variable": f"q{i:02d}",
+                    "short_text": f"Intérêt pour la politique {i}"}), "1")
         for i in range(6)]
     user = tpl.build_messages(PERSONA, TARGET, ctx, dimensions=ALL_DIMS)[1]["content"]
     assert user.count("Intérêt pour la politique") == 2
@@ -420,3 +424,199 @@ def test_truncation_lengths_are_configurable():
     row = {"question_text": "x" * 79, "display_label": "Libellé"}
     assert item_text(row, truncation_lengths=(80,)) == "x" * 79
     assert item_text(row, truncation_lengths=(79, 80)) == "Libellé"
+
+
+# --------------------------------------------------------------------------
+# correctif 1 — the survey year frames the interview
+# --------------------------------------------------------------------------
+
+TARGET_2012 = ItemSpec(**{**TARGET.__dict__, "survey_id": "eeq_2012", "year": 2012})
+
+
+def test_the_year_of_the_survey_opens_the_persona_block():
+    tpl = PromptTemplate(condition="C0")
+    system = tpl.build_messages(PERSONA, TARGET_2012, dimensions=ALL_DIMS)[0]["content"]
+    assert system.splitlines()[0] == (
+        "Tu es un répondant à un sondage d'opinion mené en 2012."
+    )
+    assert system.splitlines()[1].startswith("Population : ")
+
+
+def test_the_year_renders_in_english_too():
+    target = ItemSpec(**{**TARGET_2012.__dict__, "language": "en"})
+    system = PromptTemplate(condition="C0").build_messages(
+        PERSONA, target, dimensions=ALL_DIMS)[0]["content"]
+    assert system.splitlines()[0] == (
+        "You are a respondent to an opinion survey conducted in 2012."
+    )
+
+
+def test_the_year_is_never_dropped_by_the_ses_dropout():
+    """Like ``Population``, the year is the frame, not an SES dimension."""
+    tpl = PromptTemplate(condition="C0", min_fields=1)
+    for seed in range(200):
+        system = tpl.render_persona(PERSONA, "fr",
+                                    rng=random.Random(seed),
+                                    year=tpl.resolve_year(PERSONA, TARGET_2012))
+        assert "mené en 2012" in system
+        assert "Population : " in system
+
+
+def test_the_year_is_overridable_at_inference():
+    """The corpus stops in 2025; the product will ask about 2026."""
+    tpl = PromptTemplate(condition="C0", year_override=2026)
+    system = tpl.build_messages(PERSONA, TARGET_2012, dimensions=ALL_DIMS)[0]["content"]
+    assert "mené en 2026" in system
+    # override > persona > item
+    persona = Persona(fields=dict(PERSONA.fields), survey_id="eeq_2012", year=2018)
+    assert PromptTemplate(condition="C0").resolve_year(persona, TARGET_2012) == 2018
+    assert tpl.resolve_year(persona, TARGET_2012) == 2026
+    assert PromptTemplate(condition="C0").resolve_year(PERSONA, TARGET_2012) == 2012
+
+
+def test_an_item_without_a_year_falls_back_to_the_plain_head():
+    system = PromptTemplate(condition="C0").build_messages(
+        PERSONA, TARGET, dimensions=ALL_DIMS)[0]["content"]
+    assert system.splitlines()[0] == "Tu es un répondant à un sondage d'opinion."
+
+
+def test_from_row_carries_the_year_of_the_survey():
+    spec = ItemSpec.from_row({
+        "survey_id": "eeq_2012", "variable": "q1", "question_text": "Q ?",
+        "display_label": "Q", "options": [{"code": "1", "label": "Oui"}],
+        "language": "fr", "year": 2012,
+    })
+    assert spec.year == 2012
+
+
+# --------------------------------------------------------------------------
+# correctif 2 — a bare numeric modality keeps its scale
+# --------------------------------------------------------------------------
+
+SCALE_ITEM = ItemSpec(
+    survey_id="provincial_qc_2018", variable="q6_02",
+    text="À quel point es-tu en accord avec cet énoncé : j'ai l'habitude de voter.",
+    options=(
+        Option("1", "1- Fortement en désaccord"),
+        Option("2", "2"), Option("3", "3"), Option("4", "4"),
+        Option("5", "5"), Option("6", "6"),
+        Option("7", "7- Fortement en accord"),
+        Option("8", "Ne sais pas/Pas certain(e)"),
+    ),
+    language="fr", short_text="Attitude envers le vote : habitude personnelle de voter",
+    year=2018,
+)
+
+
+def test_numeric_scale_recovers_the_anchors():
+    scale = numeric_scale(SCALE_ITEM)
+    assert (scale.low, scale.high) == (1, 7)
+    assert scale.low_anchor == "Fortement en désaccord"
+    assert scale.high_anchor == "Fortement en accord"
+    assert scale.anchored
+
+
+def test_a_bare_numeric_context_modality_is_put_back_on_its_scale():
+    tpl = PromptTemplate(condition="C1", k=6)
+    line = tpl.render_context([ContextAnswer.from_item(SCALE_ITEM, "5")], "fr")
+    assert line.endswith(
+        "→ 5 sur 7 (1 = Fortement en désaccord, 7 = Fortement en accord)"
+    )
+
+
+def test_an_anchored_modality_is_left_verbatim():
+    tpl = PromptTemplate(condition="C1", k=6)
+    line = tpl.render_context([ContextAnswer.from_item(SCALE_ITEM, "7")], "fr")
+    assert line.endswith("→ 7- Fortement en accord")
+    plain = tpl.render_context([ContextAnswer.from_item(NEIGHBOUR, "1")], "fr")
+    assert plain.endswith("→ Très intéressé(e)")
+
+
+def test_the_scale_annotation_speaks_the_item_language():
+    item = ItemSpec(**{**SCALE_ITEM.__dict__, "language": "en", "options": (
+        Option("1", "1 - greatly deteriorated"), Option("2", "2"),
+        Option("3", "3 - stayed the same"), Option("4", "4"),
+        Option("5", "5 - greatly improved"),
+    )})
+    line = PromptTemplate(condition="C1").render_context(
+        [ContextAnswer.from_item(item, "4")], "en")
+    assert line.endswith(
+        "→ 4 out of 5 (1 = greatly deteriorated, 5 = greatly improved)"
+    )
+
+
+def test_a_gappy_code_list_is_not_treated_as_a_scale():
+    """Three codes that are not consecutive are a coding scheme, not a scale."""
+    item = ItemSpec(
+        survey_id="s", variable="v", text="Q ?",
+        options=(Option("1", "1"), Option("2", "2"), Option("9", "9")),
+        language="fr",
+    )
+    assert numeric_scale(item) is None
+    line = PromptTemplate(condition="C1").render_context(
+        [ContextAnswer.from_item(item, "2")], "fr")
+    assert line.endswith("→ 2")
+
+
+def test_the_target_options_are_never_annotated():
+    """Verbatim wording of the target item is non-negotiable (§3.3)."""
+    user = PromptTemplate(condition="C0").build_messages(
+        PERSONA, SCALE_ITEM, dimensions=ALL_DIMS)[1]["content"]
+    assert "2) 2\n" in user
+    assert "sur 7" not in user
+
+
+# --------------------------------------------------------------------------
+# correctif 3 — deduplication lives in the template, not in the generator
+# --------------------------------------------------------------------------
+
+TWIN = ItemSpec(
+    survey_id="eeq_2014", variable="q99",
+    text="Une tout autre question.",
+    options=NEIGHBOUR.options, language="fr",
+    # the ces_2021 defect: a generic display_label that renders as the target
+    short_text=TARGET.text,
+)
+
+
+def test_a_context_item_rendering_as_the_target_is_dropped():
+    tpl = PromptTemplate(condition="C1", k=6)
+    ctx = [ContextAnswer.from_item(TWIN, "1"),
+           ContextAnswer.from_item(NEIGHBOUR, "1")]
+    kept = tpl.select_context(TARGET, ctx)
+    assert [c.item.variable for c in kept] == ["q07"]
+    user = tpl.build_messages(PERSONA, TARGET, ctx, dimensions=ALL_DIMS)[1]["content"]
+    assert user.count(TARGET.text) == 1
+
+
+def test_two_context_items_rendering_identically_collapse_to_one():
+    tpl = PromptTemplate(condition="C1", k=6)
+    ctx = [ContextAnswer.from_item(
+        ItemSpec(**{**NEIGHBOUR.__dict__, "variable": f"q{i:02d}"}), "1")
+        for i in range(4)]
+    kept = tpl.select_context(TARGET, ctx)
+    assert len(kept) == 1
+    block = tpl.render_context(kept, "fr").splitlines()[1:]
+    assert len(set(block)) == len(block) == 1
+
+
+def test_context_selection_is_idempotent():
+    """The generator applies it, then the template applies it again."""
+    tpl = PromptTemplate(condition="C1", k=6)
+    ctx = [ContextAnswer.from_item(TWIN, "1"),
+           ContextAnswer.from_item(NEIGHBOUR, "1")]
+    once = tpl.select_context(TARGET, ctx)
+    assert tpl.select_context(TARGET, once) == once
+
+
+def test_deduplication_can_be_turned_off_for_a_diagnostic():
+    tpl = PromptTemplate(condition="C1", k=6, dedup_context=False)
+    ctx = [ContextAnswer.from_item(TWIN, "1"),
+           ContextAnswer.from_item(NEIGHBOUR, "1")]
+    assert len(tpl.select_context(TARGET, ctx)) == 2
+
+
+def test_the_hard_target_leak_still_raises_before_deduplication():
+    tpl = PromptTemplate(condition="C1", k=6)
+    with pytest.raises(ValueError, match="context leak"):
+        tpl.select_context(TARGET, [ContextAnswer.from_item(TARGET, "1")])
