@@ -159,7 +159,8 @@ def test_repair_mojibake(text, expected):
 def test_has_mojibake_and_option_render():
     assert has_mojibake("A` chaque")
     assert not has_mojibake("À chaque")
-    assert Option("1", "A` l'occasion").render() == "1) À l'occasion"
+    assert Option("1", "A` l'occasion").render() == "- À l'occasion"
+    assert Option("1", "A` l'occasion").text == "À l'occasion"
 
 
 def test_clean_wording_combines_all_three():

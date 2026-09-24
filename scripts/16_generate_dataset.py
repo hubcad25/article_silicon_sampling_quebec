@@ -4,8 +4,14 @@ Writes, under ``data/datasets/``:
 
     c0_train_8000.jsonl   c0_train_20000.jsonl   c0_validation.jsonl
     c1_train_8000.jsonl   c1_train_20000.jsonl   c1_validation.jsonl
-    pairs.parquet         composition.csv        token_report.csv
-    manifest.json
+    pairs.parquet         pairs.csv              composition.csv
+    token_report.csv      manifest.json
+
+``pairs.parquet`` / ``pairs.csv`` are line-aligned with the JSONL files: row
+``i < validation_size`` is line ``i`` of ``cX_validation.jsonl``, the following
+rows are the training lines in order (``row_index`` = line number in the
+training file, the same in the 8 000 and 20 000 files since one is a prefix of
+the other). The assistant turn of every line is ``answer_label``.
 
 The JSONL files are in Azure AI Foundry chat format and uploadable as is. The
 8 000-pair file is the first 8 000 lines of the 20 000-pair one, and C0 and C1
@@ -194,15 +200,19 @@ def render_all(pairs, panels, specs, cfg):
 
 def metadata_frame(pairs, rendered, cfg) -> pl.DataFrame:
     cond = cfg.conditions[-1]
+    n_val = cfg.validation_size
     rows = []
-    for pair, rec in zip(pairs, rendered[cond], strict=True):
+    for i, (pair, rec) in enumerate(zip(pairs, rendered[cond], strict=True)):
         rows.append({
+            "split": "validation" if i < n_val else "train",
+            "row_index": i if i < n_val else i - n_val,
             "survey_id": pair.survey_id,
             "variable": pair.variable,
             "respondent_id": pair.respondent_id,
             "language": pair.language,
             "theme": pair.theme,
             "answer_code": pair.answer_code,
+            "answer_label": rec["example"]["messages"][-1]["content"],
             "n_context": rec["n_context"],
             "n_ses_fields": rec["n_ses_fields"],
             "context_keys": json.dumps(rec["context_keys"]),
@@ -259,7 +269,9 @@ def composition_rows(meta: pl.DataFrame, n: int, label: str):
     sub = meta.head(n)
     rows = []
     for axis in ("survey_id", "language", "theme"):
-        counts = sub.group_by(axis).len().sort("len", descending=True)
+        # ties broken on the value: group_by order is not stable across runs
+        counts = sub.group_by(axis).len().sort(["len", axis],
+                                               descending=[True, False])
         for value, count in zip(counts[axis], counts["len"], strict=True):
             rows.append({
                 "file": label, "axis": axis, "value": value,
@@ -302,6 +314,8 @@ def main() -> None:
     meta = metadata_frame(pairs, rendered, cfg)
     cfg.out_dir.mkdir(parents=True, exist_ok=True)
     meta.write_parquet(cfg.out_dir / "pairs.parquet")
+    # CSV companion (AGENTS.md data-format policy); list columns stay JSON strings.
+    meta.write_csv(cfg.out_dir / "pairs.csv")
 
     n_val = cfg.validation_size
     report = _prompt_report()

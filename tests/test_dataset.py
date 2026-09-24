@@ -247,7 +247,9 @@ def test_render_shares_the_ses_dropout_across_conditions(fake):
     c1 = ds.render(pair, "C1", panel, specs, templates, seed=9)
     assert c0["example"]["messages"][0] == c1["example"]["messages"][0]
     assert c0["n_context"] == 0 and c1["n_context"] == 1
-    assert c0["example"]["messages"][2]["content"] == "1"
+    # the assistant turn is the option's text, not its code
+    assert c0["example"]["messages"][2]["content"] == "Yes"
+    assert c1["example"]["messages"][2]["content"] == "Yes"
 
 
 def test_audit_catches_a_planted_leak(fake):
@@ -256,6 +258,7 @@ def test_audit_catches_a_planted_leak(fake):
                      manifest={})
     meta = pl.DataFrame([{
         "survey_id": "s", "variable": "target", "respondent_id": "0",
+        "answer_code": "1",
         "context_keys": json.dumps([["s", "near"]]),
         "context_used": json.dumps([["s", "near"]]),
         "context_cosines": json.dumps([0.99]),
@@ -268,6 +271,27 @@ def test_audit_catches_a_planted_leak(fake):
     problems = ds.audit_examples([example], meta, split, specs, "C1")
     assert problems["context_above_max_cosine"]
     assert problems["context_is_test_item"]
+    # a code where the option text is expected, and options listed with codes
+    assert problems["answer_not_an_option"]
+    assert problems["answer_does_not_match_code"]
+    assert problems["target_option_has_code"]
+
+
+def test_audit_accepts_a_clean_text_answer(fake):
+    panel, specs = fake
+    templates = {"C0": PromptTemplate(condition="C0", k=6)}
+    pair = ds.Pair(survey_id="s", variable="target", respondent_id="0", row=0,
+                   language="fr", theme="t0", answer_code="2")
+    rec = ds.render(pair, "C0", panel, specs, templates, seed=9)
+    meta = pl.DataFrame([{
+        "survey_id": "s", "variable": "target", "respondent_id": "0",
+        "answer_code": "2", "context_keys": "[]", "context_used": "[]",
+        "context_cosines": "[]",
+    }])
+    split = sp.Split(items=frozenset(), respondents={}, manifest={})
+    problems = ds.audit_examples([rec["example"]], meta, split, specs, "C0")
+    assert not any(problems.values()), problems
+    assert rec["example"]["messages"][2]["content"] == "No"
 
 
 # --------------------------------------------------------------------------
@@ -378,8 +402,45 @@ def test_target_answer_is_always_one_of_the_rendered_options(meta, specs):
     for example, row in zip(rows, meta.slice(ds.VALIDATION_SIZE).to_dicts(),
                             strict=False):
         item = specs[(row["survey_id"], row["variable"])]
-        assert example["messages"][2]["content"] in {o.code for o in item.options}
-        assert example["messages"][2]["content"] == row["answer_code"]
+        answer = example["messages"][2]["content"]
+        listed = example["messages"][1]["content"].rsplit("\nOptions :\n", 1)[1]
+        assert answer in {o.text for o in item.options}
+        assert f"\n- {answer}\n" in f"\n{listed}\n"
+        assert answer == row["answer_label"]
+        assert item.match_answer(answer) == row["answer_code"]
+
+
+@generated
+def test_no_target_option_carries_a_code():
+    import re
+    coded = re.compile(r"^-?\d+\) ")
+    for name in ("c0_validation.jsonl", "c1_train_20000.jsonl"):
+        for example in _lines(name):
+            listed = (example["messages"][1]["content"]
+                      .rsplit("\nOptions :\n", 1)[1].split("\n\n")[0])
+            lines = listed.split("\n")
+            assert all(l.startswith("- ") for l in lines), name
+            assert not any(coded.match(l) for l in lines), name
+
+
+@generated
+def test_pairs_csv_is_line_aligned_with_the_jsonl(meta):
+    csv_meta = pl.read_csv(DATASETS / "pairs.csv", infer_schema_length=0)
+    assert csv_meta.height == meta.height
+    for col in ("split", "row_index", "survey_id", "variable", "language",
+                "theme", "respondent_id", "answer_code", "answer_label",
+                "n_context", "n_ses_fields", "max_context_cosine"):
+        assert col in csv_meta.columns, col
+    val = csv_meta.filter(pl.col("split") == "validation")
+    train = csv_meta.filter(pl.col("split") == "train")
+    assert val.height == ds.VALIDATION_SIZE
+    assert val["row_index"].to_list() == [str(i) for i in range(val.height)]
+    assert train["row_index"].to_list() == [str(i) for i in range(train.height)]
+    for name, frame in (("c1_validation.jsonl", val),
+                        ("c0_train_8000.jsonl", train)):
+        for example, label in zip(_lines(name), frame["answer_label"].to_list(),
+                                  strict=False):
+            assert example["messages"][2]["content"] == label
 
 
 @generated
@@ -387,7 +448,8 @@ def test_c0_carries_no_context_block():
     for row in _lines("c0_train_20000.jsonl"):
         user = row["messages"][1]["content"]
         assert user.startswith("Question : ")
-        assert "\n- " not in user.split("\n\nR")[0].split("\n\nA")[0]
+        # the only "- " lines are the target's options
+        assert "\n- " not in user.split("\nOptions :\n")[0]
 
 
 @generated

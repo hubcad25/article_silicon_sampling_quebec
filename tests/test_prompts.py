@@ -111,7 +111,8 @@ def test_finetune_and_roleplay_arms_get_identical_prompts():
     roleplay = tpl.build_messages(PERSONA, TARGET, ctx, dimensions=ALL_DIMS)
     finetune = tpl.build_example(PERSONA, TARGET, "4", ctx, dimensions=ALL_DIMS)
     assert finetune["messages"][:2] == roleplay
-    assert finetune["messages"][2] == {"role": "assistant", "content": "4"}
+    assert finetune["messages"][2] == {"role": "assistant",
+                                       "content": "Pas du tout satisfait(e)"}
 
 
 def test_rendering_is_deterministic():
@@ -196,7 +197,7 @@ def test_options_are_verbatim_and_in_order():
     user = tpl.build_messages(PERSONA, TARGET, dimensions=ALL_DIMS)[1]["content"]
     positions = []
     for opt in TARGET.options:
-        line = f"{opt.code}) {opt.label}"
+        line = f"\n- {opt.label}\n"
         assert line in user, line
         positions.append(user.index(line))
     assert positions == sorted(positions)
@@ -206,8 +207,8 @@ def test_dont_know_and_refusal_stay_in_the_options():
     """Decision of §0: both are valid targets and stay on the menu."""
     tpl = PromptTemplate(condition="C0")
     user = tpl.build_messages(PERSONA, TARGET, dimensions=ALL_DIMS)[1]["content"]
-    assert "8) Je ne sais pas" in user
-    assert "9) Je préfère ne pas répondre" in user
+    assert "\n- Je ne sais pas\n" in user
+    assert "\n- Je préfère ne pas répondre\n" in user
 
 
 def test_target_wording_is_verbatim_and_untouched_by_context_compaction():
@@ -407,7 +408,7 @@ def test_english_items_render_in_english():
     assert "You are a respondent" in msgs[0]["content"]
     assert "Population : Canada" in msgs[0]["content"]
     assert msgs[1]["content"].endswith(
-        "Answer with the number of the chosen option only.")
+        "Answer with the exact text of the chosen option only.")
 
 
 def test_region_and_province_are_distinct_fields():
@@ -562,7 +563,8 @@ def test_the_target_options_are_never_annotated():
     """Verbatim wording of the target item is non-negotiable (§3.3)."""
     user = PromptTemplate(condition="C0").build_messages(
         PERSONA, SCALE_ITEM, dimensions=ALL_DIMS)[1]["content"]
-    assert "2) 2\n" in user
+    assert "\n- 2\n" in user
+    assert "\n- 1- Fortement en désaccord\n" in user
     assert "sur 7" not in user
 
 
@@ -620,3 +622,131 @@ def test_the_hard_target_leak_still_raises_before_deduplication():
     tpl = PromptTemplate(condition="C1", k=6)
     with pytest.raises(ValueError, match="context leak"):
         tpl.select_context(TARGET, [ContextAnswer.from_item(TARGET, "1")])
+
+
+# --------------------------------------------------------------------------
+# text answers — the model answers with the option's text, never its code
+# --------------------------------------------------------------------------
+
+import re  # noqa: E402
+
+from article_silicon_sampling_quebec.prompts import (  # noqa: E402
+    _TEXT,
+    merge_duplicate_labels,
+    normalise_answer,
+)
+
+_CODED = re.compile(r"^-?\d+\) ")
+
+DUP_ITEM = ItemSpec(  # eeq_2018 q53 / q54, as stored in items.parquet
+    survey_id="eeq_2018", variable="q53", text="Avez-vous voté ?",
+    options=(Option("1", "Oui"), Option("2", "Non"), Option("3", "Je ne sais pas"),
+             Option("98", "Je ne sais pas"),
+             Option("99", "Je préfère ne pas répondre")),
+    language="fr", code_map=(("97", "99"),),
+)
+
+
+def _option_lines(user: str) -> list[str]:
+    return user.rsplit("\nOptions :\n", 1)[1].split("\n\n")[0].split("\n")
+
+
+def test_no_code_appears_in_the_target_option_list():
+    for item in (TARGET, SCALE_ITEM, DUP_ITEM):
+        user = PromptTemplate(condition="C0").build_messages(
+            PERSONA, item, dimensions=ALL_DIMS)[1]["content"]
+        lines = _option_lines(user)
+        assert lines == [f"- {o.text}" for o in item.options]
+        assert not any(_CODED.match(l) for l in lines)
+
+
+def test_assistant_content_is_one_of_the_rendered_labels():
+    tpl = PromptTemplate(condition="C0")
+    for item in (TARGET, SCALE_ITEM, DUP_ITEM):
+        for opt in item.options:
+            ex = tpl.build_example(PERSONA, item, opt.code, dimensions=ALL_DIMS)
+            answer = ex["messages"][2]["content"]
+            assert f"- {answer}" in _option_lines(ex["messages"][1]["content"])
+            assert item.match_answer(answer) == opt.code
+
+
+def test_an_answer_that_is_not_an_option_raises():
+    with pytest.raises(ValueError):
+        PromptTemplate(condition="C0").build_example(
+            PERSONA, TARGET, "42", dimensions=ALL_DIMS)
+
+
+def test_duplicate_labels_are_merged_onto_the_first_code():
+    assert [o.code for o in DUP_ITEM.options] == ["1", "2", "3", "99"]
+    assert DUP_ITEM.canonical_code("98") == "3"
+    assert DUP_ITEM.canonical_code("97") == "99"   # refusal merge untouched
+    assert DUP_ITEM.answer_text("98") == "Je ne sais pas"
+    assert DUP_ITEM.match_answer("Je ne sais pas") == "3"
+    # idempotent: rebuilding a spec from its own fields changes nothing
+    assert ItemSpec(**DUP_ITEM.__dict__) == DUP_ITEM
+
+
+def test_merge_is_case_and_whitespace_insensitive():
+    opts, remap = merge_duplicate_labels(
+        (Option("1", "Ne sais pas"), Option("2", "ne  sais PAS "), Option("3", "Oui")))
+    assert [o.code for o in opts] == ["1", "3"]
+    assert remap == {"2": "1"}
+
+
+def test_labels_are_unique_after_merge_on_the_whole_corpus():
+    from pathlib import Path
+
+    import polars as pl
+
+    path = Path(__file__).resolve().parents[1] / "data" / "items.parquet"
+    if not path.exists():
+        pytest.skip("items.parquet not available")
+    for row in pl.read_parquet(path).iter_rows(named=True):
+        spec = ItemSpec.from_row(row)
+        keys = [normalise_answer(o.text) for o in spec.options]
+        assert all(keys), spec.key
+        assert len(keys) == len(set(keys)), spec.key
+        for opt in spec.options:
+            assert spec.match_answer(opt.text) == opt.code
+
+
+@pytest.mark.parametrize("output, expected", [
+    ("Pas du tout satisfait(e)", "4"),              # exact
+    ("pas du tout satisfait(e)", "4"),              # case
+    ("  Pas du  tout satisfait(e).\n", "4"),        # whitespace + trailing period
+    ('"Je ne sais pas"', "8"),                      # quotes
+    ("« Je ne sais pas »", "8"),                    # French quotes
+    ("- Très satisfait(e)", "1"),                   # bullet copied from the list
+    ("Ｊｅ ne sais pas", "8"),                        # NFKC
+    ("4", None),                                    # a code is not an answer
+    ("Pas du tout satisfait", None),                # no fuzzy match
+    ("Très satisfait(e) ou assez satisfait(e)", None),
+    ("", None),
+    (None, None),
+])
+def test_match_answer(output, expected):
+    assert TARGET.match_answer(output) == expected
+
+
+def test_match_answer_keeps_embedded_codes_and_bare_scale_points():
+    assert SCALE_ITEM.match_answer("1- Fortement en désaccord") == "1"
+    assert SCALE_ITEM.match_answer("2") == "2"
+    assert SCALE_ITEM.match_answer("Fortement en désaccord") is None
+
+
+def test_the_instruction_is_parallel_in_both_languages():
+    fr, en = _TEXT["fr"]["instruction"], _TEXT["en"]["instruction"]
+    assert fr == "Réponds uniquement par le texte exact de l'option choisie."
+    assert en == "Answer with the exact text of the chosen option only."
+    assert set(_TEXT["fr"]) == set(_TEXT["en"])
+    for lang in ("fr", "en"):
+        assert "numéro" not in _TEXT[lang]["instruction"]
+        assert "number" not in _TEXT[lang]["instruction"]
+    item_en = ItemSpec(**{**TARGET.__dict__, "language": "en"})
+    fr_user = PromptTemplate(condition="C0").build_messages(
+        PERSONA, TARGET, dimensions=ALL_DIMS)[1]["content"]
+    en_user = PromptTemplate(condition="C0").build_messages(
+        PERSONA, item_en, dimensions=ALL_DIMS)[1]["content"]
+    assert fr_user.endswith("\n\n" + fr) and en_user.endswith("\n\n" + en)
+    # same layout, only the instruction differs
+    assert fr_user[: -len(fr)] == en_user[: -len(en)]

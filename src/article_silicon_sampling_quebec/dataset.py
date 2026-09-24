@@ -70,6 +70,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import unicodedata
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -590,6 +591,10 @@ AUDIT_WARNINGS: frozenset[str] = frozenset({
 })
 
 
+#: A target option line in the retired ``N) label`` format.
+_CODED_OPTION = re.compile(r"^-?\d+\) ")
+
+
 def _strip(text: str) -> str:
     return unicodedata.normalize("NFKC", text).strip().lower()
 
@@ -616,6 +621,8 @@ def audit_examples(
         "context_is_test_item": [],
         "bad_message_shape": [],
         "answer_not_an_option": [],
+        "answer_does_not_match_code": [],
+        "target_option_has_code": [],
         "context_line_count": [],
         "duplicate_pair": [],
         "context_label_matches_target_label": [],
@@ -655,8 +662,18 @@ def audit_examples(
             continue
 
         item = specs[key]
-        if messages[2]["content"] not in {opt.code for opt in item.options}:
+        # The assistant turn is an option's rendered text, listed verbatim in
+        # the prompt, and it parses back to the recorded answer code.
+        answer = messages[2]["content"]
+        if answer not in {opt.text for opt in item.options}:
             problems["answer_not_an_option"].append(ident)
+        if item.match_answer(answer) != str(row["answer_code"]):
+            problems["answer_does_not_match_code"].append(ident)
+        option_lines = (messages[1]["content"].rsplit("\nOptions :\n", 1)[-1]
+                        .split("\n\n")[0].split("\n"))
+        if any(_CODED_OPTION.match(l) for l in option_lines) or \
+                option_lines != [opt.render() for opt in item.options]:
+            problems["target_option_has_code"].append(ident)
 
         used = ([] if condition == "C0"
                 else [tuple(k) for k in json.loads(row["context_used"])])

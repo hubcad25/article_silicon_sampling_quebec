@@ -13,8 +13,19 @@ What the template renders
             explicit ``Population: Québec / Canada`` field (§3.3, neutralises
             the language x population confound).
 ``user``    the optional context block (C1 or C2) + the target item, verbatim,
-            with its options.
-``assistant`` the **code** of the chosen modality (training target only).
+            with its options listed **without codes** (``- <label>``).
+``assistant`` the **text** of the chosen modality, exactly as listed
+            (training target only).
+
+Why text and not the code. The same content carries many codes across the
+corpus ("Ne sais pas" alone has 18: -9, 3, 8, 98, 99, 998…), so a code target
+ties what is learnt to one questionnaire's numbering and blocks transfer to
+unseen items; code / symbol biases would also inflate the fine-tuned vs
+roleplay contrast; and C1 context lines already show answers as label text.
+Every rendered label is therefore unique within its item
+(:meth:`ItemSpec.__post_init__` merges duplicate labels), and a model output
+is mapped back to an option by :meth:`ItemSpec.match_answer` — exact or
+normalised match only, never a fuzzy guess.
 
 Refusal merge. The modalities rendered here are the ones of
 ``items.parquet``, where ``corpus.perimeter.merge_refusal_options`` has already
@@ -97,6 +108,7 @@ __all__ = [
     "shorten_wording",
     "question_text_truncated",
     "label_speaks",
+    "normalise_answer",
     "CONTEXT_MAX_CHARS",
 ]
 
@@ -171,7 +183,7 @@ _TEXT: dict[str, dict[str, str]] = {
         "c2_head": "Réponses observées dans ton groupe à d'autres questions :",
         "question": "Question",
         "options": "Options",
-        "instruction": "Réponds uniquement par le numéro de l'option choisie.",
+        "instruction": "Réponds uniquement par le texte exact de l'option choisie.",
         "population_qc": "Québec",
         "population_ca": "Canada",
     },
@@ -184,7 +196,7 @@ _TEXT: dict[str, dict[str, str]] = {
         "c2_head": "Answers observed in your group to other questions:",
         "question": "Question",
         "options": "Options",
-        "instruction": "Answer with the number of the chosen option only.",
+        "instruction": "Answer with the exact text of the chosen option only.",
         "population_qc": "Quebec",
         "population_ca": "Canada",
     },
@@ -197,13 +209,69 @@ _TEXT: dict[str, dict[str, str]] = {
 
 @dataclass(frozen=True)
 class Option:
-    """One response modality, verbatim. ``code`` is what the model must emit."""
+    """One response modality, verbatim.
+
+    ``code`` identifies the modality in the microdata and is never shown to the
+    model. ``text`` is what the prompt lists and what the model must emit.
+    """
 
     code: str
     label: str
 
+    @property
+    def text(self) -> str:
+        """The label as rendered and as expected back: mojibake repaired,
+        whitespace collapsed, otherwise verbatim (``1 - greatly
+        deteriorated`` and a bare ``2`` stay as they are)."""
+        return " ".join(repair_mojibake(self.label).split())
+
     def render(self) -> str:
-        return f"{self.code}) {repair_mojibake(self.label)}"
+        return f"- {self.text}"
+
+
+#: Stripped from both ends of a label / model output by :func:`normalise_answer`.
+_ANSWER_LEAD = re.compile(r"^(?:[\s\"'«»“”‘’`]|[-*•]\s)+")
+_ANSWER_TRAIL = re.compile(r"[\s\"'«»“”‘’`.,;:!?]+$")
+
+
+def normalise_answer(text: str | None) -> str:
+    """The key an answer is compared on when it is not an exact match.
+
+    NFKC, casefold, whitespace collapsed, then surrounding quotes stripped, a
+    leading list bullet (``- ``, copied from the option list) dropped, and
+    trailing punctuation (``.``, ``!``, ``:``…) removed. Nothing else: no
+    stemming, no edit distance. Option labels are made unique on this very key
+    (:meth:`ItemSpec.__post_init__`), so a normalised match is unambiguous.
+    """
+    text = unicodedata.normalize("NFKC", str(text or "")).casefold()
+    text = " ".join(text.split())
+    text = _ANSWER_LEAD.sub("", text)
+    text = _ANSWER_TRAIL.sub("", text)
+    return text
+
+
+def merge_duplicate_labels(options: Sequence[Option],
+                           ) -> tuple[tuple[Option, ...], dict[str, str]]:
+    """Collapse options whose rendered labels coincide (:func:`normalise_answer`).
+
+    Two options with the same label cannot be told apart by a text answer
+    (``eeq_2018`` q53/q54 offer ``Je ne sais pas`` as both 3 and 98). Same rule
+    as the refusal merge: the first code in questionnaire order is kept, the
+    others are mapped onto it. Returns the surviving options and the
+    ``dropped code -> kept code`` map.
+    """
+    kept: list[Option] = []
+    first: dict[str, str] = {}
+    remap: dict[str, str] = {}
+    for opt in options:
+        key = normalise_answer(opt.text)
+        if key in first:
+            if opt.code != first[key]:
+                remap[opt.code] = first[key]
+            continue
+        first[key] = opt.code
+        kept.append(opt)
+    return tuple(kept), remap
 
 
 @dataclass(frozen=True)
@@ -234,6 +302,19 @@ class ItemSpec:
     #: prompt AND in the observed distribution, or the two describe different
     #: partitions of the same item.
     code_map: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        # Duplicate-label merge (see :func:`merge_duplicate_labels`), folded
+        # into ``code_map`` so that ``canonical_code`` — hence the prompt, the
+        # training target and every observed distribution — uses the merged
+        # partition. Idempotent: rebuilding a spec from its own fields is a no-op.
+        options, remap = merge_duplicate_labels(self.options)
+        if not remap:
+            return
+        code_map = {raw: remap.get(kept, kept) for raw, kept in self.code_map}
+        code_map.update(remap)
+        object.__setattr__(self, "options", options)
+        object.__setattr__(self, "code_map", tuple(sorted(code_map.items())))
 
     @property
     def key(self) -> tuple[str, str]:
@@ -279,6 +360,37 @@ class ItemSpec:
         for opt in self.options:
             if opt.code == code:
                 return opt.label
+        return None
+
+    def answer_text(self, code: Any) -> str | None:
+        """The training target for a raw code: the option's rendered text,
+        exactly the string listed in the prompt (``None`` if not offered)."""
+        code = self.canonical_code(code)
+        for opt in self.options:
+            if opt.code == code:
+                return opt.text
+        return None
+
+    def match_answer(self, text: str | None) -> str | None:
+        """Map a model output back to an option code, or ``None``.
+
+        Exact match on the rendered text first, then a match on
+        :func:`normalise_answer`. Never a fuzzy guess: anything else — a code,
+        a paraphrase, two options — is ``None`` and must be counted as an
+        invalid answer by the caller, not silently reassigned.
+        """
+        if text is None:
+            return None
+        text = str(text)
+        for opt in self.options:
+            if text == opt.text:
+                return opt.code
+        key = normalise_answer(text)
+        if not key:
+            return None
+        for opt in self.options:
+            if key == normalise_answer(opt.text):
+                return opt.code
         return None
 
     @classmethod
@@ -1142,7 +1254,15 @@ class PromptTemplate:
                       rng: random.Random | None = None,
                       dimensions: Sequence[str] | None = None,
                       ) -> dict[str, list[dict[str, str]]]:
-        """A full chat training example; the assistant turn is the raw code."""
+        """A full chat training example.
+
+        The assistant turn is the chosen option's rendered text — the exact
+        string listed in the prompt — looked up after the refusal and
+        duplicate-label merges (:meth:`ItemSpec.answer_text`).
+        """
+        answer = target.answer_text(answer_code)
+        if answer is None:
+            raise ValueError(f"code {answer_code!r} is not an option of {target.key}")
         messages = self.build_messages(persona, target, context, rng, dimensions)
-        messages.append({"role": "assistant", "content": str(answer_code)})
+        messages.append({"role": "assistant", "content": answer})
         return {"messages": messages}

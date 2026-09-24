@@ -1,0 +1,11 @@
+[16:04:53] pending | trained_tokens=None
+[16:13:57] running | trained_tokens=None
+[16:50:17] cancelled | trained_tokens=None
+{
+ "status": "cancelled",
+ "fine_tuned_model": null,
+ "trained_tokens": null,
+ "created_at": 1790280285,
+ "finished_at": 1790282991,
+ "error": null
+}

@@ -1,6 +1,6 @@
 # Plan de recherche — Échantillonnage silicone par strate, ancré sur un corpus de sondages
 
-**Version** : 2026-09-24 · **Statut** : split gelé, datasets générés, 3 correctifs de rendu à finir avant le premier run
+**Version** : 2026-09-24 · **Statut** : split gelé ; datasets régénérés au format **réponse = texte de l'option** ; runs 1-2 (format code) écartés, runs à relancer
 
 ---
 
@@ -52,7 +52,44 @@ portail (CA$ 907) n'avait pas bougé plusieurs heures après, et l'API de consom
 vides sur l'abonnement sponsorisé. Pire cas (×3 le tarif Qwen) sur les 3 runs restants ≈ CA$ 290 < solde.
 Le delta couvrira les runs 1+2 ensemble : répartir au prorata des `trained_tokens`.
 
-### Test rapide du modèle C0 8k — 24 septembre (validation, pas test)
+### 🔁 Changement de format — 24 septembre : le modèle répond par le **texte** de l'option, plus par son code
+**Décision (ne pas rouvrir).** Les options de l'item cible sont listées **sans code** (`- Le Parti Québécois`, ordre du
+questionnaire, hygiène habituelle : mojibake réparé, espaces réduits) ; consigne FR « Réponds uniquement par le texte
+exact de l'option choisie. » / EN « Answer with the exact text of the chosen option only. » ; le tour assistant est le
+libellé rendu de l'option choisie (après `canonical_code`, fusion des refus comprise).
+Pourquoi : un même contenu porte des codes différents d'un item à l'autre (« Ne sais pas » : 18 codes ; PLQ : 5), une
+cible-code empêche le transfert vers des items inédits — la question centrale — et ses biais de symbole gonfleraient le
+contraste FT vs roleplay ; les lignes de contexte C1 montraient déjà des libellés.
+- **Runs 1 et 2 écartés** (format code) : run 1 `ftjob-be22…` (C0 8k, succeeded, non déployé) ; run 2 `ftjob-61f3…`
+  (C0 20k) **annulé le 24 sept**. Les 4 runs sont à relancer sur les nouveaux fichiers.
+- **Split pré-enregistré inchangé** (`data/split/` non touché) ; paires, personas, abandon SES, contexte C1, graines :
+  identiques à l'octet près au build précédent (vérifié : seuls la liste d'options, la consigne et le tour assistant changent).
+- **Unicité des libellés** : fusion au rendu des options de même libellé (insensible casse/espaces/ponctuation de bord,
+  1er code gardé, les autres y sont repliés via `code_map` → prompt et distributions observées sur la même partition).
+  Seuls cas du corpus : `eeq_2018` q53 et q54 (`Je ne sais pas` en 3 **et** 98 → 98 replié sur 3). Ce sont des items
+  contexte-seulement ; ⚠️ le code 3 y pèse 41 % / 20 % des réponses, à vérifier au questionnaire (3 ≠ NSP ?).
+- **Parseur d'évaluation** : `ItemSpec.match_answer(texte) → code | None` — correspondance exacte, puis normalisée
+  (NFKC, casse, espaces, guillemets, puce `- ` recopiée, ponctuation finale). Jamais de correspondance floue : pas de
+  correspondance = réponse invalide, comptée comme telle.
+- **Métadonnées** : `data/datasets/pairs.csv` (compagnon de `pairs.parquet`), aligné ligne à ligne sur les JSONL :
+  `split` (validation / train), `row_index` (ligne dans son fichier ; 8k = préfixe du 20k), `answer_code`, `answer_label`…
+- Audit OK (0 violation, 0 avertissement) ; sur les fichiers : 0 tour assistant hors des libellés listés, 0 ligne
+  d'option `N) `, 0 ligne de contexte dans la mauvaise langue, 0 cible à préfixe, 0 mojibake ; régénération
+  byte-identique (11 artefacts, deux exécutions).
+
+**Tokens et coût (tokenizer Llama-3 exact, 5,50 $/M)** — les options sans code coûtent un peu moins :
+
+| Fichier | Tokens (texte) | $ US | Avant (code) |
+|---|---|---|---|
+| C0 8k | 1 344 243 | 7,39 | 1 358 206 · 7,47 |
+| C0 20k | 3 360 638 | 18,48 | 3 395 115 · 18,67 |
+| C1 8k | 2 617 866 | 14,40 | 2 631 829 · 14,48 |
+| C1 20k | 6 553 796 | 36,05 | 6 588 273 · 36,24 |
+| **4 runs** | **13 876 543** | **76,32** | 13 973 423 · 77,06 |
+
+Validation : C0 84 039 tok (0,46 $), C1 162 211 tok (0,89 $).
+
+### Test rapide du modèle C0 8k — 24 septembre (validation, pas test) — *format code, écarté*
 Déployé 16:11 → supprimé 16:16. Format appris : **100 % de codes valides** sur les appels aboutis ; pas
 d'effondrement à T=1 (5-6 modalités sur 20 tirages). Taux de réussite **non concluants** : ~1/3 des appels en
 429 comptés comme erreurs par la 1re version du script (corrigée : `scratch/quick_eval.py`, 3 fils, 429 exclus,
@@ -63,7 +100,8 @@ réponses sauvegardées dans `logs/quick_eval_<dep>.json`).
 avec `CallFailed` plutôt que de perdre le tirage — un tirage perdu biaise la distribution et réduit N en silence.
 
 ### Ensuite
-1. Premier run : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).
+1. Premier run **au format texte** : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).
+   L'évaluation lit les sorties avec `ItemSpec.match_answer` (sortie non appariée = invalide, jamais réattribuée).
    **Relever le solde Azure credits juste avant et après** (CA$ 907,63 au dernier relevé) — seul
    moyen de connaître le prix réel du fine-tuning 70B, non publié.
 2. Ajuster puis lancer les 3 autres runs **en séquence**.
