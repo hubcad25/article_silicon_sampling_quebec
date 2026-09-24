@@ -36,6 +36,11 @@ Vérifiés sur le corpus et sur les JSONL régénérés (tests : `tests/test_wor
 Datasets régénérés, audit OK, régénération byte-identique. Coût révisé : **4 runs ≈ 14,0 M tokens ≈ 77 $ US**
 (C0 8k 7,5 $ · C0 20k 18,7 $ · C1 8k 14,5 $ · C1 20k 36,2 $).
 
+### 🚀 Run 1 lancé — 24 septembre
+`ftjob-be22287553734e58bf9d0c8ae0b3e4b2` · C0 8k · Llama-3.3-70B-Instruct-9 · 1 époque, batch 64, LR ×1,
+seed 20260924 · suffixe `c0-8k`. Fichiers : train `file-2aa8d829…`, valid `file-083865c3…`.
+**Solde avant : CA$ 907** (relevé portail). Solde après : _à relever_. Suivi : `python scratch/watch_job.py <job>`.
+
 ### Ensuite
 1. Premier run : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).
    **Relever le solde Azure credits juste avant et après** (CA$ 907,63 au dernier relevé) — seul
