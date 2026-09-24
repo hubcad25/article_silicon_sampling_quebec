@@ -39,7 +39,11 @@ Datasets régénérés, audit OK, régénération byte-identique. Coût révisé
 ### 🚀 Run 1 lancé — 24 septembre
 `ftjob-be22287553734e58bf9d0c8ae0b3e4b2` · C0 8k · Llama-3.3-70B-Instruct-9 · 1 époque, batch 64, LR ×1,
 seed 20260924 · suffixe `c0-8k`. Fichiers : train `file-2aa8d829…`, valid `file-083865c3…`.
-**Solde avant : CA$ 907** (relevé portail). Solde après : _à relever_. Suivi : `python scratch/watch_job.py <job>`.
+**Solde avant : CA$ 907** (relevé portail). Solde après : _à relever (le portail peut accuser quelques heures de retard)_.
+**Succeeded** — 13:40 soumis, 13:48 running, 14:49 terminé (~61 min de calcul). `trained_tokens` = **1 336 671**
+(estimé 1 358 206). Modèle : `Llama-3.3-70B-Instruct-9.ft-be22287553734e58bf9d0c8ae0b3e4b2-c0-8k` (non déployé).
+Loss : train 4,68 → ~0,8 dès le pas 16 puis plateau 0,66-0,82 ; moyenne 0,816 ; **eval 0,716** (fin). Métriques :
+`logs/ft_c0_8k_metrics.csv`. Suivi : `python scratch/watch_job.py <job>`.
 
 ### Ensuite
 1. Premier run : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).

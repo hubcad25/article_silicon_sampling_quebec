@@ -1,0 +1,11 @@
+[13:40:52] pending | trained_tokens=None
+[13:47:59] running | trained_tokens=None
+[14:49:09] succeeded | trained_tokens=1336671
+{
+ "status": "succeeded",
+ "fine_tuned_model": "Llama-3.3-70B-Instruct-9.ft-be22287553734e58bf9d0c8ae0b3e4b2-c0-8k",
+ "trained_tokens": 1336671,
+ "created_at": 1790271645,
+ "finished_at": 1790275736,
+ "error": null
+}
