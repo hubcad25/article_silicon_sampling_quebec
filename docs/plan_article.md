@@ -57,6 +57,10 @@ Déployé 16:11 → supprimé 16:16. Format appris : **100 % de codes valides** 
 d'effondrement à T=1 (5-6 modalités sur 20 tirages). Taux de réussite **non concluants** : ~1/3 des appels en
 429 comptés comme erreurs par la 1re version du script (corrigée : `scratch/quick_eval.py`, 3 fils, 429 exclus,
 réponses sauvegardées dans `logs/quick_eval_<dep>.json`).
+**Règle pour la phase 5 : aucun tirage n'est jamais sauté.** Tout appel passe par
+`foundry.FoundryChat` : les 429 et erreurs passagères sont réessayés (backoff exponentiel plafonné à
+60 s, `Retry-After` respecté, jitter) ; après 15 min d'attente pour un même appel, le run **s'arrête**
+avec `CallFailed` plutôt que de perdre le tirage — un tirage perdu biaise la distribution et réduit N en silence.
 
 ### Ensuite
 1. Premier run : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).
