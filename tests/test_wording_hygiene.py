@@ -165,3 +165,38 @@ def test_has_mojibake_and_option_render():
 
 def test_clean_wording_combines_all_three():
     assert clean_wording("rts_q1. A` chaque élection", "rts_q1") == "À chaque élection"
+
+
+# ---------------- codes glued to labels ----------------
+
+from article_silicon_sampling_quebec.prompts import numeric_scale, strip_code_prefixes
+
+
+def test_code_prefix_equal_to_the_code_is_stripped():
+    opts = (Option("-9", "(-9) Don't know"), Option("1", "(1) Liberal (Grits)"),
+            Option("2", "2. Conservative Party"), Option("3", "3 - stayed the same"))
+    assert [o.label for o in strip_code_prefixes(opts)] == \
+        ["Don't know", "Liberal (Grits)", "Conservative Party", "3 - stayed the same"]
+
+
+def test_prefix_that_is_not_the_code_is_kept():
+    opts = (Option("1", "2. Something"),)
+    assert strip_code_prefixes(opts) == opts
+
+
+def test_numbered_scale_keeps_its_numbers():
+    opts = (Option("-9", "(-9) Don't know"), Option("0", "(0) No interest at all"),
+            Option("1", "(1)"), Option("2", "(2)"), Option("3", "(3) Great deal"))
+    spec = ItemSpec("s", "q9", "Interest?", opts)
+    assert [o.text for o in spec.options] == \
+        ["Don't know", "0 - No interest at all", "1", "2", "3 - Great deal"]
+    scale = numeric_scale(spec)
+    assert (scale.low, scale.high, scale.low_anchor, scale.high_anchor) == \
+        (0, 3, "No interest at all", "Great deal")
+
+
+def test_code_prefix_strip_is_idempotent_and_feeds_the_duplicate_merge():
+    spec = ItemSpec("s", "v", "Q?", (Option("1", "(1) Yes"), Option("2", "(2) Yes")))
+    assert [o.text for o in spec.options] == ["Yes"] and spec.canonical_code("2") == "1"
+    again = ItemSpec(**spec.__dict__)
+    assert again.options == spec.options

@@ -135,6 +135,21 @@ KMEANS_ITERATIONS = 40
 CONDITIONS: tuple[str, ...] = ("C0", "C1")
 LANGUAGES: tuple[str, ...] = ("en", "fr")
 
+#: Language each CES respondent actually answered in, and the raw values of
+#: it that mean French. The catalogue stores the CES in English only, yet
+#: 72-89 % of their Quebec respondents answered in French: a prompt in the
+#: language the respondent never read would make the wording — the
+#: independent variable — wrong for most of the Quebec cells.
+RESPONSE_LANGUAGE: dict[str, tuple[str, frozenset[str]]] = {
+    "ces_2019_online": ("cps19_Q_Language", frozenset({"FR-CA"})),
+    "ces_2019_phone": ("language_CES", frozenset({"2"})),
+    "ces_2021": ("UserLanguage", frozenset({"FR-CA"})),
+    "ces_2025": ("cps25_UserLanguage", frozenset({"FR-CA"})),
+}
+
+#: French wording of the CES items (scripts/17_extract_ces_french_wording.py).
+FRENCH_WORDING_PATH = _REPO / "data" / "ces_french_wording.json"
+
 
 # --------------------------------------------------------------------------
 # Allocation
@@ -175,7 +190,8 @@ def allocate_pairs(
     capacity: Mapping[ItemKey, int],
     total: int,
     levels: Sequence[str] = ("language", "survey_id", "theme"),
-) -> dict[ItemKey, int]:
+    key_columns: Sequence[str] = ("survey_id", "variable"),
+) -> dict[tuple[str, ...], int]:
     """Quota of pairs per item, balanced down `levels` then across items.
 
     `items` needs ``survey_id``, ``variable`` and one column per level.
@@ -183,7 +199,7 @@ def allocate_pairs(
     """
     rows = [
         {
-            "key": (row["survey_id"], row["variable"]),
+            "key": tuple(row[c] for c in key_columns),
             **{lv: str(row[lv]) for lv in levels},
         }
         for row in items.iter_rows(named=True)
@@ -281,6 +297,90 @@ def theme_labels(
 
 
 # --------------------------------------------------------------------------
+# Items in the respondent's language
+# --------------------------------------------------------------------------
+
+
+#: The write-in line printed after "Autre (spécifier) :" in the French phone
+#: questionnaire — layout, not wording.
+_FILL_IN_BLANK = re.compile(r"\s*:?\s*_{3,}\s*$")
+
+
+def french_item_rows(items: pl.DataFrame,
+                     path: Path = FRENCH_WORDING_PATH) -> list[dict[str, Any]]:
+    """``items.parquet``-shaped rows for the CES items fully available in French.
+
+    Only ``status == "complete"`` entries: the French question **and** a French
+    label for every option code of the English item. Anything less and the
+    pair is dropped for French respondents rather than shown in English
+    (decision of 24 Sept.: the corpus is large enough to be selective). Codes,
+    option order, ``code_map`` and year are the English item's — only the words
+    change.
+    """
+    if not path.exists():
+        return []
+    french = json.loads(path.read_text(encoding="utf-8"))
+    rows = []
+    for row in items.iter_rows(named=True):
+        entry = french.get(row["survey_id"], {}).get(row["variable"])
+        if not entry or entry.get("status") != "complete":
+            continue
+        labels = entry["options_fr"]
+        options = json.loads(row["options"]) if isinstance(row["options"], str) else row["options"]
+        if any(str(o["code"]) not in labels for o in options):
+            continue
+        rows.append({
+            **row,
+            "question_text": entry["question_text_fr"],
+            "question_text_source": "questionnaire_fr",
+            "display_label": None,
+            "language": "fr",
+            "options": json.dumps([{"code": o["code"],
+                                    "label": _FILL_IN_BLANK.sub("", labels[str(o["code"])])}
+                                   for o in options], ensure_ascii=False),
+        })
+    return rows
+
+
+class SpecSet(Mapping):
+    """Item specs by key, with per-language variants.
+
+    Indexing by key gives the item in its catalogue language, as before;
+    :meth:`for_language` gives the version a respondent of that language saw,
+    or ``None`` when that version is not available — the caller then drops the
+    pair, it never falls back to the other language.
+    """
+
+    def __init__(self, base: Mapping[ItemKey, ItemSpec],
+                 variants: Mapping[str, Mapping[ItemKey, ItemSpec]] | None = None):
+        self.base = dict(base)
+        self.variants = {lang: dict(v) for lang, v in (variants or {}).items()}
+
+    def __getitem__(self, key: ItemKey) -> ItemSpec:
+        return self.base[key]
+
+    def __iter__(self):
+        return iter(self.base)
+
+    def __len__(self) -> int:
+        return len(self.base)
+
+    def for_language(self, key: ItemKey, language: str | None) -> ItemSpec | None:
+        spec = self.base.get(key)
+        if spec is None or language is None or language == spec.language:
+            return spec
+        return self.variants.get(language, {}).get(key)
+
+
+def spec_for(specs: Mapping[ItemKey, ItemSpec], key: ItemKey,
+             language: str | None) -> ItemSpec | None:
+    """Language-aware lookup that also accepts a plain mapping (tests)."""
+    if isinstance(specs, SpecSet):
+        return specs.for_language(key, language)
+    return specs.get(key)
+
+
+# --------------------------------------------------------------------------
 # Microdata access
 # --------------------------------------------------------------------------
 
@@ -341,6 +441,23 @@ class SurveyPanel:
         self._columns = set(self.raw.columns)
         self._codes: dict[str, list[str | None]] = {}
         self._personas: dict[int, Persona] = {}
+        self._languages: list[str | None] | None = None
+        spec = RESPONSE_LANGUAGE.get(survey_id)
+        if spec and spec[0] in self._columns:
+            french = spec[1]
+            self._languages = [
+                None if (c := normalise_code(v)) is None else ("fr" if c in french else "en")
+                for v in self.raw[spec[0]]
+            ]
+
+    # -- language --------------------------------------------------------
+
+    def response_language(self, row: int, default: str) -> str:
+        """Language this respondent answered in; `default` where the survey
+        has a single language (or the value is missing)."""
+        if self._languages is None:
+            return default
+        return self._languages[row] or default
 
     # -- answers ---------------------------------------------------------
 
@@ -354,22 +471,39 @@ class SurveyPanel:
             self._codes[variable] = cached
         return cached
 
-    def eligible_rows(self, item: ItemSpec) -> np.ndarray:
+    def eligible_rows(self, item: ItemSpec,
+                      specs: Mapping[ItemKey, ItemSpec] | None = None,
+                      language: str | None = None) -> np.ndarray:
         """Training respondents with a valid answer to `item`, as row indices.
 
         "Valid" means the raw code folds (refusal merge included) onto a
         modality the prompt actually offers. A respondent who did not answer
-        the target item never produces an example.
+        the target item never produces an example. With `specs`, a respondent
+        whose response language has no complete version of the item is left
+        out too (never shown the other language's wording).
         """
         codes = self.codes(item.variable)
-        offered = {opt.code for opt in item.options}
-        return np.array(
-            [
-                i for i in self.training_rows
-                if (c := item.canonical_code(codes[i])) is not None and c in offered
-            ],
-            dtype=np.int64,
-        )
+        localized: dict[str, ItemSpec | None] = {}
+
+        def version(row: int) -> ItemSpec | None:
+            if specs is None:
+                return item
+            lang = self.response_language(row, item.language)
+            if lang not in localized:
+                localized[lang] = spec_for(specs, item.key, lang)
+            return localized[lang]
+
+        out = []
+        for i in self.training_rows:
+            if language is not None and self.response_language(int(i), item.language) != language:
+                continue
+            spec = version(int(i))
+            if spec is None:
+                continue
+            c = spec.canonical_code(codes[i])
+            if c is not None and c in {opt.code for opt in spec.options}:
+                out.append(i)
+        return np.array(out, dtype=np.int64)
 
     def answer(self, row: int, item: ItemSpec) -> str | None:
         return item.canonical_code(self.codes(item.variable)[row])
@@ -441,21 +575,25 @@ def sample_pairs(
 ) -> list[Pair]:
     """Draw the quota of distinct respondents for each item.
 
-    Deterministic: items are visited in sorted key order and each item's draw
-    comes from its own seeded generator, so a quota change on one item does
-    not reshuffle the others.
+    A quota key is ``(survey_id, variable)``, or ``(survey_id, variable,
+    language)`` when the allocation unit is the item *in one prompt language*
+    (a CES item and its French version are then two units). Deterministic:
+    units are visited in sorted order and each unit's draw comes from its own
+    seeded generator, so a quota change on one unit does not reshuffle the
+    others.
     """
     pairs: list[Pair] = []
-    for key in sorted(quotas):
-        quota = quotas[key]
+    for unit in sorted(quotas):
+        quota = quotas[unit]
         if quota <= 0:
             continue
+        key, language = tuple(unit[:2]), (unit[2] if len(unit) > 2 else None)
         panel = panels[key[0]]
         item = specs[key]
-        pool = panel.eligible_rows(item)
+        pool = panel.eligible_rows(item, specs, language=language)
         if pool.size == 0:
             continue
-        rng = np.random.default_rng(_stable_seed(seed, key[0], key[1]))
+        rng = np.random.default_rng(_stable_seed(seed, *unit))
         take = min(quota, pool.size)
         chosen = rng.choice(pool, size=take, replace=False)
         for row in sorted(int(r) for r in chosen):
@@ -468,7 +606,7 @@ def sample_pairs(
                     variable=key[1],
                     respondent_id=panel.rids[row],
                     row=row,
-                    language=item.language,
+                    language=panel.response_language(row, item.language),
                     theme=themes.get(key, "theme_na"),
                     answer_code=answer,
                 )
@@ -500,10 +638,12 @@ def context_answers(
     20 500-pair draw: 39 pairs over 4 target items hit the target-identical
     case, 1 163 pairs had a duplicated line.
     """
-    target = specs.get(pair.key)
+    target = spec_for(specs, pair.key, pair.language)
     out: list[ContextAnswer] = []
     for nkey, _cos in pair.context:
-        spec = specs.get(nkey)
+        # In the respondent's language, like the target: a neighbour with no
+        # complete version in that language is dropped, not shown translated.
+        spec = spec_for(specs, nkey, pair.language)
         if spec is None:
             continue
         code = panel.answer(pair.row, spec)
@@ -525,7 +665,9 @@ def render(
     seed: int,
 ) -> dict[str, Any]:
     """One chat example plus the metadata the audit needs."""
-    item = specs[pair.key]
+    item = spec_for(specs, pair.key, pair.language)
+    if item is None:  # pragma: no cover - sample_pairs never draws such a pair
+        raise ValueError(f"no {pair.language} version of {pair.key}")
     persona = panel.persona(pair.row, item.language)
     # One dropout draw per pair, shared by the conditions: the C0/C1 delta is
     # the context block and nothing else (§2.7 dropout, §2.2 contrast).
@@ -630,6 +772,7 @@ def audit_examples(
         "variable_prefix_in_wording": [],
         "mojibake": [],
         "context_line_wrong_language": [],
+        "prompt_not_in_response_language": [],
     }
     seen: set[tuple[str, str, str]] = set()
     rows = meta.to_dicts()
@@ -661,7 +804,16 @@ def audit_examples(
             problems["bad_message_shape"].append(ident)
             continue
 
-        item = specs[key]
+        language = row.get("language")
+        item = spec_for(specs, key, language)
+        if item is None:
+            problems["prompt_not_in_response_language"].append((ident, language))
+            continue
+        # The prompt speaks the language the respondent answered in (CES
+        # French respondents included), never the catalogue's by default.
+        if messages[0]["content"].startswith("Tu es") != (item.language == "fr") or \
+                (language is not None and item.language != language):
+            problems["prompt_not_in_response_language"].append((ident, language))
         # The assistant turn is an option's rendered text, listed verbatim in
         # the prompt, and it parses back to the recorded answer code.
         answer = messages[2]["content"]
@@ -704,7 +856,11 @@ def audit_examples(
             problems["duplicate_context_line"].append(ident)
         target_label = _strip(item.context_text)
         for nkey in used:
-            if target_label and _strip(specs[nkey].context_text) == target_label:
+            nspec = spec_for(specs, nkey, language)
+            if nspec is None:
+                problems["prompt_not_in_response_language"].append((ident, nkey))
+                continue
+            if target_label and _strip(nspec.context_text) == target_label:
                 problems["context_label_matches_target_label"].append((ident, nkey))
 
         # Wording hygiene, read back from the rendered text: no column name in

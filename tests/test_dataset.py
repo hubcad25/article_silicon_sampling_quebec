@@ -158,12 +158,21 @@ class FakePanel:
         }
         self.training_rows = np.array([0, 1, 2, 3, 4], dtype=np.int64)  # 5 is held out
 
-    def eligible_rows(self, item):
-        offered = {o.code for o in item.options}
-        return np.array(
-            [i for i in self.training_rows
-             if self.answers[item.variable][i] in offered], dtype=np.int64
-        )
+    languages = None  # single-language survey unless a test sets it
+
+    def response_language(self, row, default):
+        return self.languages[row] if self.languages else default
+
+    def eligible_rows(self, item, specs=None, language=None):
+        out = []
+        for i in self.training_rows:
+            if language is not None and self.response_language(i, item.language) != language:
+                continue
+            spec = (ds.spec_for(specs, item.key, self.response_language(i, item.language))
+                    if specs is not None else item)
+            if spec is not None and self.answers[item.variable][i] in {o.code for o in spec.options}:
+                out.append(i)
+        return np.array(out, dtype=np.int64)
 
     def answer(self, row, item):
         return item.canonical_code(self.answers[item.variable][row])
@@ -321,11 +330,11 @@ def frozen() -> sp.Split:
 
 
 @pytest.fixture(scope="module")
-def specs(items) -> dict:
-    return {
-        (r["survey_id"], r["variable"]): ItemSpec.from_row(r)
-        for r in items.iter_rows(named=True)
-    }
+def specs(items) -> ds.SpecSet:
+    # Same construction as the generator: English catalogue + French CES.
+    from article_silicon_sampling_quebec.prompts import build_item_specs
+    return ds.SpecSet(build_item_specs(items.iter_rows(named=True)),
+                      {"fr": build_item_specs(ds.french_item_rows(items))})
 
 
 def _lines(name: str) -> list[dict]:
@@ -401,7 +410,7 @@ def test_target_answer_is_always_one_of_the_rendered_options(meta, specs):
     rows = _lines("c1_train_20000.jsonl")
     for example, row in zip(rows, meta.slice(ds.VALIDATION_SIZE).to_dicts(),
                             strict=False):
-        item = specs[(row["survey_id"], row["variable"])]
+        item = specs.for_language((row["survey_id"], row["variable"]), row["language"])
         answer = example["messages"][2]["content"]
         listed = example["messages"][1]["content"].rsplit("\nOptions :\n", 1)[1]
         assert answer in {o.text for o in item.options}
@@ -420,6 +429,9 @@ def test_no_target_option_carries_a_code():
                       .rsplit("\nOptions :\n", 1)[1].split("\n\n")[0])
             lines = listed.split("\n")
             assert all(l.startswith("- ") for l in lines), name
+            # nor a code glued to the label: "(1) Liberal", "1. Liberal Party"
+            glued = re.compile(r"^- (?:\(-?\d+\)|-?\d+[.)]\s)")
+            assert not any(glued.match(l) for l in lines), (name, lines)
             assert not any(coded.match(l) for l in lines), name
 
 
@@ -492,7 +504,10 @@ def test_the_sample_is_balanced_not_uniform(meta):
     """Uniform sampling would put >70 % of the pairs in the three big CES."""
     shares = (meta.group_by("survey_id").len()
               .with_columns(share=pl.col("len") / meta.height))
-    assert shares["share"].max() < 0.12
+    # A CES survey now draws in both language buckets (its French respondents
+    # see the French version): 2 050 EN + 694 FR = 13.4 % each. Still far from
+    # the >70 % a uniform draw would give the big CES.
+    assert shares["share"].max() < 0.15
     langs = meta.group_by("language").len()
     assert abs(langs["len"][0] - langs["len"][1]) / meta.height < 0.02
     assert meta["theme"].n_unique() >= 8
@@ -511,3 +526,42 @@ def test_the_manifest_pins_the_frozen_split_inputs(manifest):
     for path, digest in split_manifest["input_hashes"].items():
         if path in manifest["input_hashes"]:
             assert manifest["input_hashes"][path] == digest, path
+
+
+# --------------------------------------------------------------------------
+# CES respondents who answered in French
+# --------------------------------------------------------------------------
+
+
+def _bilingual(fake):
+    panel, base = fake
+    base = {k: ItemSpec(**{**v.__dict__, "language": "en"}) for k, v in base.items()}
+    french = {("s", "target"): ItemSpec(**{**base[("s", "target")].__dict__,
+                                           "text": "Question cible en français",
+                                           "options": (Option("1", "Oui"), Option("2", "Non")),
+                                           "language": "fr"})}
+    panel.languages = ["fr", "en", "fr", "en", "en", "fr"]
+    return panel, ds.SpecSet(base, {"fr": french})
+
+
+def test_french_respondents_get_the_french_version(fake):
+    panel, specs = _bilingual(fake)
+    pairs = ds.sample_pairs({("s", "target"): 10}, {"s": panel}, specs, {}, seed=1)
+    assert {p.respondent_id: p.language for p in pairs} == {"0": "fr", "1": "en", "2": "fr", "4": "en"}
+    templates = {"C0": PromptTemplate(condition="C0")}
+    for pair in pairs:
+        ex = ds.render(pair, "C0", panel, specs, templates, seed=1)["example"]["messages"]
+        assert ex[0]["content"].startswith("Tu es") == (pair.language == "fr")
+        assert ex[2]["content"] in ({"Oui", "Non"} if pair.language == "fr" else {"Yes", "No"})
+
+
+def test_french_respondent_is_dropped_when_no_french_version(fake):
+    panel, specs = _bilingual(fake)
+    pairs = ds.sample_pairs({("s", "near"): 10}, {"s": panel}, specs, {}, seed=1)
+    assert pairs and all(p.language == "en" for p in pairs)
+
+
+def test_context_neighbour_without_french_version_is_dropped(fake):
+    panel, specs = _bilingual(fake)
+    pair = ds.Pair("s", "target", "0", 0, "fr", "t", "1", context=((("s", "near"), 0.8),))
+    assert ds.context_answers(pair, panel, specs) == []

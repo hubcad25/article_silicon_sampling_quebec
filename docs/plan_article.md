@@ -1,6 +1,6 @@
 # Plan de recherche — Échantillonnage silicone par strate, ancré sur un corpus de sondages
 
-**Version** : 2026-09-24 · **Statut** : split gelé ; datasets régénérés au format **réponse = texte de l'option** ; runs 1-2 (format code) écartés, runs à relancer
+**Version** : 2026-09-24 · **Statut** : split gelé ; datasets régénérés (réponse = texte de l'option, **CES dans la langue de passation**) ; runs 1-2 écartés, runs à relancer
 
 ---
 
@@ -88,6 +88,33 @@ contraste FT vs roleplay ; les lignes de contexte C1 montraient déjà des libel
 | **4 runs** | **13 876 543** | **76,32** | 13 973 423 · 77,06 |
 
 Validation : C0 84 039 tok (0,46 $), C1 162 211 tok (0,89 $).
+
+### 🇫🇷 CES dans la langue de passation — 24 septembre (datasets régénérés)
+**Problème** : le catalogue ne stocke les 4 CES qu'en anglais, alors que ~16 800 répondants CES ont répondu
+en français (72-89 % des répondants CES du Québec). Tout le français était donc ≤ 2018 et tout 2019-2025 en
+anglais : langue et époque étaient confondues, et le wording montré n'était pas celui que les gens ont lu.
+
+**Correctif** :
+- Version française extraite pour 799/866 items CES (`scripts/17_extract_ces_french_wording.py` →
+  `data/ces_french_wording.json`) : codebooks 2019/2025 (EN puis FR), `.qsf` 2021, PDF FR 2019 téléphone.
+  « Complet » = question + libellé FR de **chaque** code.
+- Langue de passation par répondant (`cps19_Q_Language`, `language_CES`, `UserLanguage`, `cps25_UserLanguage`) ;
+  un répondant CES francophone voit l'item, le contexte C1 et le persona **en français**.
+- Pas de version FR complète → la paire est **exclue**, jamais montrée en anglais (idem pour une ligne de contexte).
+- Unité d'allocation = **item × langue du prompt** ; l'équilibre FR/EN (10 250 / 10 250) porte sur les prompts
+  réellement rendus. Un CES pèse 13,4 % (2 050 EN + 694 FR) ; 27 % des exemples FR viennent des CES 2019-2025.
+- Au passage : **codes collés aux libellés retirés** (`(1) Liberal (Grits)` ×109 items 2019 tél., `1. Liberal Party`
+  ×317 items 2025) — le préfixe n'est retiré que s'il égale le code ; sur une échelle numérotée le nombre reste
+  (`0 - No interest at all`, `1`…). Audit : règle dure `prompt_not_in_response_language`.
+
+**Amendement au plan de test (décidé avant toute évaluation, split inchangé)** : les 21 items de test CES
+2019 web / 2021 / 2025 sont évalués **par langue** — cellule FR (répondants francophones tenus à l'écart, prompt
+FR) et cellule EN — au niveau **âge × genre** (≈ 10-11 cellules FR ≥ 50 par sondage ; à âge × genre × scolarité,
+0-2 seulement). Les 6 items de 2019 téléphone restent EN seulement (345 FR tenus à l'écart, aucune cellule ≥ 50).
+L'analyse principale à 3 dimensions reste inchangée pour les cellules qui passent le seuil ; la comparaison FR/EN
+sur le même item et la même année est une analyse additionnelle.
+
+Coût révisé (4 runs) : C0 8k 7,12 $ · C0 20k 17,82 $ · C1 8k 13,78 $ · C1 20k 34,40 $ ≈ **73 $ US**.
 
 ### Test rapide du modèle C0 8k — 24 septembre (validation, pas test) — *format code, écarté*
 Déployé 16:11 → supprimé 16:16. Format appris : **100 % de codes valides** sur les appels aboutis ; pas

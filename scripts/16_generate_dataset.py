@@ -114,7 +114,13 @@ def build(cfg: ds.GeneratorConfig, verbose: bool = True):
     ]
     # Context lines are resolved over the whole table (collisions between
     # sibling items are invisible to a per-row build): build_item_specs.
-    specs = build_item_specs(items.iter_rows(named=True))
+    # CES items also exist in French, for the respondents who answered in
+    # French: resolved the same way, over the French table only.
+    french_rows = ds.french_item_rows(items)
+    specs = ds.SpecSet(build_item_specs(items.iter_rows(named=True)),
+                       {"fr": build_item_specs(french_rows)})
+    if verbose:
+        print(f"French CES versions: {len(french_rows)} items")
 
     targets = split.training_items(items).filter(pl.col("survey_id").is_in(list(cached)))
     targets = targets.filter(
@@ -142,24 +148,33 @@ def build(cfg: ds.GeneratorConfig, verbose: bool = True):
                   f"{panel.training_rows.size:>6} training "
                   f"({time.time() - t0:.1f}s)")
 
+    # Allocation unit = item x prompt language. A CES item and its French
+    # version are two units, so the language level balances the prompts the
+    # model actually reads, not the catalogue's language tag.
+    units = [(k, specs[k].language) for k in keys]
+    units += [(k, "fr") for k in keys
+              if specs[k].language != "fr" and specs.for_language(k, "fr") is not None]
+    units.sort()
     capacity = {
-        key: min(int(panels[key[0]].eligible_rows(specs[key]).size),
-                 cfg.max_pairs_per_item)
-        for key in keys
+        (k[0], k[1], lang): min(
+            int(panels[k[0]].eligible_rows(specs[k], specs, language=lang).size),
+            cfg.max_pairs_per_item)
+        for k, lang in units
     }
     frame = pl.DataFrame(
         {
-            "survey_id": [k[0] for k in keys],
-            "variable": [k[1] for k in keys],
-            "language": [specs[k].language for k in keys],
-            "theme": [themes[k] for k in keys],
+            "survey_id": [k[0] for k, _ in units],
+            "variable": [k[1] for k, _ in units],
+            "language": [lang for _, lang in units],
+            "theme": [themes[k] for k, _ in units],
         }
     )
-    quotas = ds.allocate_pairs(frame, capacity, cfg.total_pairs)
+    quotas = ds.allocate_pairs(frame, capacity, cfg.total_pairs,
+                               key_columns=("survey_id", "variable", "language"))
     if verbose:
         usable = sum(capacity.values())
         print(f"capacity {usable} pairs · allocated {sum(quotas.values())} "
-              f"over {len(quotas)} items")
+              f"over {len(quotas)} item x language units")
 
     pairs = ds.sample_pairs(quotas, panels, specs, themes, cfg.seed)
 

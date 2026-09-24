@@ -109,6 +109,7 @@ __all__ = [
     "question_text_truncated",
     "label_speaks",
     "normalise_answer",
+    "strip_code_prefixes",
     "CONTEXT_MAX_CHARS",
 ]
 
@@ -250,6 +251,57 @@ def normalise_answer(text: str | None) -> str:
     return text
 
 
+#: A label that starts with its own option code: ``(1) Liberal (Grits)``
+#: (ces_2019_phone), ``1. Liberal Party`` (ces_2025), ``(3)`` alone.
+_CODE_PREFIX = re.compile(r"^\(\s*(-?\d+)\s*\)\s*|^(-?\d+)[.)](?:\s+|$)")
+
+
+def strip_code_prefixes(options: Sequence[Option]) -> tuple[Option, ...]:
+    """Drop a label's leading copy of its own code; keep numbers that are content.
+
+    With text answers the code must never reach the model (109 items of
+    ces_2019_phone and all 317 of ces_2025 carry it). The prefix is removed
+    only when its number *is* the option's code, so ``1 - greatly
+    deteriorated`` or a party named ``1er choix`` are untouched.
+
+    On a numbered scale the number is the answer, not a code: a point left
+    empty by the strip (``(3)``) becomes the bare number ``3``, and a labelled
+    point of the same consecutive run keeps it as ``0 - No interest at all`` —
+    the ``N - anchor`` form the rest of the corpus already uses. Options outside
+    the run (``(-9) Don't know``) just lose the prefix. Idempotent.
+    """
+    rests: dict[str, str | None] = {}
+    for opt in options:
+        m = _CODE_PREFIX.match(opt.label)
+        if m and (m.group(1) or m.group(2)) == opt.code:
+            rest = opt.label[m.end():].strip()
+            rests[opt.code] = "" if rest == opt.code else rest
+        else:
+            rests[opt.code] = None
+    if all(r is None for r in rests.values()):
+        return tuple(options)
+    bare = [int(c) for c, r in rests.items() if r == "" and re.fullmatch(r"-?\d+", c)]
+    run: set[int] = set()
+    if bare:
+        numeric = {int(c) for c in rests if re.fullmatch(r"-?\d+", c)}
+        lo = hi = min(bare)
+        while lo - 1 in numeric:
+            lo -= 1
+        while hi + 1 in numeric:
+            hi += 1
+        run = set(range(lo, hi + 1))
+    out = []
+    for opt in options:
+        rest = rests[opt.code]
+        if rest is None:
+            out.append(opt)
+        elif re.fullmatch(r"-?\d+", opt.code) and int(opt.code) in run:
+            out.append(Option(opt.code, f"{opt.code} - {rest}" if rest else opt.code))
+        else:
+            out.append(Option(opt.code, rest or opt.code))
+    return tuple(out)
+
+
 def merge_duplicate_labels(options: Sequence[Option],
                            ) -> tuple[tuple[Option, ...], dict[str, str]]:
     """Collapse options whose rendered labels coincide (:func:`normalise_answer`).
@@ -308,6 +360,11 @@ class ItemSpec:
         # into ``code_map`` so that ``canonical_code`` — hence the prompt, the
         # training target and every observed distribution — uses the merged
         # partition. Idempotent: rebuilding a spec from its own fields is a no-op.
+        # Code prefixes go first, so that two options differing only by their
+        # code (``(1) Yes`` / ``(2) Yes``) are caught by the merge.
+        stripped = strip_code_prefixes(self.options)
+        if stripped != self.options:
+            object.__setattr__(self, "options", stripped)
         options, remap = merge_duplicate_labels(self.options)
         if not remap:
             return
