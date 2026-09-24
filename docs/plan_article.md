@@ -131,14 +131,20 @@ réponses sauvegardées dans `logs/quick_eval_<dep>.json`).
 60 s, `Retry-After` respecté, jitter) ; après 15 min d'attente pour un même appel, le run **s'arrête**
 avec `CallFailed` plutôt que de perdre le tirage — un tirage perdu biaise la distribution et réduit N en silence.
 
-### Ensuite
-1. Premier run **au format texte** : **C0 à 8 000 exemples** sur `Llama-3.3-70B-Instruct-9` (recette API plus bas).
-   L'évaluation lit les sorties avec `ItemSpec.match_answer` (sortie non appariée = invalide, jamais réattribuée).
-   **Relever le solde Azure credits juste avant et après** (CA$ 907,63 au dernier relevé) — seul
-   moyen de connaître le prix réel du fine-tuning 70B, non publié.
-2. Ajuster puis lancer les 3 autres runs **en séquence**.
-3. Phase 5 : évaluation (déploiement, 80 tirages par cellule, balayage de température, **supprimer
-   le déploiement immédiatement après**).
+### Ensuite (décidé le 24 septembre)
+1. **Ordre des runs : C0 8k puis C1 8k d'abord** — la première comparaison est **C0 vs C1 à 8 000 exemples**.
+   Les runs 20k viennent **après**, pas avant.
+   - C0 8k : `ftjob-0413559e867f42a59860f17f6153597b` (lancé 24 sept.).
+   - C1 8k : soumis **automatiquement** à la réussite de C0 8k par `scratch/chain_c1_8k.py`
+     (journal : `logs/ft_chain_c1_8k.log`, qui contient l'id du job C1). Vérifier ce journal en début de session.
+2. Puis **inférer avec les 2 modèles** (C0 8k, C1 8k). **L'évaluation (phase 5) n'est PAS gérée dans cette
+   session de travail** : Hubert la prend en charge séparément. Ne pas construire le harnais d'évaluation sans
+   qu'il le demande. Outils déjà prêts si besoin : `foundry.FoundryChat` (réessaie, ne saute jamais un tirage),
+   `ItemSpec.match_answer` (sortie non appariée = invalide), recette de déploiement (`--model-format Meta`,
+   `GlobalStandard`, supprimer le déploiement tout de suite après).
+3. **Note pour Justin** (`docs/note_justin.md`) : y ajouter les premiers résultats C0 vs C1 8k dès qu'ils
+   existent ; mettre à jour la section format (réponse en texte, CES dans la langue de passation).
+4. Relever le solde Azure credits : l'écart couvre le run 1 écarté, l'éventuel partiel du run 2 annulé, C0 8k et C1 8k.
 
 ---
 
