@@ -116,6 +116,11 @@ sur le même item et la même année est une analyse additionnelle.
 
 Coût révisé (4 runs) : C0 8k 7,12 $ · C0 20k 17,82 $ · C1 8k 13,78 $ · C1 20k 34,40 $ ≈ **73 $ US**.
 
+### 🚀 Run 1bis lancé — 24 septembre (format texte + CES bilingues)
+`ftjob-0413559e867f42a59860f17f6153597b` · C0 8k · Llama-3.3-70B-Instruct-9 · 1 époque, seed 20260924 ·
+suffixe `c0-8k-txt`. Train `file-f3d895e9…`, valid `file-84f67416…`. Suivi : `logs/ft_c0_8k_txt.log`.
+Solde : relever après ce run (il inclura aussi le run 1 écarté et l'éventuel partiel du run 2 annulé).
+
 ### Test rapide du modèle C0 8k — 24 septembre (validation, pas test) — *format code, écarté*
 Déployé 16:11 → supprimé 16:16. Format appris : **100 % de codes valides** sur les appels aboutis ; pas
 d'effondrement à T=1 (5-6 modalités sur 20 tirages). Taux de réussite **non concluants** : ~1/3 des appels en
