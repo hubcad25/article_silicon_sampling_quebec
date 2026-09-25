@@ -1,0 +1,4 @@
+[20:02:53] previous job succeeded
+201 data/datasets/c1_train_8000.jsonl file-523d21a7e4bc4937b5ef87d95179ebd1
+201 data/datasets/c1_validation.jsonl file-e73439026bc84e82a7c35c16aa32ed0c
+201 C1 8k job: ftjob-5dfdb814460746c69cf0ed69177d8608 pending None {"data/datasets/c1_train_8000.jsonl": "file-523d21a7e4bc4937b5ef87d95179ebd1", "data/datasets/c1_validation.jsonl": "file-e73439026bc84e82a7c35c16aa32ed0c"}

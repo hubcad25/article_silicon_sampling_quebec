@@ -131,6 +131,12 @@ réponses sauvegardées dans `logs/quick_eval_<dep>.json`).
 60 s, `Retry-After` respecté, jitter) ; après 15 min d'attente pour un même appel, le run **s'arrête**
 avec `CallFailed` plutôt que de perdre le tirage — un tirage perdu biaise la distribution et réduit N en silence.
 
+### Pilote du test — décidé le 24 septembre
+Premier test = **3 blocs × 4 items = 12 items** (identite_qc_federalisme, valeurs_sociales, partis_vote), 275 paires
+item × cellule, ~27 500 appels/modèle. Split inchangé. Détails, liste des items, réserves et consignes
+d'exécution : `docs/adr/0001-sous-ensemble-pilote-blocs-thematiques.md`. C1 8k soumis : `ftjob-5dfdb814…` ;
+C0 8k déployé sous `c0-8k-txt` (à supprimer après la campagne).
+
 ### Ensuite (décidé le 24 septembre)
 1. **Ordre des runs : C0 8k puis C1 8k d'abord** — la première comparaison est **C0 vs C1 à 8 000 exemples**.
    Les runs 20k viennent **après**, pas avant.
