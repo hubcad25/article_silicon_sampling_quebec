@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
-# Figures for the short methodological note to Justin.
+# Figures for the results note to Justin (pilot, 12 items, 5 arms + human reference).
 # Usage:
-#   Rscript scripts/24_plot_note_justin.R [input_dir] [output_dir] [temperature]
+#   Rscript scripts/24_plot_note_justin.R [input_dir] [output_dir]
 
 suppressPackageStartupMessages({
   library(dplyr)
@@ -12,16 +12,13 @@ suppressPackageStartupMessages({
   library(showtext)
   library(stringr)
   library(sysfonts)
+  library(tidyr)
 })
 
 args <- commandArgs(trailingOnly = TRUE)
-input_dir <- if (length(args) >= 1) args[[1]] else "data/analysis/fake"
-output_dir <- if (length(args) >= 2) args[[2]] else file.path(input_dir, "figures")
-selected_temperature <- if (length(args) >= 3) as.numeric(args[[3]]) else 1.0
-
-if (is.na(selected_temperature)) {
-  stop("The temperature argument must be numeric.", call. = FALSE)
-}
+input_dir <- if (length(args) >= 1) args[[1]] else "data/analysis"
+output_dir <- if (length(args) >= 2) args[[2]] else file.path(input_dir, "inference", "figures")
+primary_temperature <- 1.0
 
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -56,23 +53,25 @@ showtext::showtext_opts(dpi = 300)
 
 dashboard_colors <- list(
   green = "#00A087",
+  green_dark = "#287A69",
   red = "#f0695a",
   blue = "#0072B2",
-  yellow = "#E69F00"
+  yellow = "#E69F00",
+  grey = "#657278"
 )
 
-arm_order <- c("A", "B", "B0", "R")
-arm_labels <- c(
-  A = "A — méthode simple (fine-tunée)",
-  B = "B — stratégie enrichie (avec contexte)",
-  B0 = "B0 — stratégie enrichie sans contexte",
-  R = "R — modèle de base"
+# Codes in the analysis files -> names used in the note.
+arm_names <- c(
+  R = "Base", A = "Profil", B0 = "Voisins", BS = "Voisins+Cellule", B = "Fuite"
 )
+arm_order <- c("Base", "Profil", "Voisins", "Voisins+Cellule", "Fuite")
 arm_colors <- c(
-  A = dashboard_colors$blue,
-  B = dashboard_colors$green,
-  B0 = dashboard_colors$yellow,
-  R = dashboard_colors$red
+  Base = dashboard_colors$red,
+  Profil = dashboard_colors$blue,
+  Voisins = dashboard_colors$yellow,
+  `Voisins+Cellule` = dashboard_colors$green_dark,
+  Fuite = "grey70",
+  Humain = "grey20"
 )
 
 theme_dashboard_light <- function(base_size = 20, base_family = "nunito") {
@@ -99,158 +98,129 @@ theme_dashboard_light <- function(base_size = 20, base_family = "nunito") {
     )
 }
 
-read_required_csv <- function(filename, required_columns) {
+read_input <- function(filename) {
   path <- file.path(input_dir, filename)
   if (!file.exists(path)) stop("Missing input file: ", path, call. = FALSE)
-  data <- readr::read_csv(path, show_col_types = FALSE)
-  missing_columns <- setdiff(required_columns, names(data))
-  if (length(missing_columns) > 0) {
-    stop(
-      filename, " is missing required columns: ",
-      paste(missing_columns, collapse = ", "),
-      call. = FALSE
-    )
-  }
-  data
+  readr::read_csv(path, show_col_types = FALSE)
 }
 
-metric_summary <- read_required_csv(
-  "metric_summary.csv",
-  c("arm", "temperature", "mean_kl")
-) |>
-  filter(arm %in% arm_order) |>
-  mutate(arm = factor(arm, levels = arm_order))
+name_arm <- function(code) factor(arm_names[code], levels = arm_order)
+comma_number <- label_number(accuracy = 0.01, decimal.mark = ",", style_negative = "minus")
 
-arm_contrasts <- read_required_csv(
-  "arm_contrasts.csv",
-  c("contrast", "temperature", "mean_kl_difference", "ci_low", "ci_high")
-) |>
-  filter(dplyr::near(temperature, selected_temperature))
+human <- read_input("human_reference_summary.csv") |>
+  filter(scope == "all", arm == "human")
 
-if (nrow(metric_summary) == 0) {
-  stop("No recognized arms in metric_summary.csv.", call. = FALSE)
-}
-if (nrow(arm_contrasts) == 0) {
-  stop("No contrasts found at temperature ", selected_temperature, ".", call. = FALSE)
-}
+# 1. Distance by temperature, with the human floor as a band.
+by_temperature <- read_input("annex_temperature.csv") |>
+  filter(scope == "all", arm != "B") |>
+  mutate(arm = name_arm(arm))
 
-temperature_breaks <- sort(unique(metric_summary$temperature))
-
-p_kl <- ggplot(
-  metric_summary,
-  aes(x = temperature, y = mean_kl, color = arm, group = arm)
-) +
+p_temperature <- ggplot(by_temperature, aes(temperature, mean_tv, color = arm, group = arm)) +
+  annotate(
+    "rect", xmin = -Inf, xmax = Inf,
+    ymin = human$mean_tv_ci_low, ymax = human$mean_tv_ci_high,
+    fill = "grey88"
+  ) +
+  geom_hline(yintercept = human$mean_tv, color = "grey35", linetype = "dashed", linewidth = 0.7) +
+  annotate(
+    "text", x = 1.3, y = human$mean_tv_ci_low - 0.012, hjust = 1, vjust = 1,
+    label = "Humain : deux moitiés de vrais répondants", family = "nunito",
+    size = 5.5, color = "grey35"
+  ) +
   geom_line(linewidth = 0.9) +
   geom_point(size = 2.8) +
-  scale_color_manual(values = arm_colors, labels = arm_labels, drop = FALSE) +
-  scale_x_continuous(
-    breaks = temperature_breaks,
-    expand = expansion(mult = c(0.03, 0.03))
-  ) +
+  scale_color_manual(values = arm_colors, drop = TRUE) +
+  scale_x_continuous(breaks = c(0.3, 0.7, 1.0, 1.3), labels = comma_number) +
   scale_y_continuous(
-    labels = label_number(accuracy = 0.01, decimal.mark = ","),
-    expand = expansion(mult = c(0, 0.05))
+    labels = comma_number, limits = c(0, NA), expand = expansion(mult = c(0, 0.05))
   ) +
   labs(
-    title = "Quelle méthode reproduit le mieux les distributions observées?",
-    subtitle = str_wrap(
-      "Plus une courbe est basse, plus la distribution produite est fidèle aux réponses observées.",
-      width = 95
-    ),
-    x = "Température",
-    y = "KL moyenne\n",
-    color = NULL,
-    caption = str_wrap(
-      "Résultats simulés — répétition générale du pipeline; aucune performance réelle de modèle.",
-      width = 70
-    )
+    title = "Distance aux vrais répondants selon la température",
+    subtitle = "Variation totale moyenne, 12 items, 275 cellules. Plus bas = plus fidèle.",
+    x = "Température", y = "Variation totale\n", color = NULL
   ) +
-  guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
   theme_dashboard_light()
 
-contrast_order <- c("B - A", "B - B0", "A - R")
+# 2. Paired contrasts at T = 1.0.
 contrast_labels <- c(
-  "B - A" = "B − A : stratégie enrichie vs simple",
-  "B - B0" = "B − B0 : apport du contexte",
-  "A - R" = "A − R : apport du fine-tuning"
+  "A - R" = "Profil − Base",
+  "BS - B0" = "Voisins+Cellule − Voisins",
+  "BS - A" = "Voisins+Cellule − Profil",
+  "B - BS" = "Fuite − Voisins+Cellule"
 )
-arm_contrasts <- arm_contrasts |>
-  mutate(contrast = factor(contrast, levels = rev(contrast_order)))
+contrasts <- read_input("main_arm_contrasts.csv") |>
+  filter(contrast %in% names(contrast_labels))
+contrasts <- contrasts |>
+  mutate(label = factor(contrast_labels[contrast], levels = rev(contrast_labels))) |>
+  filter(!is.na(label))
 
-p_contrasts <- ggplot(
-  arm_contrasts,
-  aes(x = mean_kl_difference, y = contrast)
-) +
+p_contrasts <- ggplot(contrasts, aes(mean_tv_difference, label)) +
   geom_vline(xintercept = 0, color = "grey70", linewidth = 0.7) +
-  geom_errorbarh(
-    aes(xmin = ci_low, xmax = ci_high),
-    height = 0.16,
-    linewidth = 0.8,
-    color = "grey35"
-  ) +
+  geom_errorbarh(aes(xmin = tv_ci_low, xmax = tv_ci_high), height = 0.16,
+                 linewidth = 0.8, color = "grey35") +
   geom_point(size = 3.2, color = dashboard_colors$blue) +
-  annotate(
-    "text",
-    x = -Inf,
-    y = Inf,
-    label = "À gauche : premier bras meilleur",
-    hjust = 0,
-    vjust = 1,
-    size = 5.2,
-    family = "nunito",
-    color = "grey35"
-  ) +
-  annotate(
-    "text",
-    x = Inf,
-    y = Inf,
-    label = "À droite : second bras meilleur",
-    hjust = 1,
-    vjust = 1,
-    size = 5.2,
-    family = "nunito",
-    color = "grey35"
-  ) +
-  scale_x_continuous(
-    labels = label_number(accuracy = 0.01, decimal.mark = ",", style_negative = "minus"),
-    expand = expansion(mult = c(0.08, 0.08))
-  ) +
-  scale_y_discrete(
-    labels = contrast_labels,
-    expand = expansion(add = c(0.5, 1.15))
-  ) +
+  scale_x_continuous(labels = comma_number, expand = expansion(mult = c(0.08, 0.08))) +
   labs(
-    title = "Les trois comparaisons qui guident la décision",
-    subtitle = paste0(
-      "À température ",
-      format(selected_temperature, nsmall = 1, decimal.mark = ","),
-      " : différence moyenne de KL et intervalle à 95 %.\n",
-      "Pour B − A, un intervalle entièrement sous zéro favorise B."
-    ),
-    x = "Différence de KL (premier bras − second bras)",
-    y = "",
-    caption = str_wrap(
-      "Résultats simulés — répétition générale du pipeline; aucune performance réelle de modèle.",
-      width = 70
-    )
+    title = "Comparaisons appariées, température 1,0",
+    subtitle = "Différence de variation totale et IC 95 % (bootstrap apparié). Négatif = premier bras meilleur.",
+    x = "Différence de variation totale", y = NULL
   ) +
   theme_dashboard_light()
 
-ggsave(
-  file.path(output_dir, "kl_temperature.png"),
-  p_kl,
-  width = 12,
-  height = 6.2,
-  dpi = 300,
-  bg = "white"
+# 3. Per item: human floor, base, best fine-tuned arm, context arm.
+items <- read_input("test_blocks.csv") |>
+  filter(pilot) |>
+  select(item_idx, block, short_label)
+item_metrics <- read_input("item_metrics.csv") |>
+  filter(scope == "all", near(temperature, primary_temperature), arm %in% c("R", "A", "BS")) |>
+  transmute(item_idx, arm = as.character(name_arm(arm)), mean_tv)
+item_human <- read_input("human_reference_cells.csv") |>
+  group_by(item_idx) |>
+  summarise(mean_tv = mean(tv, na.rm = TRUE), .groups = "drop") |>
+  mutate(arm = "Humain")
+block_names <- c(
+  identite_qc_federalisme = "Identité et fédéralisme",
+  partis_vote = "Partis et vote",
+  valeurs_sociales = "Valeurs sociales"
 )
-ggsave(
-  file.path(output_dir, "contrastes_kl.png"),
-  p_contrasts,
-  width = 12,
-  height = 5.6,
-  dpi = 300,
-  bg = "white"
-)
+per_item <- bind_rows(item_metrics, item_human) |>
+  left_join(items, by = "item_idx") |>
+  mutate(
+    label = str_trunc(short_label, 48),
+    block = block_names[block],
+    arm = factor(arm, levels = c("Humain", "Profil", "Voisins+Cellule", "Base"))
+  )
+item_order <- per_item |>
+  filter(arm == "Profil") |>
+  arrange(mean_tv) |>
+  pull(label)
+per_item <- mutate(per_item, label = factor(label, levels = rev(item_order)))
+
+p_items <- ggplot(per_item, aes(mean_tv, label, color = arm, shape = arm)) +
+  geom_line(aes(group = label), color = "grey85", linewidth = 0.6) +
+  geom_point(size = 3.4) +
+  scale_color_manual(values = arm_colors) +
+  scale_shape_manual(values = c(Humain = 4, Profil = 16, `Voisins+Cellule` = 17, Base = 15)) +
+  scale_x_continuous(labels = comma_number, limits = c(0, 0.8), breaks = seq(0, 0.8, 0.2)) +
+  facet_wrap(~block, ncol = 1, scales = "free_y") +
+  labs(
+    title = "Résultats par item, température 1,0",
+    subtitle = "Variation totale moyenne sur les cellules de chaque item.",
+    x = "Variation totale", y = NULL, color = NULL, shape = NULL
+  ) +
+  theme_dashboard_light() +
+  theme(
+    strip.text = element_text(hjust = 0),
+    axis.text.y = element_text(size = 16),
+    panel.grid.major.x = element_line(color = "grey92")
+  )
+
+save_plot <- function(plot, filename, height) {
+  ggsave(file.path(output_dir, filename), plot, width = 12, height = height,
+         dpi = 300, bg = "white")
+}
+save_plot(p_temperature, "tv_temperature.png", 6.4)
+save_plot(p_contrasts, "contrastes_tv.png", 5.2)
+save_plot(p_items, "items_tv.png", 9)
 
 message("Figures written to ", output_dir)

@@ -68,10 +68,10 @@ tree_nodes <- data.frame(
              dashboard_colors$blue),
   label = c(
     "108 199 répondants au total",
-    "BRANCHE ENTRAÎNEMENT  ·  78 055 répondants\nMêmes 8 000 couples répondant–question pour C0 et C1",
+    "BRANCHE ENTRAÎNEMENT  ·  78 055 répondants\nMêmes 8 000 couples répondant–question pour les deux modèles",
     "TEST GELÉ  ·  30 144 répondants\nJamais vus au fine-tuning",
-    "C0\nProfil SES + question cible\nProduit une réponse individuelle",
-    "C1\nProfil SES + jusqu’à 6 réponses individuelles\nà des questions voisines + question cible\nProduit une réponse individuelle",
+    "FT-PROFIL\nProfil SES + question cible\nProduit une réponse individuelle",
+    "FT-VOISINS\nProfil SES + jusqu’à 6 réponses individuelles\nà des questions voisines + question cible\nProduit une réponse individuelle",
     "CONTEXTE\n14 947 répondants",
     "ÉVALUATION\n15 197 répondants"
   ),
@@ -88,23 +88,23 @@ tree_lines <- data.frame(
 
 # Panneau B : les cinq conditions LLM restent le cœur visuel.
 conditions <- data.frame(
-  condition = c("R", "A-C0", "B0-C1", "B-C1", "BS-C1"),
-  model = c("base", "C0", "C1", "C1", "C1"),
+  condition = c("Base", "Profil", "Voisins", "Voisins+Cellule", "Fuite"),
+  model = c("Llama 70B", "FT-Profil", "FT-Voisins", "FT-Voisins", "FT-Voisins"),
   common = rep("Profil SES +\nquestion cible", 5),
   context = c(
     "Aucun",
     "Aucun",
     "Aucun",
-    "Distributions voisines des 30 144\nrépondants gelés  ·  chevauchement",
-    "Distributions voisines des 14 947\nrépondants de contexte  ·  répondants distincts"
+    "Distributions de la cellule sur ≤ 6 questions voisines\n14 947 répondants de contexte  ·  distincts de l’évaluation",
+    "Mêmes distributions, calculées sur les 30 144\nrépondants gelés  ·  inclut l’évaluation (test de fuite)"
   ),
   reference = rep("15 197 répondants\nd’évaluation", 5),
   colour = c(
     dashboard_colors$red,
     dashboard_colors$blue,
     dashboard_colors$yellow,
-    dashboard_colors$green,
-    green_dark
+    green_dark,
+    muted
   ),
   y = seq(4.77, 2.45, length.out = 5),
   stringsAsFactors = FALSE
@@ -117,23 +117,8 @@ table_rows <- transform(
   fill = rep(c("white", "#F9FAFA"), length.out = 5)
 )
 
-# Référence secondaire : benchmark statistique, visuellement séparé des bras LLM.
-benchmark <- data.frame(
-  condition = "S",
-  model = "Logit conditionnel\nrégularisé",
-  common = "Profil SES + question cible\n+ options",
-  context = "Aucun contexte",
-  reference = "15 197 répondants\nd’évaluation",
-  colour = muted,
-  y = 1.84,
-  ymin = 1.61,
-  ymax = 2.07,
-  fill = "#EEF1F2",
-  stringsAsFactors = FALSE
-)
-
 headers <- data.frame(
-  x = c(1.18, 2.55, 4.62, 8.70, 12.85),
+  x = c(1.55, 3.10, 4.75, 8.70, 12.85),
   label = c(
     "CONDITION", "MODÈLE", "ENTRÉE COMMUNE",
     "CONTEXTE AJOUTÉ", "RÉFÉRENCE OBSERVÉE"
@@ -216,95 +201,44 @@ p <- ggplot() +
   ) +
   geom_text(
     data = conditions,
-    aes(x = 1.18, y = y, label = condition, colour = colour),
-    family = "nunito", fontface = "bold", size = 3.20,
+    aes(x = 0.88, y = y, label = condition, colour = colour),
+    family = "nunito", fontface = "bold", size = 2.95, hjust = 0,
     show.legend = FALSE
   ) +
   geom_text(
     data = conditions,
-    aes(x = 2.55, y = y, label = model),
-    family = "nunito", fontface = "bold", size = 3.05, colour = ink
+    aes(x = 3.10, y = y, label = model),
+    family = "nunito", fontface = "bold", size = 2.85, colour = ink
   ) +
   geom_text(
     data = conditions,
-    aes(x = 4.62, y = y, label = common),
+    aes(x = 4.75, y = y, label = common),
     family = "nunito", size = 2.82, lineheight = 0.88, colour = ink
   ) +
   geom_text(
     data = conditions,
     aes(x = 8.70, y = y, label = context),
-    family = "nunito", size = 2.72, lineheight = 0.88, colour = ink
+    family = "nunito", size = 2.50, lineheight = 0.88, colour = ink
   ) +
   geom_text(
     data = conditions,
     aes(x = 12.85, y = y, label = reference),
     family = "nunito", size = 2.76, lineheight = 0.88, colour = ink
   ) +
-  # Benchmark statistique, en retrait sous les cinq conditions LLM.
-  geom_segment(
-    aes(x = 0.60, xend = 14.30, y = 2.12, yend = 2.12),
-    linewidth = 0.55, colour = rule
-  ) +
-  geom_rect(
-    data = benchmark,
-    aes(xmin = 0.60, xmax = 14.30, ymin = ymin, ymax = ymax),
-    fill = benchmark$fill, colour = NA
-  ) +
-  geom_segment(
-    data = benchmark,
-    aes(x = 0.72, xend = 0.72, y = y - 0.15, yend = y + 0.15),
-    linewidth = 1.5, lineend = "round", colour = muted
-  ) +
-  geom_text(
-    data = benchmark,
-    aes(x = 1.18, y = y + 0.07, label = condition),
-    family = "nunito", fontface = "bold", size = 3.05, colour = muted
-  ) +
-  geom_text(
-    data = benchmark,
-    aes(x = 1.18, y = y - 0.11, label = "Benchmark statistique"),
-    family = "nunito", size = 1.85, colour = muted
-  ) +
-  geom_text(
-    data = benchmark,
-    aes(x = 2.55, y = y, label = model),
-    family = "nunito", fontface = "bold", size = 2.55,
-    lineheight = 0.88, colour = muted
-  ) +
-  geom_text(
-    data = benchmark,
-    aes(x = 4.62, y = y, label = common),
-    family = "nunito", size = 2.48, lineheight = 0.88, colour = muted
-  ) +
-  geom_text(
-    data = benchmark,
-    aes(x = 8.70, y = y, label = context),
-    family = "nunito", size = 2.48, colour = muted
-  ) +
-  geom_text(
-    data = benchmark,
-    aes(x = 12.85, y = y, label = reference),
-    family = "nunito", size = 2.48, lineheight = 0.88, colour = muted
-  ) +
-  annotate(
-    "text", x = 0.68, y = 1.43, hjust = 0,
-    label = "S — Embeddings textuels figés; mêmes 8 000 exemples; aucune réponse cible.",
-    family = "nunito", size = 2.20, colour = muted
-  ) +
   # Repère humain–humain associé à l'évaluation, et non aux conditions.
   annotate(
-    "rect", xmin = 9.25, xmax = 14.25, ymin = 1.16, ymax = 1.57,
+    "rect", xmin = 9.25, xmax = 14.25, ymin = 1.16, ymax = 1.92,
     fill = "#EEF1F2", colour = rule, linewidth = 0.55
   ) +
   annotate(
-    "text", x = 11.75, y = 1.385,
+    "text", x = 11.75, y = 1.54,
     label = paste0(
       "HUMAIN–HUMAIN  ·  REPÈRE DE BRUIT D’ÉCHANTILLONNAGE\n",
-      "Question cible : 14 947 contexte ↔ 15 197 évaluation\n",
+      "Question cible : 14 947 contexte vs 15 197 évaluation\n",
       "Non applicable à une question nouvelle"
     ),
-    family = "nunito", fontface = "bold", size = 2.05,
-    lineheight = 0.84, colour = muted
+    family = "nunito", fontface = "bold", size = 2.55,
+    lineheight = 0.95, colour = muted
   ) +
   geom_segment(
     aes(x = 11.75, y = 1.16, xend = 11.75, yend = 1.11),
