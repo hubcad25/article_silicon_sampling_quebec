@@ -1,7 +1,7 @@
 ---
 title: "Estimer l'opinion d'un sous-groupe sur une question inédite"
 author: "Hubert Cadieux"
-date: "Septembre 2026"
+date: "27 septembre 2026"
 lang: fr
 geometry: margin=2.3cm
 fontsize: 10pt
@@ -285,16 +285,53 @@ fait-il mieux qu'un modèle simplement prompté?), mais avec des montages diffé
 
    Justin trouvait toutefois qu'entraîner plus longtemps dégradait les résultats. Les runs de
    20 000 diront si le volume aide ici avant d'aller plus loin.
-4. **Les indices, avec un format cohérent.** Une seule expérience ciblée : entraîner le modèle
-   directement avec des distributions de groupe, comme il les reçoit à l'inférence. Les indices
-   rétablissent déjà les écarts entre groupes ; c'est la piste la plus plausible pour la question
-   centrale du projet.
+4. **Les indices, présentés dans le format appris.** Voir ci-dessous : c'est la présentation à
+   l'inférence qu'il faut corriger, pas l'entraînement.
 
 **Ce qu'on peut laisser de côté**
 
 - Balayer davantage la température : 1,0 fonctionne, et 1,3 n'apporte que des réponses invalides.
 - Le modèle non entraîné comme méthode : il ne sert plus que de point de comparaison.
 - La crainte de fuite entre indices et évaluation : le contrôle ne montre aucun effet.
+
+## Pourquoi les indices n'ont rien donné, et comment les présenter
+
+L'entraînement du modèle à indices est cohérent avec l'objectif : le modèle joue un **répondant
+réel**, qui voit ses propres réponses à des questions voisines et donne sa réponse à la question
+cible. Le problème se situe à l'inférence, où les indices lui sont présentés sous une forme qu'il
+n'a jamais vue.
+
+- **Le format change.** À l'entraînement : « Tes réponses à d'autres questions : question → une
+  réponse ». À l'inférence : « Réponses observées dans ton groupe : question : 26 %, 67 %, 4 %…
+  (n = 45) ». L'en-tête, les pourcentages et l'effectif sont tous nouveaux pour le modèle.
+- **Ce qu'il a appris ne s'applique plus.** Les questions voisines sont souvent presque la même
+  question, répondue par la même personne. Le modèle a surtout appris que la réponse d'une personne
+  à une question voisine prédit sa réponse à la question cible. Avec des pourcentages de groupe, il
+  n'y a plus de réponse individuelle sur laquelle s'appuyer.
+- **Il lit probablement le groupe comme une seule personne.** Dans l'exemple de l'annexe F, les
+  indices montrent une majorité fédéraliste (« Non » à 61 %, « Statu quo » à 63 %) ; le modèle
+  répond alors comme un fédéraliste typique et écrase la minorité souverainiste (9 % contre 34 %).
+  Ce comportement expliquerait aussi que les indices creusent les écarts *entre* sous-groupes
+  (annexe D) tout en faussant la distribution *dans* chaque sous-groupe.
+
+**Diagnostic, avant toute nouvelle expérience.** Sur les tirages existants, vérifier si Entraîné +
+indices penche systématiquement vers l'option majoritaire des indices, par rapport à Indices
+retirés : pour chaque sous-groupe, comparer la part attribuée aux options qui dominent les
+questions voisines. Aucun nouvel appel au modèle n'est nécessaire.
+
+**Présentation proposée : des répondants réels plutôt que des pourcentages.** Chaque tirage reçoit
+les réponses individuelles d'**un** répondant de contexte du sous-groupe, dans le format exact de
+l'entraînement (« Tes réponses… → réponse »). Sur 100 tirages, on parcourt la quarantaine de
+répondants de contexte du sous-groupe. Le modèle fait alors exactement la tâche apprise : prédire
+la réponse d'une personne à partir de ses autres réponses. La distribution du sous-groupe émerge
+de ces vraies personnes plutôt que d'un résumé qu'il doit interpréter. Cette variante ne demande
+aucun réentraînement, seulement une nouvelle condition d'inférence, et n'utilise aucun répondant
+d'évaluation.
+
+Deux autres options ont été écartées parce qu'elles abandonnent l'idée du LLM comme répondant :
+entraîner le modèle directement sur des distributions de groupe (aucun vrai répondant ne dispose de
+telles statistiques), ou lui faire prédire la distribution elle-même d'un seul coup (le modèle
+devient un estimateur plutôt qu'un répondant).
 
 **Limites.** 12 questions sur 60 ; sous-groupes petits (médiane de 31 répondants d'évaluation) ;
 un seul modèle de base, une seule époque. Les règles d'analyse principales ont été fixées avant de

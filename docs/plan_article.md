@@ -158,7 +158,7 @@ contraste entre bras fine-tunés significatif. Sensibilité n ≥ 30 vide par co
    qu'il le demande. Outils déjà prêts si besoin : `foundry.FoundryChat` (réessaie, ne saute jamais un tirage),
    `ItemSpec.match_answer` (sortie non appariée = invalide), recette de déploiement (`--model-format Meta`,
    `GlobalStandard`, supprimer le déploiement tout de suite après).
-3. **Note pour Justin** (`docs/note_justin.md`) : y ajouter les premiers résultats C0 vs C1 8k dès qu'ils
+3. **Note pour Justin** (`docs/note_recherche_2026-09-27.md`) : y ajouter les premiers résultats C0 vs C1 8k dès qu'ils
    existent ; mettre à jour la section format (réponse en texte, CES dans la langue de passation).
 4. Relever le solde Azure credits : l'écart couvre le run 1 écarté, l'éventuel partiel du run 2 annulé, C0 8k et C1 8k.
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
-# Figures for the results note to Justin (pilot, 12 items, 5 arms + human reference).
+# Figures for the research note of 27 September 2026 (pilot, 12 items, 5 arms + human reference).
 # Usage:
-#   Rscript scripts/24_plot_note_justin.R [input_dir] [output_dir]
+#   Rscript scripts/24_plot_note_recherche.R [input_dir] [output_dir]
 
 suppressPackageStartupMessages({
   library(dplyr)
