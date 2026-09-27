@@ -1,0 +1,2 @@
+temperature,bootstrap_repetitions,bootstrap_seed,confidence,bootstrap_unit,point_aggregation,direction_denominator,amplification,entropy
+1.0,2000,20260925,0.95,paired item,pooled item-cell-option units,observed deviation != 0; zero BS-B0 change is disagreement,through-origin slope after centering within item-option,natural logarithm; computed by item-cell

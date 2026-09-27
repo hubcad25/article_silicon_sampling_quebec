@@ -106,13 +106,32 @@ tester explicitement une interaction entre volume d'entraînement et ancien form
 ## Traitements sans nouvelle inférence
 
 1. terminer l'ajustement et les prédictions du **modèle statistique**;
-2. exécuter le diagnostic des anciens indices sur les résultats déjà produits;
+2. intégrer au brief le diagnostic maintenant calculé des anciens indices;
 3. intégrer les quatre nouvelles campagnes à la même analyse de variation totale, de concentration
    et d'aplatissement des différences entre sous-groupes;
 4. produire les intervalles et contrastes appariés selon les règles déjà utilisées dans le premier
    brief.
 
 # 4. Structure prévue du brief final
+
+## Diagnostic des anciens indices en pourcentages
+
+À température 1,0, l'ajout des indices déplace les probabilités dans la direction des écarts humains
+pour **47,1 % [43,4 % ; 50,7 %]** des unités question × cellule × option. La pente des écarts entre
+cellules est de **0,144 [0,059 ; 0,215]** pour **Entraîné avec indices**, contre
+**0,087 [0,033 ; 0,127]** pour **Indices retirés**. Les indices augmentent donc un peu la dispersion,
+mais les deux conditions demeurent très loin de reproduire toute l'ampleur des écarts humains
+(pente de 1).
+
+L'entropie moyenne est de **1,188 [0,929 ; 1,460]** nat chez les répondants et de
+**1,268 [1,027 ; 1,506]** avec les indices. La différence de **+0,080 [0,021 ; 0,142]** indique que
+les réponses synthétiques sont moins concentrées, et non davantage. Ainsi, les trois prédictions de
+l'hypothèse 3 de l'ADR 0005 ne sont pas vérifiées : la direction n'est pas meilleure que le hasard,
+les différences restent fortement aplaties et BS a une entropie supérieure à celle des répondants.
+
+Les calculs détaillés et le texte reproductible se trouvent dans
+`data/analysis/second_brief/diagnostic_anciens_indices_*`. Les intervalles à 95 % reposent sur un
+bootstrap apparié par question; les pentes sont calculées après centrage par question et option.
 
 ## En bref
 
@@ -158,4 +177,4 @@ retenu, format des indices retenu et pertinence ou non d'augmenter encore le vol
 | **Entraîné avec répondants 8k** | protocole fixé; implémentation et inférence à faire |
 | **Entraîné avec répondants 20k** | protocole fixé; implémentation et inférence à faire |
 | **Modèle statistique** | implémentation en cours; exécution complète à terminer |
-| Diagnostic des anciens indices | spécifié; calcul à faire sur les résultats existants |
+| Diagnostic des anciens indices | terminé; résultats intégrés ci-dessus |

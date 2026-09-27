@@ -364,6 +364,160 @@ def flattening_diagnostics(
     return pl.DataFrame(rows).sort("arm", "temperature", "item_idx", "code")
 
 
+def old_indices_diagnostics(
+    distributions: pl.DataFrame,
+    *,
+    temperature: float = PRIMARY_TEMPERATURE,
+    repetitions: int = DEFAULT_BOOTSTRAPS,
+    seed: int = DEFAULT_SEED,
+    confidence: float = DEFAULT_CONFIDENCE,
+) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+    """Diagnose the direction, amplification, and entropy of the old BS indices.
+
+    Returns option-level inputs, pair-level entropies, item-level estimates,
+    and an overall summary.
+    Overall estimates pool the item-cell-option units specified in ADR 0005;
+    uncertainty is obtained by resampling the 12 items as paired clusters.
+    """
+    if repetitions < 1 or not 0 < confidence < 1:
+        raise ValueError("invalid bootstrap or confidence parameter")
+    required = {"arm", "item_idx", "cell", "temperature", "code", "share"}
+    missing = required - set(distributions.columns)
+    if missing:
+        raise ValueError(f"distributions is missing columns: {sorted(missing)}")
+
+    selected = distributions.filter(
+        (pl.col("arm") == "observed")
+        | (
+            pl.col("arm").is_in(["B0", "BS"])
+            & (pl.col("temperature") == temperature)
+        )
+    ).with_columns(pl.col("code").cast(pl.Utf8))
+    arms = set(selected["arm"])
+    if arms != {"observed", "B0", "BS"}:
+        raise ValueError("observed, B0, and BS distributions are required")
+
+    keys = ["item_idx", "cell", "code"]
+    wide = selected.select(*keys, "arm", "share").pivot(
+        on="arm", index=keys, values="share"
+    ).select(*keys, "observed", "B0", "BS")
+    expected = selected.filter(pl.col("arm") == "observed").height
+    if wide.height != expected or wide.select(keys).n_unique() != expected:
+        raise ValueError("observed, B0, and BS must cover identical item-cell-options")
+    if wide.select("observed", "B0", "BS").null_count().row(0) != (0, 0, 0):
+        raise ValueError("observed, B0, and BS must cover identical item-cell-options")
+
+    option_rows = wide.with_columns(
+        pl.col("observed").mean().over("item_idx", "code").alias("observed_item_mean"),
+        pl.col("B0").mean().over("item_idx", "code").alias("b0_item_mean"),
+        pl.col("BS").mean().over("item_idx", "code").alias("bs_item_mean"),
+    ).with_columns(
+        (pl.col("observed") - pl.col("observed_item_mean")).alias("observed_deviation"),
+        (pl.col("B0") - pl.col("b0_item_mean")).alias("b0_deviation"),
+        (pl.col("BS") - pl.col("bs_item_mean")).alias("bs_deviation"),
+        (pl.col("BS") - pl.col("B0")).alias("bs_b0_change"),
+    ).with_columns(
+        (pl.col("observed_deviation") != 0).alias("direction_eligible"),
+        (
+            (pl.col("observed_deviation") != 0)
+            & (pl.col("observed_deviation") * pl.col("bs_b0_change") > 0)
+        ).alias("direction_agrees"),
+    ).sort(*keys)
+
+    entropy_rows = selected.group_by("arm", "item_idx", "cell").agg(
+        (-pl.col("share").filter(pl.col("share") > 0)
+         * pl.col("share").filter(pl.col("share") > 0).log()).sum().alias("entropy"),
+        pl.len().alias("n_options"),
+    ).with_columns(
+        (pl.col("entropy") / pl.col("n_options").cast(pl.Float64).log()).alias(
+            "normalized_entropy"
+        )
+    ).pivot(
+        on="arm", index=["item_idx", "cell", "n_options"],
+        values=["entropy", "normalized_entropy"],
+    ).rename({
+        "entropy_observed": "observed_entropy",
+        "entropy_B0": "b0_entropy",
+        "entropy_BS": "bs_entropy",
+        "normalized_entropy_observed": "observed_normalized_entropy",
+        "normalized_entropy_B0": "b0_normalized_entropy",
+        "normalized_entropy_BS": "bs_normalized_entropy",
+    }).select(
+        "item_idx", "cell", "n_options",
+        "observed_entropy", "b0_entropy", "bs_entropy",
+        "observed_normalized_entropy", "b0_normalized_entropy", "bs_normalized_entropy",
+    ).sort("item_idx", "cell")
+
+    def estimates(options: pl.DataFrame, entropies: pl.DataFrame) -> dict[str, float]:
+        eligible = options.filter(pl.col("direction_eligible"))
+        x = options["observed_deviation"].to_numpy()
+        denominator = float(np.dot(x, x))
+        if eligible.is_empty() or denominator <= 0:
+            raise ValueError("diagnostic requires non-zero observed between-cell variation")
+        values = {
+            "direction": float(eligible["direction_agrees"].mean()),
+            "amplification_bs": float(np.dot(x, options["bs_deviation"].to_numpy()) / denominator),
+            "amplification_b0": float(np.dot(x, options["b0_deviation"].to_numpy()) / denominator),
+        }
+        values["amplification_bs_minus_b0"] = (
+            values["amplification_bs"] - values["amplification_b0"]
+        )
+        for column in (
+            "observed_entropy", "b0_entropy", "bs_entropy",
+            "observed_normalized_entropy", "b0_normalized_entropy",
+            "bs_normalized_entropy",
+        ):
+            values[f"mean_{column}"] = float(entropies[column].mean())
+        values["entropy_bs_minus_observed"] = (
+            values["mean_bs_entropy"] - values["mean_observed_entropy"]
+        )
+        values["entropy_bs_minus_b0"] = (
+            values["mean_bs_entropy"] - values["mean_b0_entropy"]
+        )
+        values["normalized_entropy_bs_minus_observed"] = (
+            values["mean_bs_normalized_entropy"]
+            - values["mean_observed_normalized_entropy"]
+        )
+        return values
+
+    item_ids = sorted(int(value) for value in option_rows["item_idx"].unique())
+    item_rows = []
+    for item_idx in item_ids:
+        options = option_rows.filter(pl.col("item_idx") == item_idx)
+        entropies = entropy_rows.filter(pl.col("item_idx") == item_idx)
+        row = {"item_idx": item_idx, "n_cells": entropies.height,
+               "n_option_units": options.height,
+               "n_direction_eligible": options.filter(pl.col("direction_eligible")).height}
+        row.update(estimates(options, entropies))
+        item_rows.append(row)
+    by_item = pl.DataFrame(item_rows).sort("item_idx")
+
+    point = estimates(option_rows, entropy_rows)
+    rng = np.random.default_rng(seed)
+    samples: dict[str, list[float]] = {name: [] for name in point}
+    for _ in range(repetitions):
+        sampled = rng.choice(item_ids, size=len(item_ids), replace=True)
+        sampled_options = pl.concat([
+            option_rows.filter(pl.col("item_idx") == item_idx) for item_idx in sampled
+        ])
+        sampled_entropies = pl.concat([
+            entropy_rows.filter(pl.col("item_idx") == item_idx) for item_idx in sampled
+        ])
+        replicate = estimates(sampled_options, sampled_entropies)
+        for name, value in replicate.items():
+            samples[name].append(value)
+    summary_rows = []
+    for metric, estimate in point.items():
+        low, high = _interval(np.asarray(samples[metric]), confidence)
+        summary_rows.append({
+            "metric": metric, "estimate": estimate, "ci_low": low, "ci_high": high,
+            "n_items": len(item_ids), "n_cells": entropy_rows.height,
+            "n_option_units": option_rows.height,
+        })
+    summary = pl.DataFrame(summary_rows)
+    return option_rows, entropy_rows, by_item, summary
+
+
 def evaluate_ses_subgroups(
     cell_metrics: pl.DataFrame,
     cell_attributes: pl.DataFrame,
@@ -461,5 +615,6 @@ __all__ = [
     "CONTRASTS", "DEFAULT_ALPHA", "DEFAULT_BOOTSTRAPS", "DEFAULT_CONFIDENCE",
     "DEFAULT_SEED", "FLATTENING_MIN_CELL_N", "MIN_CELL_N", "PRIMARY_TEMPERATURE",
     "evaluate_distributions", "evaluate_ses_subgroups", "flattening_diagnostics",
+    "old_indices_diagnostics",
     "kl_divergence", "total_variation",
 ]

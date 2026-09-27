@@ -7,6 +7,7 @@ from article_silicon_sampling_quebec.metrics import (
     evaluate_ses_subgroups,
     flattening_diagnostics,
     kl_divergence,
+    old_indices_diagnostics,
     total_variation,
 )
 
@@ -161,3 +162,34 @@ def test_ses_summary_preserves_item_weighting_and_available_contrasts():
     assert summaries.filter(pl.col("scope") == "all").height == 5
     assert contrasts.filter(pl.col("scope") == "all").height == 6
     assert set(summaries["level"]) == {"woman"}
+
+
+def test_old_indices_diagnostic_detects_direction_amplification_and_concentration():
+    rows = []
+    shares = {
+        "observed": {"a": (0.8, 0.2), "b": (0.2, 0.8)},
+        "B0": {"a": (0.5, 0.5), "b": (0.5, 0.5)},
+        "BS": {"a": (0.95, 0.05), "b": (0.05, 0.95)},
+    }
+    for item_idx in (1, 2):
+        for arm, cells in shares.items():
+            for cell, probabilities in cells.items():
+                for code, share in zip(("1", "2"), probabilities, strict=True):
+                    rows.append({
+                        "arm": arm, "item_idx": item_idx, "cell": cell,
+                        "temperature": None if arm == "observed" else 1.0,
+                        "code": code, "share": share,
+                    })
+
+    options, entropies, by_item, summary = old_indices_diagnostics(
+        pl.DataFrame(rows), repetitions=20, seed=3,
+    )
+    values = {row["metric"]: row["estimate"] for row in summary.iter_rows(named=True)}
+
+    assert options.height == 8
+    assert entropies.height == 4
+    assert by_item.height == 2
+    assert values["direction"] == 1.0
+    assert values["amplification_b0"] == pytest.approx(0.0)
+    assert values["amplification_bs"] == pytest.approx(1.5)
+    assert values["entropy_bs_minus_observed"] < 0
