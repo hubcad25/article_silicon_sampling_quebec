@@ -13,12 +13,15 @@ Only errors that no retry can fix (400, 401, 403, 404) raise immediately.
 
 from __future__ import annotations
 
+import http.client
+import io
 import json
 import os
 import random
+import threading
 import time
 import urllib.error
-import urllib.request
+import urllib.parse
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -26,6 +29,9 @@ __all__ = ["CallFailed", "FoundryChat"]
 
 #: Retried: throttling, timeouts, server-side and gateway errors.
 RETRY_STATUS = frozenset({408, 409, 429, 500, 502, 503, 504})
+#: A 400 whose body names the content filter: the service refused this sampled
+#: output, not the request. Resampled a bounded number of times and counted.
+FILTER_MARKERS = ("content_filter", "ResponsibleAIPolicyViolation", "content management policy")
 
 
 class CallFailed(RuntimeError):
@@ -44,9 +50,16 @@ class FoundryChat:
     max_backoff: float = 60.0
     sleep: Callable[[float], None] = time.sleep
     rng: random.Random = field(default_factory=random.Random)
+    #: One kept-alive HTTPS connection per worker thread. Opening a fresh TCP+TLS
+    #: connection per call exhausted the container's outbound SNAT ports after
+    #: ~500 calls, leaving every worker stuck in SYN_SENT.
+    _local: threading.local = field(default_factory=threading.local, repr=False, compare=False)
     #: Counters, for the run log: how often the service pushed back.
     retries: int = 0
     throttled: int = 0
+    filtered: int = 0
+    #: Content-filter refusals tolerated for one call before it raises.
+    max_filtered: int = 5
 
     def __post_init__(self) -> None:
         self.base = (self.base or os.environ["FOUNDRY_CHAT_ENDPOINT"]).rstrip("/").split("/openai")[0]
@@ -57,19 +70,47 @@ class FoundryChat:
         return (f"{self.base}/openai/deployments/{self.deployment}"
                 f"/chat/completions?api-version={self.api_version}")
 
+    def _connection(self) -> http.client.HTTPSConnection:
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            host = urllib.parse.urlsplit(self.base).netloc
+            conn = http.client.HTTPSConnection(host, timeout=self.timeout)
+            self._local.conn = conn
+        return conn
+
+    def _drop_connection(self) -> None:
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            conn.close()
+            self._local.conn = None
+
     def _post(self, body: dict) -> dict:
-        req = urllib.request.Request(self.url, data=json.dumps(body).encode(), method="POST",
-                                     headers={"api-key": self.key,
-                                              "Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=self.timeout) as r:
-            return json.loads(r.read())
+        split = urllib.parse.urlsplit(self.url)
+        path = f"{split.path}?{split.query}"
+        headers = {"api-key": self.key, "Content-Type": "application/json"}
+        try:
+            conn = self._connection()
+            conn.request("POST", path, body=json.dumps(body).encode(), headers=headers)
+            resp = conn.getresponse()
+            payload = resp.read()
+        except (http.client.HTTPException, OSError) as e:
+            self._drop_connection()
+            if isinstance(e, TimeoutError):
+                raise
+            raise urllib.error.URLError(e) from e
+        if resp.will_close:
+            self._drop_connection()
+        if resp.status >= 400:
+            raise urllib.error.HTTPError(self.url, resp.status, resp.reason,
+                                         resp.headers, io.BytesIO(payload))
+        return json.loads(payload)
 
     def complete(self, messages: list[dict], *, temperature: float = 1.0,
                  max_tokens: int = 8, top_p: float = 1.0) -> str:
         """The assistant text of one completion. Retries until it succeeds or raises."""
         body = {"messages": messages, "temperature": temperature,
                 "max_tokens": max_tokens, "top_p": top_p}
-        waited, attempt = 0.0, 0
+        waited, attempt, filtered = 0.0, 0, 0
         while True:
             retry_after = None
             try:
@@ -77,7 +118,13 @@ class FoundryChat:
                 return (data["choices"][0]["message"]["content"] or "").strip()
             except urllib.error.HTTPError as e:
                 if e.code not in RETRY_STATUS:
-                    raise CallFailed(f"HTTP {e.code} on {self.deployment}") from e
+                    detail = _error_body(e)
+                    if (e.code == 400 and any(m in detail for m in FILTER_MARKERS)
+                            and filtered < self.max_filtered):
+                        filtered += 1
+                        self.filtered += 1
+                        continue
+                    raise CallFailed(f"HTTP {e.code} on {self.deployment}: {detail[:500]}") from e
                 if e.code == 429:
                     self.throttled += 1
                 header = e.headers.get("Retry-After") if e.headers else None
@@ -97,3 +144,10 @@ class FoundryChat:
             self.sleep(delay)
             waited += delay
             attempt += 1
+
+
+def _error_body(error: urllib.error.HTTPError) -> str:
+    try:
+        return (error.read() or b"").decode("utf-8", errors="replace")
+    except Exception:  # noqa: BLE001 - the body is diagnostic only
+        return ""

@@ -13,9 +13,9 @@ from article_silicon_sampling_quebec.foundry import CallFailed, FoundryChat
 OK = {"choices": [{"message": {"content": " 3 "}}]}
 
 
-def http_error(code, retry_after=None):
+def http_error(code, retry_after=None, body=b""):
     headers = {"Retry-After": str(retry_after)} if retry_after is not None else {}
-    return urllib.error.HTTPError("u", code, "err", headers, io.BytesIO(b""))
+    return urllib.error.HTTPError("u", code, "err", headers, io.BytesIO(body))
 
 
 def client(responses, **kw):
@@ -57,3 +57,70 @@ def test_exhausted_retries_raise_instead_of_skipping():
     with pytest.raises(CallFailed):
         chat.complete([])
     assert sum(slept) <= 10
+
+
+class FakeResponse:
+    def __init__(self, status, payload, will_close=False):
+        self.status, self.reason, self.will_close = status, "r", will_close
+        self.headers = {"Retry-After": "1"} if status == 429 else {}
+        self._payload = payload
+
+    def read(self):
+        return json.dumps(self._payload).encode()
+
+
+class FakeConnection:
+    def __init__(self, responses):
+        self.responses, self.requests, self.closed = responses, 0, False
+
+    def request(self, *args, **kwargs):
+        self.requests += 1
+        item = self.responses.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        self.next = item
+
+    def getresponse(self):
+        return self.next
+
+    def close(self):
+        self.closed = True
+
+
+def test_connection_is_kept_alive_across_calls():
+    chat = FoundryChat("dep", base="https://x", key="k", sleep=lambda s: None)
+    conn = FakeConnection([FakeResponse(200, OK), FakeResponse(429, {}), FakeResponse(200, OK)])
+    chat._local.conn = conn
+    assert chat.complete([]) == "3" and chat.complete([]) == "3"
+    assert conn.requests == 3 and not conn.closed and chat.throttled == 1
+
+
+def test_broken_connection_is_dropped_and_retried():
+    chat = FoundryChat("dep", base="https://x", key="k", sleep=lambda s: None)
+    broken = FakeConnection([ConnectionResetError()])
+    fresh = FakeConnection([FakeResponse(200, OK)])
+    chat._local.conn = broken
+    chat._connection = lambda: getattr(chat._local, "conn", None) or setattr(chat._local, "conn", fresh) or fresh
+    assert chat.complete([]) == "3"
+    assert broken.closed and fresh.requests == 1
+
+
+FILTERED = b'{"error":{"code":"content_filter","message":"filtered"}}'
+
+
+def test_content_filter_400_is_resampled_and_counted():
+    chat, slept = client([http_error(400, body=FILTERED), OK])
+    assert chat.complete([]) == "3"
+    assert chat.filtered == 1 and slept == []
+
+
+def test_content_filter_gives_up_after_max_filtered():
+    chat, _ = client([http_error(400, body=FILTERED) for _ in range(3)], max_filtered=2)
+    with pytest.raises(CallFailed, match="content_filter"):
+        chat.complete([])
+
+
+def test_other_400_raises_with_its_body():
+    chat, _ = client([http_error(400, body=b'{"error":"max_tokens too large"}')])
+    with pytest.raises(CallFailed, match="max_tokens too large"):
+        chat.complete([])
