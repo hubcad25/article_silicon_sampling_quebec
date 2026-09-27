@@ -12,14 +12,14 @@ header-includes:
 - \usepackage{float}
 - \usepackage{graphicx}
 - \floatplacement{figure}{H}
-- \newcommand{\notesubtitle}{Résultats du pilote · Llama 3.3 70B fine-tuné · 12 questions, 275 sous-groupes}
+- \newcommand{\notesubtitle}{Premiers résultats · Llama 3.3 70B fine-tuné · 12 questions, 275 sous-groupes}
 - \input{note_style.tex}
 ---
 
 ```{=latex}
 \begin{encadre}
 ```
-**En bref.** Ce pilote teste si un modèle de langage peut reproduire la répartition des réponses
+**En bref.** Ce premier test vérifie si un modèle de langage peut reproduire la répartition des réponses
 d'un sous-groupe sociodémographique à une question de sondage qu'il n'a jamais vue.
 
 - **L'entraînement sur des réponses de sondage fonctionne.** Le modèle entraîné divise par 2,5 la
@@ -49,12 +49,16 @@ sur la souveraineté.
 | Sondages | 17 sondages québécois et canadiens, 1998–2025, en français et en anglais |
 | Répondants | 108 199 |
 | Questions | 1 778 au catalogue, dont 1 633 utilisables comme cibles d'opinion |
-| Test | 60 questions gelées avant tout entraînement ; ce pilote en utilise 12 |
+| Test | 60 questions gelées avant tout entraînement ; ce premier test en évalue 12 |
 | Unités évaluées | 275 couples question × sous-groupe |
 
 Un **sous-groupe** (ou cellule) croise l'âge, le genre et la scolarité, ou seulement l'âge et le
-genre quand les effectifs sont trop faibles. Les 12 questions pilotes couvrent trois thèmes
-(identité et fédéralisme, partis et vote, valeurs sociales) et les deux langues.
+genre quand les effectifs sont trop faibles.
+
+Seules 12 des 60 questions de test sont évaluées ici, pour limiter le coût d'inférence avant
+d'engager toute la batterie : quatre questions dans chacun de trois thèmes (identité et
+fédéralisme, partis et vote, valeurs sociales), dans les deux langues. Les 48 autres restent
+gelées pour la suite.
 
 Le partage est fait **par répondant**. 78 055 répondants servent à l'entraînement ; 30 144 n'y
 participent jamais et sont coupés en deux moitiés : 14 947 répondants de **contexte**, qui peuvent
@@ -214,7 +218,7 @@ simplement prompté. La température 0 n'a pas été testée ici.
 - Le modèle non entraîné comme méthode : il ne sert plus que de point de comparaison.
 - La crainte de fuite entre indices et évaluation : le contrôle ne montre aucun effet.
 
-**Limites.** Pilote de 12 questions ; sous-groupes petits (médiane de 31 répondants d'évaluation) ;
+**Limites.** 12 questions sur 60 ; sous-groupes petits (médiane de 31 répondants d'évaluation) ;
 un seul modèle de base, une seule époque. Les règles d'analyse principales ont été fixées avant de
 consulter les résultats ; le plancher humain, prévu au protocole, a été calculé ensuite.
 
