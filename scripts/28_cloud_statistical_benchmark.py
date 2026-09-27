@@ -122,7 +122,7 @@ def seed_cache(key: str) -> None:
     az(
         "storage", "file", "upload", "--account-name", STORAGE, "--account-key", key,
         "--share-name", SHARE, "--source", str(LOCAL_CACHE),
-        "--path", f"{FOLDER}/cache/embeddings.parquet", "--overwrite", "false", "-o", "none",
+        "--path", f"{FOLDER}/cache/embeddings.parquet", "-o", "none",
     )
 
 
@@ -146,7 +146,7 @@ def launch(key: str) -> None:
         az(
             "storage", "file", "upload", "--account-name", STORAGE, "--account-key", key,
             "--share-name", SHARE, "--source", str(payload),
-            "--path", f"{FOLDER}/runner.tar.gz", "--overwrite", "true", "-o", "none",
+            "--path", f"{FOLDER}/runner.tar.gz", "-o", "none",
         )
     finally:
         payload.unlink(missing_ok=True)
