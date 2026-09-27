@@ -304,8 +304,8 @@ n'a jamais vue.
 - **Le format change.** À l'entraînement : « Tes réponses à d'autres questions : question → une
   réponse ». À l'inférence : « Réponses observées dans ton groupe : question : 26 %, 67 %, 4 %…
   (n = 45) ». L'en-tête, les pourcentages et l'effectif sont tous nouveaux pour le modèle.
-- **Ce qu'il a appris ne s'applique plus.** Les questions voisines sont souvent presque la même
-  question, répondue par la même personne. Le modèle a surtout appris que la réponse d'une personne
+- **Ce qu'il a appris ne s'applique plus.** Les questions voisines sont souvent très proches de la
+  question cible (similarité jusqu'à 0,95), et répondues par la même personne. Le modèle a surtout appris que la réponse d'une personne
   à une question voisine prédit sa réponse à la question cible. Avec des pourcentages de groupe, il
   n'y a plus de réponse individuelle sur laquelle s'appuyer.
 - **Il lit probablement le groupe comme une seule personne.** Dans l'exemple de l'annexe F, les
@@ -314,7 +314,7 @@ n'a jamais vue.
   Ce comportement expliquerait aussi que les indices creusent les écarts *entre* sous-groupes
   (annexe D) tout en faussant la distribution *dans* chaque sous-groupe.
 
-**Diagnostic, avant toute nouvelle expérience.** Sur les tirages existants, vérifier si Entraîné +
+**Diagnostic, avant toute nouvelle expérience** (détaillé dans l'ADR 0005). Sur les tirages existants, vérifier si Entraîné +
 indices penche systématiquement vers l'option majoritaire des indices, par rapport à Indices
 retirés : pour chaque sous-groupe, comparer la part attribuée aux options qui dominent les
 questions voisines. Aucun nouvel appel au modèle n'est nécessaire.
