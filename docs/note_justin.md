@@ -67,7 +67,18 @@ gelées pour la suite.
 
 Le partage est fait **par répondant**. 78 055 répondants servent à l'entraînement ; 30 144 n'y
 participent jamais et sont coupés en deux moitiés : 14 947 répondants de **contexte**, qui peuvent
-servir d'indices, et 15 197 répondants d'**évaluation**, la vérité à reproduire.
+servir d'indices, et 15 197 répondants d'**évaluation**, la vérité à reproduire. Le schéma de la
+page suivante résume le protocole.
+
+```{=latex}
+\begin{landscape}
+\thispagestyle{empty}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth,height=0.92\textheight,keepaspectratio]{../data/analysis/inference/figures/schema_protocole.png}
+\end{figure}
+\end{landscape}
+```
 
 ## Deux modèles, cinq conditions
 
@@ -90,19 +101,8 @@ D'où trois conditions principales et deux contrôles.
 | *Fuite* (contrôle) | à indices | les mêmes indices, calculés en incluant les répondants d'évaluation |
 
 Les indices ne contiennent jamais la question cible ni sa distribution. Chaque condition répond
-100 fois par sous-groupe, à quatre températures (0,3 ; 0,7 ; 1,0 ; 1,3). Le schéma du protocole est
-sur la page suivante.
+100 fois par sous-groupe, à quatre températures (0,3 ; 0,7 ; 1,0 ; 1,3).
 
-```{=latex}
-\afterpage{%
-\begin{landscape}
-\thispagestyle{empty}
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth,height=0.92\textheight,keepaspectratio]{../data/analysis/inference/figures/schema_protocole.png}
-\end{figure}
-\end{landscape}}
-```
 
 ## Évaluation
 
@@ -272,9 +272,19 @@ fait-il mieux qu'un modèle simplement prompté?), mais avec des montages diffé
    le bruit d'échantillonnage est presque aussi grand que l'erreur du modèle : on ne peut plus voir
    une amélioration. Il faut privilégier des questions tirées de grands sondages, ou des sous-groupes
    plus larges, plutôt que plus de répondants à l'entraînement.
-3. **Plus d'exemples d'entraînement : à trancher avec les runs en cours.** 8 000 exemples, c'est peu
-   au regard des données disponibles, mais Justin trouvait qu'entraîner plus longtemps
-   dégradait les résultats. Les mêmes modèles, entraînés sur 20 000 exemples, répondront à la question.
+3. **Plus de données d'entraînement : l'angle le moins exploité, à trancher avec les runs en cours.**
+   Les modèles ont vu 8 000 paires répondant–question, soit 6 995 répondants avec, le plus souvent,
+   une seule de leurs réponses. La branche d'entraînement contient environ 6,4 millions de réponses
+   valides : ces 8 000 paires en représentent à peine 0,1 %, et les runs de 20 000 en cours, 0,3 %.
+   Deux directions restent intactes :
+   - **le volume** : des dizaines ou des centaines de milliers de paires restent abordables (le coût
+     d'entraînement croît linéairement, environ 7 $ US par tranche de 8 000 pour le modèle standard) ;
+   - **la profondeur par répondant** : entraîner sur plusieurs réponses d'une même personne, pour que
+     le modèle apprenne comment les opinions d'un individu se tiennent entre elles. C'est précisément
+     ce que le modèle à indices cherche à exploiter.
+
+   Justin trouvait toutefois qu'entraîner plus longtemps dégradait les résultats. Les runs de
+   20 000 diront si le volume aide ici avant d'aller plus loin.
 4. **Les indices, avec un format cohérent.** Une seule expérience ciblée : entraîner le modèle
    directement avec des distributions de groupe, comme il les reçoit à l'inférence. Les indices
    rétablissent déjà les écarts entre groupes ; c'est la piste la plus plausible pour la question
