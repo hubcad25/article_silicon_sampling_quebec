@@ -27,6 +27,22 @@ from article_silicon_sampling_quebec.metrics import (  # noqa: E402
 from article_silicon_sampling_quebec.inference import build_item_cells  # noqa: E402
 
 
+def verified_statistical_outputs(root: Path) -> list[Path] | None:
+    manifest_path = root / "manifest.json"
+    if not manifest_path.exists():
+        return None
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    outputs = manifest.get("outputs", {})
+    required = {"distributions.csv", "distribution_diagnostics.csv"}
+    if not required <= set(outputs):
+        raise ValueError("statistical benchmark manifest is incomplete")
+    for name, expected_hash in outputs.items():
+        path = root / name
+        if not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
+            raise ValueError(f"statistical benchmark output does not match manifest: {path}")
+    return [root / name for name in sorted(outputs)]
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input-root", type=Path,
@@ -47,6 +63,19 @@ def main() -> None:
         schema_overrides={"code": pl.Utf8, "temperature": pl.Float64},
     )
     diagnostics = pl.read_csv(args.input_root / "distribution_diagnostics.csv")
+    statistical_root = args.input_root / "statistical_benchmark"
+    statistical_outputs = verified_statistical_outputs(statistical_root)
+    if statistical_outputs is not None:
+        statistical_distributions = pl.read_csv(
+            statistical_root / "distributions.csv",
+            schema_overrides={"code": pl.Utf8, "temperature": pl.Float64, "n": pl.Int64},
+        )
+        statistical_diagnostics = pl.read_csv(
+            statistical_root / "distribution_diagnostics.csv",
+            schema_overrides={"transport_n": pl.Int64, "effective_n": pl.Int64},
+        )
+        distributions = pl.concat([distributions, statistical_distributions], how="vertical")
+        diagnostics = pl.concat([diagnostics, statistical_diagnostics], how="vertical")
     responses = pl.read_csv(
         args.input_root / "observed_responses.csv", schema_overrides={"code": pl.Utf8}
     )
@@ -135,7 +164,11 @@ def main() -> None:
                 "observed_resampling": "respondents uniformly with replacement; retain weights",
                 "model_resampling": "valid draws with replacement",
                 "contrast_resampling": "paired cells; items with replacement; same items in both arms",
-                "statistical_benchmark_s": "not implemented; not analysed",
+                "statistical_benchmark_s": (
+                    "conditional logit with frozen text-embedding-3-large alternatives"
+                    if "S" in set(distributions["arm"])
+                    else "not available; not analysed"
+                ),
             }]),
         ),
     }
@@ -149,6 +182,8 @@ def main() -> None:
         REPO / "data" / "split" / "heldout_halves.csv",
         REPO / "docs" / "adr" / "0003-analyse-comparative-pilote.md",
     ]
+    if statistical_outputs is not None:
+        source_files.extend([*statistical_outputs, statistical_root / "manifest.json"])
     manifest = {
         "parameters": outputs["analysis_parameters"][1].row(0, named=True),
         "sources": {

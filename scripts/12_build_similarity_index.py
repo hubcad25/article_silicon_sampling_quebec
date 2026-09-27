@@ -317,9 +317,11 @@ def _read_cache() -> dict[str, list[float]]:
 
 def _write_cache(cache: dict[str, list[float]]) -> None:
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    temporary = CACHE_PATH.with_suffix(".tmp.parquet")
     pl.DataFrame(
         {"text_hash": list(cache), "embedding": [cache[h] for h in cache]}
-    ).write_parquet(CACHE_PATH)
+    ).write_parquet(temporary)
+    temporary.replace(CACHE_PATH)
 
 
 def embed_texts(texts: Sequence[str], dry_run: bool = False) -> np.ndarray:

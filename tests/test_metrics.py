@@ -47,6 +47,33 @@ def test_total_variation_has_expected_scale():
     assert total_variation(np.array([0.75, 0.25]), np.array([0.5, 0.5])) == 0.25
 
 
+def test_evaluation_accepts_exact_statistical_probabilities():
+    distributions, diagnostics, responses = fake_analysis_tables()
+    statistical = pl.DataFrame([
+        {"arm": "S", "item_idx": 1, "cell": "c", "temperature": 0.7,
+         "code": "1", "share": 0.8, "n": None},
+        {"arm": "S", "item_idx": 1, "cell": "c", "temperature": 0.7,
+         "code": "2", "share": 0.2, "n": None},
+    ]).with_columns(pl.col("n").cast(pl.Int64))
+    distributions = pl.concat([distributions, statistical], how="vertical")
+    diagnostics = pl.concat([diagnostics, pl.DataFrame([{
+        "arm": "S", "item_idx": 1, "cell": "c", "temperature": 0.7,
+        "invalid_rate": 0.0,
+    }])], how="vertical")
+
+    metrics, _, summaries, contrasts = evaluate_distributions(
+        distributions, diagnostics, responses, repetitions=20, seed=4,
+    )
+
+    statistical_metric = metrics.filter(pl.col("arm") == "S").row(0, named=True)
+    assert statistical_metric["model_n"] is None
+    assert statistical_metric["tv"] == pytest.approx(0.05)
+    expected_kl = 0.75 * np.log(0.75 / 0.8) + 0.25 * np.log(0.25 / 0.2)
+    assert statistical_metric["kl"] == pytest.approx(expected_kl)
+    assert summaries.filter(pl.col("arm") == "S").height == 1
+    assert contrasts.filter(pl.col("contrast").str.ends_with(" - S")).height == 4
+
+
 def test_evaluation_is_reproducible_and_pairs_all_requested_contrasts():
     tables = fake_analysis_tables()
     first = evaluate_distributions(*tables, repetitions=50, seed=7)

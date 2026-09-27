@@ -23,6 +23,10 @@ CONTRASTS = (
     ("BS", "B0"),
     ("B", "BS"),
     ("A", "R"),
+    ("A", "S"),
+    ("B0", "S"),
+    ("B", "S"),
+    ("BS", "S"),
 )
 
 
@@ -152,7 +156,8 @@ def evaluate_distributions(
             raise ValueError(f"option mismatch for arm {arm}, item {item_idx}, cell {cell}")
         if group["n"].n_unique() != 1:
             raise ValueError(f"model n varies across options for item {item_idx}, cell {cell}")
-        n_model = int(group["n"][0])
+        raw_n_model = group["n"][0]
+        n_model = None if raw_n_model is None else int(raw_n_model)
         diagnostic_key = (arm, item_idx, cell, temperature)
         if diagnostic_key not in invalid_rates:
             raise ValueError(f"missing diagnostics for {diagnostic_key}")
@@ -163,7 +168,31 @@ def evaluate_distributions(
             "observed_n": observed_n, "small_cell": observed_n < min_cell_n,
             "model_n": n_model, "invalid_rate": invalid_rates[diagnostic_key],
         }
-        if n_model:
+        if n_model is None:
+            model_shares = group["share"].to_numpy().astype(float)
+            if not np.isfinite(model_shares).all() or np.any(model_shares <= 0):
+                raise ValueError(f"deterministic probabilities are invalid for {diagnostic_key}")
+            if not np.isclose(model_shares.sum(), 1.0, atol=1e-6):
+                raise ValueError(f"deterministic probabilities do not sum to one for {diagnostic_key}")
+            row["tv"] = total_variation(observed_shares, model_shares)
+            positive = observed_shares > 0
+            row["kl"] = float(np.sum(
+                observed_shares[positive]
+                * np.log(observed_shares[positive] / model_shares[positive])
+            ))
+            sampled_observed = observed_boot[pair_key]
+            tv_boot = 0.5 * np.abs(sampled_observed - model_shares).sum(axis=1)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                kl_boot = np.where(
+                    sampled_observed > 0,
+                    sampled_observed * np.log(sampled_observed / model_shares),
+                    0.0,
+                ).sum(axis=1)
+            row["tv_ci_low"], row["tv_ci_high"] = _interval(tv_boot, confidence)
+            row["kl_ci_low"], row["kl_ci_high"] = _interval(kl_boot, confidence)
+            bootstraps[(*diagnostic_key, "tv")] = tv_boot
+            bootstraps[(*diagnostic_key, "kl")] = kl_boot
+        elif n_model:
             counts = _model_counts(group["share"].to_list(), n_model)
             model_shares = counts / n_model
             row["tv"] = total_variation(observed_shares, model_shares)
