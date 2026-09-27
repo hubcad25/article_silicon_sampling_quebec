@@ -15,6 +15,8 @@ header-includes:
 - \usepackage{float}
 - \usepackage{graphicx}
 - \floatplacement{figure}{H}
+- \usepackage{pdflscape}
+- \usepackage{afterpage}
 - \newcommand{\notesubtitle}{Premiers résultats · Llama 3.3 70B fine-tuné · 12 questions, 275 sous-groupes}
 - \input{note_style.tex}
 ---
@@ -88,9 +90,19 @@ D'où trois conditions principales et deux contrôles.
 | *Fuite* (contrôle) | à indices | les mêmes indices, calculés en incluant les répondants d'évaluation |
 
 Les indices ne contiennent jamais la question cible ni sa distribution. Chaque condition répond
-100 fois par sous-groupe, à quatre températures (0,3 ; 0,7 ; 1,0 ; 1,3).
+100 fois par sous-groupe, à quatre températures (0,3 ; 0,7 ; 1,0 ; 1,3). Le schéma du protocole est
+sur la page suivante.
 
-![](../data/analysis/inference/figures/schema_protocole.png){width=84%}
+```{=latex}
+\afterpage{%
+\begin{landscape}
+\thispagestyle{empty}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth,height=0.92\textheight,keepaspectratio]{../data/analysis/inference/figures/schema_protocole.png}
+\end{figure}
+\end{landscape}}
+```
 
 ## Évaluation
 
