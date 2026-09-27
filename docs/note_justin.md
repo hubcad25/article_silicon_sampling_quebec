@@ -116,14 +116,15 @@ directement aux siens.
 
 | Condition | Variation totale | IC 95 % | Écart au plancher humain |
 |---|---|---|---|
-| Humain (plancher) | **0,186** | [0,153 ; 0,222] | — |
-| **Entraîné** | **0,219** | [0,186 ; 0,257] | +0,033 [0,014 ; 0,051] |
+| \cellcolor{ref}Humain (plancher) | \cellcolor{ref}0,186 | \cellcolor{ref}[0,153 ; 0,222] | \cellcolor{ref}— |
+| Entraîné | \cellcolor{best}0,219 | \cellcolor{best}[0,186 ; 0,257] | \cellcolor{best}+0,033 [0,014 ; 0,051] |
 | Entraîné + indices | 0,246 | [0,202 ; 0,288] | +0,059 [0,025 ; 0,097] |
 | *Indices retirés* | 0,242 | [0,203 ; 0,283] | +0,056 [0,014 ; 0,100] |
 | *Fuite* | 0,240 | [0,195 ; 0,290] | +0,054 [0,013 ; 0,099] |
 | Non entraîné | 0,548 | [0,478 ; 0,616] | +0,362 [0,304 ; 0,430] |
 
-*Température 1,0 ; 12 questions, 275 sous-groupes.*
+*Température 1,0 ; 12 questions, 275 sous-groupes. Dans tous les tableaux : \colorbox{best}{vert} = meilleur résultat,
+\colorbox{worse}{rouge} = résultat défavorable, \colorbox{ref}{gris} = plancher humain ou vrais répondants (référence).*
 
 Le modèle entraîné comble environ 90 % de l'écart entre le modèle non entraîné et le plancher
 humain. Il reste significativement au-dessus du plancher, et l'écart grandit sur les sous-groupes
@@ -163,11 +164,11 @@ moitié (annexe D), même si ça ne se traduit pas en distance moyenne.
 | Condition | T = 0,3 | T = 0,7 | T = 1,0 | T = 1,3 |
 |---|---|---|---|---|
 | Non entraîné | 0,590 | 0,568 | 0,548 | 0,532 |
-| Entraîné | 0,366 | 0,239 | **0,219** | 0,220 |
+| Entraîné | \cellcolor{best}0,366 | \cellcolor{best}0,239 | \cellcolor{best}0,219 | \cellcolor{best}0,220 |
 | Entraîné + indices | 0,415 | 0,283 | 0,246 | 0,246 |
 | *Indices retirés* | 0,369 | 0,266 | 0,242 | 0,243 |
 | *Fuite* | 0,402 | 0,265 | 0,240 | 0,231 |
-| Humain (plancher) | 0,186 | 0,186 | 0,186 | 0,186 |
+| \cellcolor{ref}Humain (plancher) | \cellcolor{ref}0,186 | \cellcolor{ref}0,186 | \cellcolor{ref}0,186 | \cellcolor{ref}0,186 |
 
 *Variation totale moyenne. Part de l'option la plus fréquente et contrastes par température : annexe C.*
 
@@ -285,21 +286,30 @@ consulter les résultats ; le plancher humain, prévu au protocole, a été calc
 
 | Question | Lang. | Proximité | Cell. | Humain | Entraîné | E. + ind. | Ind. ret. | Non entr. |
 |--------------------------------|-----|---------|-----|------|------|------|------|------|
-| Souveraineté, langue et culture (CES 2021) | en | quasi-doublon | 43 | 0,13 | 0,16 | 0,13 | 0,25 | 0,63 |
-| Importance de l'ethnicité et de la langue (CES 2019) | en | loin | 34 | 0,21 | 0,19 | 0,21 | 0,16 | 0,50 |
-| Partage des dépenses fédérales (EEQ 2012) | fr | isolée | 11 | 0,21 | 0,19 | 0,24 | 0,20 | 0,48 |
-| Plus de pouvoirs ou indépendance (EEQ 2012) | fr | proche | 11 | 0,17 | 0,21 | 0,18 | 0,26 | 0,38 |
-| Meilleur premier ministre (CECD 1998) | fr | loin | 9 | 0,12 | 0,16 | 0,12 | 0,14 | 0,37 |
-| Meilleur parti : immigration (EEQ 2018) | fr | modérée | 8 | 0,17 | 0,24 | 0,34 | 0,32 | 0,67 |
-| Parti de 2^e^ choix (CES 2019) | en | quasi-doublon | 54 | 0,21 | 0,25 | 0,31 | 0,24 | 0,77 |
-| Meilleur parti : économie (CES 2019 tél.) | en | proche | 29 | 0,30 | 0,30 | 0,36 | 0,28 | 0,59 |
-| Aide médicale à mourir et avortement (CES 2021) | en | loin | 43 | 0,13 | 0,15 | 0,23 | 0,33 | 0,58 |
-| Signes religieux des enseignants (EEQ 2018) | fr | isolée | 8 | 0,09 | 0,16 | 0,26 | 0,15 | 0,39 |
-| Impact économique des immigrants (CES 2019 tél.) | en | modérée | 15 | 0,23 | 0,27 | 0,22 | 0,21 | 0,55 |
-| Pratique religieuse et société (EEQ 2008) | fr | quasi-doublon | 10 | 0,28 | 0,36 | 0,35 | 0,36 | 0,67 |
+| Souveraineté, langue et culture (CES 2021) | en | quasi-doublon | 43 | \cellcolor{ref}0,13 | 0,16 | \cellcolor{best}0,13 | 0,25 | 0,63 |
+| Importance de l'ethnicité et de la langue (CES 2019) | en | loin | 34 | \cellcolor{ref}0,21 | 0,19 | 0,21 | \cellcolor{best}0,16 | 0,50 |
+| Partage des dépenses fédérales (EEQ 2012) | fr | isolée | 11 | \cellcolor{ref}0,21 | \cellcolor{best}0,19 | 0,24 | 0,20 | 0,48 |
+| Plus de pouvoirs ou indépendance (EEQ 2012) | fr | proche | 11 | \cellcolor{ref}0,17 | 0,21 | \cellcolor{best}0,18 | 0,26 | 0,38 |
+| Meilleur premier ministre (CECD 1998) | fr | loin | 9 | \cellcolor{ref}0,12 | 0,16 | \cellcolor{best}0,12 | 0,14 | 0,37 |
+| Meilleur parti : immigration (EEQ 2018) | fr | modérée | 8 | \cellcolor{ref}0,17 | \cellcolor{best}0,24 | 0,34 | 0,32 | 0,67 |
+| Parti de 2^e^ choix (CES 2019) | en | quasi-doublon | 54 | \cellcolor{ref}0,21 | 0,25 | 0,31 | \cellcolor{best}0,24 | 0,77 |
+| Meilleur parti : économie (CES 2019 tél.) | en | proche | 29 | \cellcolor{ref}0,30 | 0,30 | 0,36 | \cellcolor{best}0,28 | 0,59 |
+| Aide médicale à mourir et avortement (CES 2021) | en | loin | 43 | \cellcolor{ref}0,13 | \cellcolor{best}0,15 | 0,23 | 0,33 | 0,58 |
+| Signes religieux des enseignants (EEQ 2018) | fr | isolée | 8 | \cellcolor{ref}0,09 | 0,16 | 0,26 | \cellcolor{best}0,15 | 0,39 |
+| Impact économique des immigrants (CES 2019 tél.) | en | modérée | 15 | \cellcolor{ref}0,23 | 0,27 | 0,22 | \cellcolor{best}0,21 | 0,55 |
+| Pratique religieuse et société (EEQ 2008) | fr | quasi-doublon | 10 | \cellcolor{ref}0,28 | 0,36 | \cellcolor{best}0,35 | 0,36 | 0,67 |
 
-*Questions groupées par thème (identité et fédéralisme, partis et vote, valeurs sociales). Proximité :
-distance sémantique entre la question et la plus proche question d'entraînement.* Les écarts varient
+*Questions groupées par thème (identité et fédéralisme, partis et vote, valeurs sociales). En vert,
+la meilleure condition de chaque question (le plancher humain, en gris, sert de référence).*
+
+**Proximité.** Ressemblance entre la question de test et la question d'entraînement qui lui est
+la plus semblable, mesurée par la similarité cosinus de leurs embeddings de texte. Elle indique à quel
+point la question est « nouvelle » pour le modèle : *quasi-doublon* (0,95 et plus : pratiquement la
+même question, posée ailleurs ou autrement), *proche* (0,85 à 0,95), *modérée* (0,775 à 0,85),
+*loin* (0,70 à 0,775) et *isolée* (moins de 0,70 : aucune question semblable à l'entraînement). Les
+60 questions de test ont été tirées en nombre égal dans chaque catégorie.
+
+Les écarts varient
 beaucoup d'une question à l'autre, sans tendance nette selon la proximité ou la langue (modèle entraîné :
 0,220 en français, 0,219 en anglais).
 
@@ -307,8 +317,8 @@ beaucoup d'une question à l'autre, sans tendance nette selon la proximité ou l
 
 | Condition | Variation totale | IC 95 % | Écart au plancher |
 |---|---|---|---|
-| Humain | 0,153 | [0,124 ; 0,185] | — |
-| Entraîné | 0,205 | [0,171 ; 0,245] | +0,052 [0,031 ; 0,070] |
+| \cellcolor{ref}Humain | \cellcolor{ref}0,153 | \cellcolor{ref}[0,124 ; 0,185] | \cellcolor{ref}— |
+| Entraîné | \cellcolor{best}0,205 | \cellcolor{best}[0,171 ; 0,245] | \cellcolor{best}+0,052 [0,031 ; 0,070] |
 | Entraîné + indices | 0,236 | [0,178 ; 0,295] | +0,082 [0,039 ; 0,129] |
 | *Indices retirés* | 0,240 | [0,189 ; 0,288] | +0,087 [0,048 ; 0,132] |
 | Non entraîné | 0,566 | [0,479 ; 0,642] | +0,412 [0,346 ; 0,483] |
@@ -319,44 +329,45 @@ l'analyse principale sur 12 questions.*
 
 ## C. Détail par température
 
-**Part de l'option la plus fréquente** (vrais répondants : 50 %)
+**Part de l'option la plus fréquente** (vrais répondants : 50 % ; en vert, la plus proche de 50 %)
 
 | Condition | T = 0,3 | T = 0,7 | T = 1,0 | T = 1,3 |
 |---|---|---|---|---|
 | Non entraîné | 98 % | 95 % | 93 % | 91 % |
-| Entraîné | 81 % | 60 % | 51 % | 44 % |
+| Entraîné | 81 % | 60 % | \cellcolor{best}51 % | \cellcolor{best}44 % |
 | Entraîné + indices | 78 % | 56 % | 47 % | 42 % |
-| *Indices retirés* | 66 % | 50 % | 43 % | 39 % |
+| *Indices retirés* | \cellcolor{best}66 % | \cellcolor{best}50 % | 43 % | 39 % |
 
-**Contrastes appariés** (différence de variation totale, IC 95 % ; négatif = premier meilleur)
+**Contrastes appariés** (différence de variation totale, IC 95 % ; négatif = premier meilleur ;
+en vert ou en rouge, les différences dont l'intervalle exclut zéro)
 
 | Contraste | T = 0,3 | T = 0,7 | T = 1,0 | T = 1,3 |
 |---|---|---|---|---|
-| Entraîné − Non entraîné | −0,22 [−0,27 ; −0,17] | −0,33 [−0,35 ; −0,25] | −0,33 [−0,35 ; −0,23] | −0,31 [−0,34 ; −0,20] |
-| Entraîné + indices − Entraîné | +0,05 [−0,01 ; 0,11] | +0,04 [0,00 ; 0,08] | +0,03 [−0,00 ; 0,06] | +0,03 [−0,00 ; 0,05] |
+| Entraîné − Non entraîné | \cellcolor{best}−0,22 [−0,27 ; −0,17] | \cellcolor{best}−0,33 [−0,35 ; −0,25] | \cellcolor{best}−0,33 [−0,35 ; −0,23] | \cellcolor{best}−0,31 [−0,34 ; −0,20] |
+| Entraîné + indices − Entraîné | +0,05 [−0,01 ; 0,11] | \cellcolor{worse}+0,04 [0,00 ; 0,08] | +0,03 [−0,00 ; 0,06] | +0,03 [−0,00 ; 0,05] |
 | Entraîné + indices − Indices retirés | +0,05 [−0,02 ; 0,12] | +0,02 [−0,03 ; 0,06] | +0,00 [−0,04 ; 0,04] | +0,00 [−0,03 ; 0,03] |
 | Fuite − Entraîné + indices | −0,01 [−0,03 ; 0,00] | −0,02 [−0,03 ; 0,00] | −0,01 [−0,02 ; 0,01] | −0,01 [−0,03 ; 0,00] |
 
-**Réponses invalides** (réponse qui ne correspond exactement à aucune option). Aucun tirage n'est
+**Réponses invalides** (réponse qui ne correspond exactement à aucune option ; en rouge, 1 % et plus). Aucun tirage n'est
 perdu en silence : les erreurs d'API sont réessayées jusqu'à obtenir une réponse, sinon le run s'arrête.
 
 | Condition | T = 0,3 | T = 0,7 | T = 1,0 | T = 1,3 |
 |---|---|---|---|---|
 | Non entraîné | 0,0 % | 0,0 % | 0,0 % | 0,2 % |
-| Entraîné | 0,0 % | 0,0 % | 0,4 % | 4,6 % |
-| Entraîné + indices | 0,0 % | 0,0 % | 0,5 % | 5,2 % |
-| *Indices retirés* | 0,0 % | 0,0 % | 0,4 % | 4,8 % |
+| Entraîné | 0,0 % | 0,0 % | 0,4 % | \cellcolor{worse}4,6 % |
+| Entraîné + indices | 0,0 % | 0,0 % | 0,5 % | \cellcolor{worse}5,2 % |
+| *Indices retirés* | 0,0 % | 0,0 % | 0,4 % | \cellcolor{worse}4,8 % |
 
 ## D. Aplatissement des différences entre sous-groupes
 
 Rapport entre la variance des distributions prédites d'un sous-groupe à l'autre et la variance
 observée (1 = le modèle différencie les groupes autant que la réalité ; 0 = même réponse pour tous).
 Médiane sur les options, température 1,0, sous-groupes d'au moins 100 répondants seulement
-(3 questions).
+(3 questions). En vert, la valeur la plus proche de 1.
 
 | Non entraîné | Entraîné | Entraîné + indices | *Indices retirés* | *Fuite* |
 |---|---|---|---|---|
-| 0,00 | 0,57 | 1,09 | 0,55 | 1,06 |
+| 0,00 | 0,57 | 1,09 | 0,55 | \cellcolor{best}1,06 |
 
 Le modèle non entraîné donne la même distribution à tous les groupes. Sans indices, les modèles
 entraînés compressent les écarts entre groupes de moitié environ ; les indices les rétablissent.
@@ -459,14 +470,15 @@ Question : Si vous deviez choisir entre plus de pouvoirs pour le Québec et l'in
 *Fuite* : le même format, mais les pourcentages sont calculés sur tous les répondants tenus à
 l'écart (n = 90), y compris ceux qui servent à l'évaluation.
 
-**Ce que chaque condition a produit pour ce sous-groupe** (température 1,0, 100 réponses)
+**Ce que chaque condition a produit pour ce sous-groupe** (température 1,0, 100 réponses ; en vert,
+la condition la plus proche des vrais répondants pour chaque réponse)
 
 | Réponse | Vrais répondants | Non entraîné | Entraîné | Indices retirés | Entraîné + indices |
 |---|---|---|---|---|---|
-| Plus de pouvoirs pour le Québec | 58 % | 100 % | 50 % | 45 % | 62 % |
-| Indépendance | 34 % | 0 % | 29 % | 26 % | 9 % |
-| Ne sais pas | 6 % | 0 % | 10 % | 15 % | 13 % |
-| Pas de réponse | 2 % | 0 % | 11 % | 14 % | 15 % |
+| Plus de pouvoirs pour le Québec | \cellcolor{ref}58 % | 100 % | 50 % | 45 % | \cellcolor{best}62 % |
+| Indépendance | \cellcolor{ref}34 % | 0 % | \cellcolor{best}29 % | 26 % | 9 % |
+| Ne sais pas | \cellcolor{ref}6 % | 0 % | \cellcolor{best}10 % | 15 % | 13 % |
+| Pas de réponse | \cellcolor{ref}2 % | \cellcolor{best}0 % | 11 % | 14 % | 15 % |
 
 Le modèle non entraîné donne la même réponse 100 fois sur 100. Le modèle entraîné retrouve l'ordre
 de grandeur des deux grandes options. Avec les indices, le modèle sous-estime nettement
