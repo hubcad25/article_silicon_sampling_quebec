@@ -8,6 +8,9 @@ fontsize: 10pt
 mainfont: Fira Sans
 mainfontoptions:
 - Scale=0.95
+monofont: DejaVu Sans Mono
+monofontoptions:
+- Scale=0.82
 header-includes:
 - \usepackage{float}
 - \usepackage{graphicx}
@@ -179,6 +182,58 @@ C'est le même contraste que Justin observait entre son fine-tune de 4 milliards
 et un modèle prompté : la température agit sur un modèle entraîné, beaucoup moins sur un modèle
 simplement prompté. La température 0 n'a pas été testée ici.
 
+## Ce qui se compare aux tests de Justin
+
+Les deux projets posent la même question de fond (un modèle entraîné sur des réponses de sondage
+fait-il mieux qu'un modèle simplement prompté?), mais avec des montages différents.
+
+| | Tests de Justin | Ici |
+|---|---|---|
+| Modèle entraîné | Qwen3 4B, LoRA, sur un portable | Llama 3.3 70B, sur Azure |
+| Données | 2 sondages canadiens (DC 2024, CES 2025) | 17 sondages québécois et canadiens, français et anglais |
+| Questions de test | 10 | 12 (sur 60 gelées) |
+| Ce qu'on reproduit | distribution nationale | distribution par sous-groupe |
+| Métrique principale | KL | variation totale (KL en complément) |
+| Comparaison « prompté » | roleplay d'un autre modèle | même modèle de base, non entraîné |
+
+**Directement comparable**
+
+- **Même volume d'entraînement.** Le checkpoint retenu par Justin (2 000 itérations × lots de 4) a
+  vu 8 000 exemples, exactement comme nos modèles. Son checkpoint plus long (environ 17 400 exemples)
+  correspond presque à nos runs de 20 000 en cours : ce sera une réplication directe de son résultat
+  « entraîner plus longtemps dégrade ».
+- **Effet de la température sur le modèle entraîné.** En KL, le modèle entraîné s'améliore d'un
+  facteur 3,4 entre les températures 0,3 et 1,0 chez Justin, et de 3,3 ici. Même ampleur, sur un
+  modèle 17 fois plus gros et une tâche plus difficile.
+- **Concentration des réponses** (part de l'option la plus fréquente) : même statistique dans les deux
+  notes.
+
+| Température | 0,3 | 0,7 | 1,0 |
+|---|---|---|---|
+| Fine-tune de Justin | ≈ 58 % | ≈ 43 % | 39 % |
+| Roleplay de Justin | ≈ 53 % | ≈ 54 % | 54 % |
+| Entraîné (ici) | 81 % | 60 % | 51 % |
+| Non entraîné (ici) | 98 % | 95 % | 93 % |
+
+*Valeurs de Justin lues sur sa figure 2 (« ≈ »). Vrais répondants ici : 50 %.*
+
+**Même direction, ampleur non comparable**
+
+- **Entraîné contre prompté.** Chez Justin, le fine-tune est 5,7 fois meilleur que le roleplay en KL ;
+  ici, 7,9 fois meilleur que le modèle non entraîné en KL (2,5 fois en variation totale). Le niveau
+  d'évaluation et le modèle prompté diffèrent : seule la direction se compare.
+
+**Ce qui diverge**
+
+- **Le modèle prompté.** Le roleplay de Justin dispersait ses réponses et variait peu avec la
+  température ; notre modèle non entraîné, lui, s'effondre sur une seule réponse et ne distingue pas
+  les sous-groupes. Un modèle instruit sans entraînement, avec un gabarit de sondage strict, se
+  comporte différemment d'un roleplay avec persona.
+- **Les différences entre groupes.** Chez Justin, les modèles échantillonnés exagèrent les écarts entre
+  groupes (rapport de 1,7 à 2,0) ; ici, le modèle entraîné les compresse de moitié (0,57) et seuls
+  les indices les rétablissent. Les deux calculs ne sont pas identiques, et le nôtre repose
+  sur 3 questions seulement : à confirmer avant d'en tirer une conclusion.
+
 # 3. Ce qu'on retient et où investir
 
 **Ce qui a marché**
@@ -316,3 +371,104 @@ entraînés compressent les écarts entre groupes de moitié environ ; les indic
   passation ; une question sans version complète dans cette langue est exclue plutôt que traduite.
 - **Correspondance avec les fichiers d'analyse** : Non entraîné = R ; Entraîné = A (modèle C0) ;
   Entraîné + indices = BS, Indices retirés = B0, Fuite = B (modèle C1).
+
+## F. Exemples de prompts
+
+**Entraînement.** Le même couple répondant–question, tel que vu par les deux modèles. La réponse du
+tour « assistant » est la cible apprise. Le profil est celui du répondant, avec les champs
+disponibles dans son sondage.
+
+*Modèle standard*
+
+```text
+[system]
+Tu es un répondant à un sondage d'opinion mené en 2018.
+Population : Québec
+Âge : 18-24 ans / 25-34 ans
+Région : Montréal
+Province : Québec
+
+[user]
+Question : Lequel des chefs des principaux partis provinciaux ferait le meilleur premier ministre du Québec? Serait-ce…
+Options :
+- Philippe Couillard, du Parti libéral
+- Jean-François Lisée, du Parti Québécois
+- François Legault, de la Coalition Avenir Québec
+- Manon Massé, de Québec solidaire
+- Aucun d’entre eux
+- Ne sais pas/Pas certain(e)
+
+Réponds uniquement par le texte exact de l'option choisie.
+
+[assistant — cible]
+Aucun d’entre eux
+```
+
+*Modèle à indices* : même exemple, précédé des réponses **de ce répondant** à des questions voisines.
+
+```text
+[user]
+Tes réponses à d'autres questions du sondage :
+- Selon vous, quel chef de parti a fait la meilleure campagne électorale jusqu’à présent? → Ne sais pas/Pas certain(e)
+- Et selon vous, quel parti est le plus susceptible de remporter l’élection du 1er octobre? → La Coalition Avenir Québec (CAQ)
+- En pensant à ce que vous ressentez maintenant, si une élection PROVINCIALE était tenue demain, le candidat de quel parti appuieriez-vous probablement? → Le Parti libéral du Québec (PLQ)
+
+Question : Lequel des chefs des principaux partis provinciaux ferait le meilleur premier ministre du Québec? […]
+```
+
+**Inférence.** Une question de test (EEQ 2012), pour le sous-groupe des hommes de 45 à 54 ans. Le
+profil est celui du sous-groupe ; le modèle répond 100 fois par température.
+
+*Non entraîné, Entraîné et Indices retirés* : exactement le même prompt, seul le modèle change.
+
+```text
+[system]
+Tu es un répondant à un sondage d'opinion mené en 2012.
+Population : Québec
+Âge : 45-54 ans
+Genre : Homme
+
+[user]
+Question : Si vous deviez choisir entre plus de pouvoirs pour le Québec et l'indépendance, lequel préféreriez-vous?
+Options :
+- Plus de pouvoirs pour le Québec
+- Indépendance
+- Ne sais pas
+- Pas de réponse
+
+Réponds uniquement par le texte exact de l'option choisie.
+```
+
+*Entraîné + indices* : le même prompt, précédé de la façon dont **le sous-groupe** a répondu à des
+questions voisines, calculée sur les répondants de contexte (n = 45).
+
+```text
+[user]
+Réponses observées dans ton groupe à d'autres questions :
+- Si vous deviez choisir entre le statu quo et plus de pouvoirs pour le Québec, lequel préféreriez-vous? : Statu quo 26 %, Plus de pouvoirs pour le Québec 67 %, Ne sais pas 4 %, Pas de réponse 2 % (n=45)
+- Lequel des énoncés suivants est plus proche de votre point de vue? : Le Québec devrait devenir indépendant, séparé du Canada 24 %, L’Assemblée nationale du Québec devrait avoir plus de pouvoirs 28 %, On devrait laisser les choses telles qu’elles sont 38 %, L’Assemblée nationale du Québec devrait avoir moins de pouvoirs 3 %, Il ne devrait pas y avoir de gouvernement provincial au Québec 5 %, Ne sais pas 0 %, Pas de réponse 2 % (n=45)
+- Si vous deviez choisir entre le statu quo et l'indépendance, lequel préféreriez-vous? : Statu quo 63 %, Indépendance 31 %, Ne sais pas 2 %, Pas de réponse 4 % (n=45)
+- Et s'il y avait un référendum avec trois options. Voteriez-vous pour: le statu quo, plus de pouvoirs pour le Québec, ou l'indépendance? : Statu quo 33 %, Plus de pouvoirs pour le Québec 46 %, Indépendance 17 %, Ne sais pas 0 %, Pas de réponse 4 % (n=45)
+- Et si un référendum avait lieu vous demandant si vous voulez que l'Assemblée nationale du Québec ait beaucoup plus de pouvoirs, voteriez- vous OUI ou… : Oui 61 %, Non 24 %, Ne sais pas 13 %, Pas de réponse 2 % (n=45)
+- Si un référendum sur l'indépendance avait lieu vous demandant si vous voulez que le Québec devienne un pays indépendant, voteriez-vous OUI ou voteriez-vous NON? : Oui 30 %, Non 61 %, Ne sais pas 2 %, Pas de réponse 7 % (n=45)
+
+Question : Si vous deviez choisir entre plus de pouvoirs pour le Québec et l'indépendance, lequel préféreriez-vous?
+[…]
+```
+
+*Fuite* : le même format, mais les pourcentages sont calculés sur tous les répondants tenus à
+l'écart (n = 90), y compris ceux qui servent à l'évaluation.
+
+**Ce que chaque condition a produit pour ce sous-groupe** (température 1,0, 100 réponses)
+
+| Réponse | Vrais répondants | Non entraîné | Entraîné | Indices retirés | Entraîné + indices |
+|---|---|---|---|---|---|
+| Plus de pouvoirs pour le Québec | 58 % | 100 % | 50 % | 45 % | 62 % |
+| Indépendance | 34 % | 0 % | 29 % | 26 % | 9 % |
+| Ne sais pas | 6 % | 0 % | 10 % | 15 % | 13 % |
+| Pas de réponse | 2 % | 0 % | 11 % | 14 % | 15 % |
+
+Le modèle non entraîné donne la même réponse 100 fois sur 100. Le modèle entraîné retrouve l'ordre
+de grandeur des deux grandes options. Avec les indices, le modèle sous-estime nettement
+l'indépendance, alors que les indices montrent environ 30 % d'appui à l'indépendance dans ce groupe.
+C'est un exemple où le modèle ne tire pas parti des distributions de groupe qu'on lui fournit.

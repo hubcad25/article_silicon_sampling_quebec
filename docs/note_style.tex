@@ -61,3 +61,8 @@
 \usepackage{caption}
 \captionsetup{font={small,color=muted}, labelformat=empty}
 \hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}
+
+% Prompt examples: wrapped, lightly shaded code blocks (```text in the markdown).
+\usepackage{fvextra}
+\RecustomVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,fontsize=\footnotesize,commandchars=\\\{\}}
+\definecolor{shadecolor}{HTML}{F2F6F8}
