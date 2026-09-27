@@ -40,7 +40,7 @@ PAYLOAD = (
     "data/analysis/test_blocks.csv",
     "data/split/heldout_respondents.parquet",
     "data/split/heldout_items.json",
-    "data/crosswalks/ses_crosswalk.json",
+    "data/crosswalks",
 )
 
 
