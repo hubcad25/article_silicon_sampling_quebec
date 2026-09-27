@@ -114,33 +114,6 @@ tester explicitement une interaction entre volume d'entraînement et ancien form
 
 # 4. Structure prévue du brief final
 
-## Diagnostic des anciens indices en pourcentages
-
-À température 1,0, l'ajout des indices déplace les probabilités dans la direction des écarts humains
-pour **47,1 % [43,4 % ; 50,7 %]** des unités question × cellule × option. La pente des écarts entre
-cellules est de **0,144 [0,059 ; 0,215]** pour **Entraîné avec indices**, contre
-**0,087 [0,033 ; 0,127]** pour **Indices retirés**. Les indices augmentent donc un peu la dispersion,
-mais les deux conditions demeurent très loin de reproduire toute l'ampleur des écarts humains
-(pente de 1).
-
-L'entropie moyenne est de **1,188 [0,929 ; 1,460]** nat chez les répondants et de
-**1,268 [1,027 ; 1,506]** avec les indices. La différence de **+0,080 [0,021 ; 0,142]** indique que
-les réponses synthétiques sont moins concentrées, et non davantage.
-
-**En clair**, les pourcentages donnés en indices font bouger le modèle, mais ils ne l'aident pas à
-repérer de façon fiable ce qui distingue un sous-groupe. Ses déplacements ne vont pas plus souvent
-dans la bonne direction que dans la mauvaise et demeurent beaucoup trop faibles. Contrairement à ce
-qu'on soupçonnait, le modèle ne semble pas non plus se rabattre excessivement sur la réponse
-majoritaire : il disperse plutôt ses réponses davantage que les vrais répondants.
-
-Ainsi, les trois prédictions de l'hypothèse 3 de l'ADR 0005 ne sont pas vérifiées. L'échec des anciens
-indices ne s'explique donc pas par une lecture du groupe comme s'il s'agissait d'une seule personne
-typique; le format en pourcentages semble surtout fournir au modèle un signal peu exploitable.
-
-Les calculs détaillés et le texte reproductible se trouvent dans
-`data/analysis/second_brief/diagnostic_anciens_indices_*`. Les intervalles à 95 % reposent sur un
-bootstrap apparié par question; les pentes sont calculées après centrage par question et option.
-
 ## En bref
 
 Trois résultats à remplir après l'analyse : effet du passage à 20k, effet des réponses individuelles
@@ -185,4 +158,31 @@ retenu, format des indices retenu et pertinence ou non d'augmenter encore le vol
 | **Entraîné avec répondants 8k** | protocole fixé; implémentation et inférence à faire |
 | **Entraîné avec répondants 20k** | protocole fixé; implémentation et inférence à faire |
 | **Modèle statistique** | implémentation en cours; exécution complète à terminer |
-| Diagnostic des anciens indices | terminé; résultats intégrés ci-dessus |
+| Diagnostic des anciens indices | terminé; voir l'annexe A |
+
+# Annexe A — Diagnostic des anciens indices en pourcentages
+
+À température 1,0, l'ajout des indices déplace les probabilités dans la direction des écarts humains
+pour **47,1 % [43,4 % ; 50,7 %]** des unités question × cellule × option. La pente des écarts entre
+cellules est de **0,144 [0,059 ; 0,215]** pour **Entraîné avec indices**, contre
+**0,087 [0,033 ; 0,127]** pour **Indices retirés**. Les indices augmentent donc un peu la dispersion,
+mais les deux conditions demeurent très loin de reproduire toute l'ampleur des écarts humains
+(pente de 1).
+
+L'entropie moyenne est de **1,188 [0,929 ; 1,460]** nat chez les répondants et de
+**1,268 [1,027 ; 1,506]** avec les indices. La différence de **+0,080 [0,021 ; 0,142]** indique que
+les réponses synthétiques sont moins concentrées, et non davantage.
+
+**En clair**, les pourcentages donnés en indices font bouger le modèle, mais ils ne l'aident pas à
+repérer de façon fiable ce qui distingue un sous-groupe. Ses déplacements ne vont pas plus souvent
+dans la bonne direction que dans la mauvaise et demeurent beaucoup trop faibles. Contrairement à ce
+qu'on soupçonnait, le modèle ne semble pas non plus se rabattre excessivement sur la réponse
+majoritaire : il disperse plutôt ses réponses davantage que les vrais répondants.
+
+Ainsi, les trois prédictions de l'hypothèse 3 de l'ADR 0005 ne sont pas vérifiées. L'échec des anciens
+indices ne s'explique donc pas par une lecture du groupe comme s'il s'agissait d'une seule personne
+typique; le format en pourcentages semble surtout fournir au modèle un signal peu exploitable.
+
+Les calculs détaillés et le texte reproductible se trouvent dans
+`data/analysis/second_brief/diagnostic_anciens_indices_*`. Les intervalles à 95 % reposent sur un
+bootstrap apparié par question; les pentes sont calculées après centrage par question et option.
