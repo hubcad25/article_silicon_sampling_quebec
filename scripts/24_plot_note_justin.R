@@ -62,14 +62,15 @@ dashboard_colors <- list(
 
 # Codes in the analysis files -> names used in the note.
 arm_names <- c(
-  R = "Base", A = "Profil", B0 = "Voisins", BS = "Voisins+Cellule", B = "Fuite"
+  R = "Non entraîné", A = "Entraîné", BS = "Entraîné + indices",
+  B0 = "Indices retirés", B = "Fuite"
 )
-arm_order <- c("Base", "Profil", "Voisins", "Voisins+Cellule", "Fuite")
+arm_order <- c("Non entraîné", "Entraîné", "Entraîné + indices", "Indices retirés", "Fuite")
 arm_colors <- c(
-  Base = dashboard_colors$red,
-  Profil = dashboard_colors$blue,
-  Voisins = dashboard_colors$yellow,
-  `Voisins+Cellule` = dashboard_colors$green_dark,
+  `Non entraîné` = dashboard_colors$red,
+  Entraîné = dashboard_colors$blue,
+  `Entraîné + indices` = dashboard_colors$green_dark,
+  `Indices retirés` = dashboard_colors$yellow,
   Fuite = "grey70",
   Humain = "grey20"
 )
@@ -130,7 +131,7 @@ p_temperature <- ggplot(by_temperature, aes(temperature, mean_tv, color = arm, g
   geom_line(linewidth = 0.9) +
   geom_point(size = 2.8) +
   scale_color_manual(values = arm_colors, drop = TRUE) +
-  scale_x_continuous(breaks = c(0.3, 0.7, 1.0, 1.3), labels = comma_number) +
+  scale_x_continuous(breaks = c(0.3, 0.7, 1.0, 1.3), labels = label_number(accuracy = 0.1, decimal.mark = ",")) +
   scale_y_continuous(
     labels = comma_number, limits = c(0, NA), expand = expansion(mult = c(0, 0.05))
   ) +
@@ -143,10 +144,10 @@ p_temperature <- ggplot(by_temperature, aes(temperature, mean_tv, color = arm, g
 
 # 2. Paired contrasts at T = 1.0.
 contrast_labels <- c(
-  "A - R" = "Profil − Base",
-  "BS - B0" = "Voisins+Cellule − Voisins",
-  "BS - A" = "Voisins+Cellule − Profil",
-  "B - BS" = "Fuite − Voisins+Cellule"
+  "A - R" = "Entraîné − Non entraîné",
+  "BS - A" = "Entraîné + indices − Entraîné",
+  "BS - B0" = "Entraîné + indices − Indices retirés",
+  "B - BS" = "Fuite − Entraîné + indices"
 )
 contrasts <- read_input("main_arm_contrasts.csv") |>
   filter(contrast %in% names(contrast_labels))
@@ -186,12 +187,12 @@ block_names <- c(
 per_item <- bind_rows(item_metrics, item_human) |>
   left_join(items, by = "item_idx") |>
   mutate(
-    label = str_trunc(short_label, 48),
+    label = str_wrap(short_label, 42),
     block = block_names[block],
-    arm = factor(arm, levels = c("Humain", "Profil", "Voisins+Cellule", "Base"))
+    arm = factor(arm, levels = c("Humain", "Entraîné", "Entraîné + indices", "Non entraîné"))
   )
 item_order <- per_item |>
-  filter(arm == "Profil") |>
+  filter(arm == "Entraîné") |>
   arrange(mean_tv) |>
   pull(label)
 per_item <- mutate(per_item, label = factor(label, levels = rev(item_order)))
@@ -200,7 +201,7 @@ p_items <- ggplot(per_item, aes(mean_tv, label, color = arm, shape = arm)) +
   geom_line(aes(group = label), color = "grey85", linewidth = 0.6) +
   geom_point(size = 3.4) +
   scale_color_manual(values = arm_colors) +
-  scale_shape_manual(values = c(Humain = 4, Profil = 16, `Voisins+Cellule` = 17, Base = 15)) +
+  scale_shape_manual(values = c(Humain = 4, Entraîné = 16, `Entraîné + indices` = 17, `Non entraîné` = 15)) +
   scale_x_continuous(labels = comma_number, limits = c(0, 0.8), breaks = seq(0, 0.8, 0.2)) +
   facet_wrap(~block, ncol = 1, scales = "free_y") +
   labs(
@@ -211,7 +212,7 @@ p_items <- ggplot(per_item, aes(mean_tv, label, color = arm, shape = arm)) +
   theme_dashboard_light() +
   theme(
     strip.text = element_text(hjust = 0),
-    axis.text.y = element_text(size = 16),
+    axis.text.y = element_text(size = 15, lineheight = 0.8),
     panel.grid.major.x = element_line(color = "grey92")
   )
 
@@ -221,6 +222,6 @@ save_plot <- function(plot, filename, height) {
 }
 save_plot(p_temperature, "tv_temperature.png", 6.4)
 save_plot(p_contrasts, "contrastes_tv.png", 5.2)
-save_plot(p_items, "items_tv.png", 9)
+save_plot(p_items, "items_tv.png", 11)
 
 message("Figures written to ", output_dir)

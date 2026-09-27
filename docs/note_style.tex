@@ -1,0 +1,63 @@
+% Light styling for the pandoc/xelatex notes in docs/.
+\usepackage[table]{xcolor}
+\usepackage{colortbl}
+\definecolor{accent}{HTML}{0072B2}
+\definecolor{ink}{HTML}{263238}
+\definecolor{muted}{HTML}{657278}
+\definecolor{panel}{HTML}{F2F6F8}
+
+\color{ink}
+\usepackage{microtype}
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+\linespread{1.08}
+
+% Headings: sans, accent colour, modest sizes.
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries\color{accent}}{}{0pt}{}[{\color{accent!35}\titlerule[0.6pt]}]
+\titleformat{\subsection}{\large\bfseries\color{ink}}{}{0pt}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{muted}}{}{0pt}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.7em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.4em}
+\titlespacing*{\subsubsection}{0pt}{0.9em}{0.2em}
+
+% Title block.
+\makeatletter
+\renewcommand{\maketitle}{%
+  \begin{minipage}{\linewidth}
+    {\color{accent}\rule{2.2cm}{3pt}}\par\vspace{0.6em}
+    {\fontsize{22}{26}\selectfont\bfseries \@title\par}\vspace{0.35em}
+    {\large\color{muted} \notesubtitle\par}\vspace{0.6em}
+    {\small\color{muted} \@author\quad·\quad \@date\par}
+  \end{minipage}\par\vspace{1.2em}}
+\makeatother
+
+% Running header and footer.
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[L]{\footnotesize\color{muted} Silicon sampling au Québec · résultats du pilote}
+\fancyhead[R]{\footnotesize\color{muted} \thepage}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}}
+
+% Tables: more air, muted rules.
+\renewcommand{\arraystretch}{1.25}
+\usepackage{booktabs}
+\setlength{\aboverulesep}{0.3ex}
+\setlength{\belowrulesep}{0.5ex}
+\arrayrulecolor{muted!60}
+
+% Lists.
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.3em, itemsep=0.25em, topsep=0.3em, label={\color{accent}\textbullet}}
+
+% Boxes used through raw LaTeX in the markdown.
+\usepackage[most]{tcolorbox}
+\newtcolorbox{encadre}{colback=panel, colframe=panel, boxrule=0pt,
+  leftrule=3pt, colframe=accent, sharp corners, left=10pt, right=10pt, top=6pt, bottom=6pt,
+  before skip=0.8em, after skip=0.8em}
+
+\usepackage{caption}
+\captionsetup{font={small,color=muted}, labelformat=empty}
+\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}

@@ -70,8 +70,8 @@ tree_nodes <- data.frame(
     "108 199 répondants au total",
     "BRANCHE ENTRAÎNEMENT  ·  78 055 répondants\nMêmes 8 000 couples répondant–question pour les deux modèles",
     "TEST GELÉ  ·  30 144 répondants\nJamais vus au fine-tuning",
-    "FT-PROFIL\nProfil SES + question cible\nProduit une réponse individuelle",
-    "FT-VOISINS\nProfil SES + jusqu’à 6 réponses individuelles\nà des questions voisines + question cible\nProduit une réponse individuelle",
+    "MODÈLE STANDARD\nProfil SES + question cible\nProduit une réponse individuelle",
+    "MODÈLE À INDICES\nProfil SES + jusqu’à 6 réponses individuelles\nà des questions voisines + question cible\nProduit une réponse individuelle",
     "CONTEXTE\n14 947 répondants",
     "ÉVALUATION\n15 197 répondants"
   ),
@@ -88,22 +88,22 @@ tree_lines <- data.frame(
 
 # Panneau B : les cinq conditions LLM restent le cœur visuel.
 conditions <- data.frame(
-  condition = c("Base", "Profil", "Voisins", "Voisins+Cellule", "Fuite"),
-  model = c("Llama 70B", "FT-Profil", "FT-Voisins", "FT-Voisins", "FT-Voisins"),
+  condition = c("Non entraîné", "Entraîné", "Entraîné + indices", "Indices retirés", "Fuite"),
+  model = c("Llama 70B", "Standard", "À indices", "À indices", "À indices"),
   common = rep("Profil SES +\nquestion cible", 5),
   context = c(
     "Aucun",
     "Aucun",
-    "Aucun",
-    "Distributions de la cellule sur ≤ 6 questions voisines\n14 947 répondants de contexte  ·  distincts de l’évaluation",
-    "Mêmes distributions, calculées sur les 30 144\nrépondants gelés  ·  inclut l’évaluation (test de fuite)"
+    "Indices : réponses de la cellule à ≤ 6 questions voisines\n14 947 répondants de contexte  ·  distincts de l’évaluation",
+    "Aucun (contrôle : isole l’effet de l’entraînement à indices)",
+    "Mêmes indices, calculés sur les 30 144 répondants gelés\ninclut l’évaluation (contrôle de fuite)"
   ),
   reference = rep("15 197 répondants\nd’évaluation", 5),
   colour = c(
     dashboard_colors$red,
     dashboard_colors$blue,
-    dashboard_colors$yellow,
     green_dark,
+    dashboard_colors$yellow,
     muted
   ),
   y = seq(4.77, 2.45, length.out = 5),
