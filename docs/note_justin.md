@@ -309,7 +309,10 @@ même question, posée ailleurs ou autrement), *proche* (0,85 à 0,95), *modér�
 *loin* (0,70 à 0,775) et *isolée* (moins de 0,70 : aucune question semblable à l'entraînement). Les
 60 questions de test ont été tirées en nombre égal dans chaque catégorie.
 
-Les écarts varient
+Question par question, aucune condition entraînée ne domine : le modèle entraîné n'est le meilleur
+que sur 3 questions, contre 4 pour Entraîné + indices et 5 pour Indices retirés. Il gagne en moyenne
+parce qu'il n'échoue jamais gravement : il n'est jamais à plus de 0,06 de la meilleure condition,
+alors que les deux autres s'en écartent parfois de 0,11 à 0,18. Les écarts varient
 beaucoup d'une question à l'autre, sans tendance nette selon la proximité ou la langue (modèle entraîné :
 0,220 en français, 0,219 en anglais).
 
