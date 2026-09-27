@@ -28,7 +28,7 @@ d'un sous-groupe sociodémographique à une question de sondage qu'il n'a jamais
 - **Donner au modèle des indices sur le groupe n'aide pas**, du moins dans le format testé : lui
   montrer comment le sous-groupe a répondu à des questions voisines n'améliore pas la distance moyenne.
 - **La température compte pour le modèle entraîné, presque pas pour le modèle non entraîné**, ce
-  qui rejoint Savoie (2026). Une température de 1,0 est adéquate.
+  comme dans les tests de Justin. Une température de 1,0 est adéquate.
 ```{=latex}
 \end{encadre}
 ```
@@ -104,8 +104,8 @@ même profil. Avec environ 40 répondants par moitié, ce plancher est élevé. 
 pessimiste, puisqu'il additionne le bruit de deux échantillons.
 
 La métrique (variation totale plutôt que KL) et le niveau d'évaluation (sous-groupe plutôt que
-distribution nationale) diffèrent de Savoie (2026) : les niveaux absolus ne se comparent pas
-directement.
+distribution nationale) diffèrent de ceux de Justin : les niveaux absolus ne se comparent pas
+directement aux siens.
 
 # 2. Résultats
 
@@ -129,7 +129,7 @@ d'au moins 30 répondants, où le plancher est moins bruité (annexe B).
 Le modèle non entraîné échoue surtout parce qu'il **répond presque toujours la même chose** : son
 option la plus fréquente reçoit 93 % des tirages, contre 50 % chez les vrais répondants. Le modèle
 entraîné retrouve la bonne dispersion (51 %). L'effondrement est plus marqué que celui du bras
-roleplay de Savoie (2026), autour de 54 %.
+roleplay de Justin, autour de 54 %.
 
 ![](../data/analysis/inference/figures/items_tv.png){width=88%}
 
@@ -175,7 +175,7 @@ moitié (annexe D), même si ça ne se traduit pas en distance moyenne.
 - **Les conclusions ne dépendent pas de la température** : l'entraînement aide nettement partout,
   et les indices n'aident nulle part.
 
-C'est le même contraste que Savoie (2026) observait entre un fine-tune de 4 milliards de paramètres
+C'est le même contraste que Justin observait entre son fine-tune de 4 milliards de paramètres
 et un modèle prompté : la température agit sur un modèle entraîné, beaucoup moins sur un modèle
 simplement prompté. La température 0 n'a pas été testée ici.
 
@@ -205,7 +205,7 @@ simplement prompté. La température 0 n'a pas été testée ici.
    une amélioration. Il faut privilégier des questions tirées de grands sondages, ou des sous-groupes
    plus larges, plutôt que plus de répondants à l'entraînement.
 3. **Plus d'exemples d'entraînement : à trancher avec les runs en cours.** 8 000 exemples, c'est peu
-   au regard des données disponibles, mais Savoie (2026) trouvait qu'entraîner plus longtemps
+   au regard des données disponibles, mais Justin trouvait qu'entraîner plus longtemps
    dégradait les résultats. Les mêmes modèles, entraînés sur 20 000 exemples, répondront à la question.
 4. **Les indices, avec un format cohérent.** Une seule expérience ciblée : entraîner le modèle
    directement avec des distributions de groupe, comme il les reçoit à l'inférence. Les indices
@@ -316,6 +316,3 @@ entraînés compressent les écarts entre groupes de moitié environ ; les indic
   passation ; une question sans version complète dans cette langue est exclue plutôt que traduite.
 - **Correspondance avec les fichiers d'analyse** : Non entraîné = R ; Entraîné = A (modèle C0) ;
   Entraîné + indices = BS, Indices retirés = B0, Fuite = B (modèle C1).
-
-**Référence.** Savoie, J. (2026). *Decoding Temperature Determines Whether a Fine-Tuned Silicon
-Sampler Works at All.* Note de recherche, 27 août 2026.
