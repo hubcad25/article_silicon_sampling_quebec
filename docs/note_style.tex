@@ -64,7 +64,13 @@
 
 % Prompt examples: wrapped, lightly shaded code blocks (```text in the markdown).
 \usepackage{fvextra}
-\RecustomVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,fontsize=\footnotesize,commandchars=\\\{\}}
+\makeatletter
+\@ifundefined{Highlighting}{%
+  \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,fontsize=\footnotesize,commandchars=\\\{\}}%
+}{%
+  \RecustomVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,fontsize=\footnotesize,commandchars=\\\{\}}%
+}
+\makeatother
 \definecolor{shadecolor}{HTML}{F2F6F8}
 
 % Table highlighting (\cellcolor in the markdown tables).
