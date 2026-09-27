@@ -65,10 +65,10 @@ def env_value(name: str) -> str:
 
 
 def storage_key() -> str:
-    return az(
-        "storage", "account", "keys", "list", "-g", RESOURCE_GROUP, "-n", STORAGE,
-        "--query", "[0].value", "-o", "tsv",
-    )
+    # Avoid a slow management-plane lookup: this key is already required for
+    # reading the survey microdata and is kept only in the local .env / ACI
+    # secure environment.
+    return env_value("AZURE_STORAGE_KEY")
 
 
 def build_payload() -> Path:
