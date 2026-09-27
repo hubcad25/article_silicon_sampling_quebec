@@ -125,9 +125,17 @@ mais les deux conditions demeurent très loin de reproduire toute l'ampleur des 
 
 L'entropie moyenne est de **1,188 [0,929 ; 1,460]** nat chez les répondants et de
 **1,268 [1,027 ; 1,506]** avec les indices. La différence de **+0,080 [0,021 ; 0,142]** indique que
-les réponses synthétiques sont moins concentrées, et non davantage. Ainsi, les trois prédictions de
-l'hypothèse 3 de l'ADR 0005 ne sont pas vérifiées : la direction n'est pas meilleure que le hasard,
-les différences restent fortement aplaties et BS a une entropie supérieure à celle des répondants.
+les réponses synthétiques sont moins concentrées, et non davantage.
+
+**En clair**, les pourcentages donnés en indices font bouger le modèle, mais ils ne l'aident pas à
+repérer de façon fiable ce qui distingue un sous-groupe. Ses déplacements ne vont pas plus souvent
+dans la bonne direction que dans la mauvaise et demeurent beaucoup trop faibles. Contrairement à ce
+qu'on soupçonnait, le modèle ne semble pas non plus se rabattre excessivement sur la réponse
+majoritaire : il disperse plutôt ses réponses davantage que les vrais répondants.
+
+Ainsi, les trois prédictions de l'hypothèse 3 de l'ADR 0005 ne sont pas vérifiées. L'échec des anciens
+indices ne s'explique donc pas par une lecture du groupe comme s'il s'agissait d'une seule personne
+typique; le format en pourcentages semble surtout fournir au modèle un signal peu exploitable.
 
 Les calculs détaillés et le texte reproductible se trouvent dans
 `data/analysis/second_brief/diagnostic_anciens_indices_*`. Les intervalles à 95 % reposent sur un

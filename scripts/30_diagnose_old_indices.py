@@ -101,6 +101,12 @@ L’entropie moyenne, en nats, vaut **{_interval(entropy_observed)}** chez les r
 est de **{_interval(entropy_difference)}**; une valeur négative indique des réponses synthétiques plus
 concentrées.
 
+**En clair**, les pourcentages donnés en indices font bouger le modèle, mais ils ne l'aident pas à
+repérer de façon fiable ce qui distingue un sous-groupe. Ses déplacements ne vont pas plus souvent
+dans la bonne direction que dans la mauvaise et demeurent beaucoup trop faibles. Contrairement à ce
+qu'on soupçonnait, le modèle ne semble pas non plus se rabattre excessivement sur la réponse
+majoritaire : il disperse plutôt ses réponses davantage que les vrais répondants.
+
 **Conclusion.** {verdict} {uncertainty}
 
 Les estimations regroupent les unités prévues dans l’ADR 0005. Les intervalles à 95 % proviennent
