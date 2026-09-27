@@ -45,3 +45,11 @@ data/interim/*
 
 # Microdata Parquet cache (never committed)
 data/cache/
+
+# Third-party papers (not redistributable)
+litt/
+
+# Scratch artefacts: keep the helper scripts, not their data or logs
+scratch/*.jsonl
+scratch/*.log
+scratch/wording/
