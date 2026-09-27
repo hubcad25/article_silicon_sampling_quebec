@@ -137,6 +137,16 @@ item × cellule, ~27 500 appels/modèle. Split inchangé. Détails, liste des it
 d'exécution : `docs/adr/0001-sous-ensemble-pilote-blocs-thematiques.md`. C1 8k soumis : `ftjob-5dfdb814…` ;
 C0 8k déployé sous `c0-8k-txt` (à supprimer après la campagne).
 
+### 🚀 Runs 20k lancés en parallèle — 26 septembre
+Décision d'Hubert : C0 20k et C1 20k **en même temps** (lève la règle « en séquence » ; crédits non limitants).
+Même recette que les 8k (Llama-3.3-70B-Instruct-9, 1 époque, batch 64, LR ×1, seed 20260924), mêmes fichiers
+de validation. Soumission : `scratch/submit_20k.py`, journal `logs/ft_submit_20k.log`.
+- C0 20k : `ftjob-0595d652bcdb427597b606acd51e3659` · suffixe `c0-20k-txt` · train `file-c678328f…`
+- C1 20k : `ftjob-fb27ec8bfd52411d8929c944cceb355f` · suffixe `c1-20k-txt` · train `file-7ff7e89f…`
+Après : inscrire les modèles dans `inference.CAMPAIGNS`, puis `python scripts/20_cloud.py launch c0-20k c1-20k`.
+Analyse 5 bras 8k (R, A, B0, B, BS) faite le 26 sept. dans `data/analysis/` : A − R = −0,33 TV ; aucun
+contraste entre bras fine-tunés significatif. Sensibilité n ≥ 30 vide par construction (item 25 : 0 cellule).
+
 ### Ensuite (décidé le 24 septembre)
 1. **Ordre des runs : C0 8k puis C1 8k d'abord** — la première comparaison est **C0 vs C1 à 8 000 exemples**.
    Les runs 20k viennent **après**, pas avant.

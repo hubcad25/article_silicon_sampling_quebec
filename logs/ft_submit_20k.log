@@ -1,0 +1,4 @@
+201 data/datasets/c0_train_20000.jsonl file-c678328f3f504107bf41c7ab19b8d2d2
+201 data/datasets/c1_train_20000.jsonl file-7ff7e89fb44343e488ed5bdf34c1f0f7
+201 c0-20k-txt job: ftjob-0595d652bcdb427597b606acd51e3659 pending None {"train": "file-c678328f3f504107bf41c7ab19b8d2d2", "valid": "file-84f674166e8648fe9c8f5f34d1ec4055"}
+201 c1-20k-txt job: ftjob-fb27ec8bfd52411d8929c944cceb355f pending None {"train": "file-7ff7e89fb44343e488ed5bdf34c1f0f7", "valid": "file-e73439026bc84e82a7c35c16aa32ed0c"}
