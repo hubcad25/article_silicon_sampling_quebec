@@ -113,12 +113,25 @@ def wait_for_deployment_absence(deployment: str, timeout: float = 86_400) -> Non
     """Queue behind a quota-sharing deployment, observing its full active cycle."""
     _log(f"waiting for deployment {deployment} to become active")
     deadline = time.monotonic() + timeout
-    while _arm_request("GET", deployment) is None:
+
+    def present() -> bool:
+        while True:
+            try:
+                return _arm_request("GET", deployment) is not None
+            except Exception as exc:  # managed-identity/ARM outages are transient
+                if time.monotonic() > deadline:
+                    raise RuntimeError(
+                        f"timed out querying deployment {deployment}"
+                    ) from exc
+                _log(f"transient ARM error while waiting for {deployment}: {exc}")
+                time.sleep(60)
+
+    while not present():
         if time.monotonic() > deadline:
             raise RuntimeError(f"timed out waiting for deployment {deployment} creation")
         time.sleep(30)
     _log(f"deployment {deployment} observed; waiting for its deletion")
-    while _arm_request("GET", deployment) is not None:
+    while present():
         if time.monotonic() > deadline:
             raise RuntimeError(f"timed out waiting for deployment {deployment} deletion")
         time.sleep(60)
