@@ -116,7 +116,18 @@ class FoundryChat:
             retry_after = None
             try:
                 data = self._post(body)
-                return (data["choices"][0]["message"]["content"] or "").strip()
+                choices = data.get("choices") or []
+                if not choices:
+                    # Azure can return HTTP 200 with no choice when a response
+                    # is filtered. Treat it like the explicit 400 filter form:
+                    # resample, then checkpoint an invalid draw rather than
+                    # aborting an otherwise resumable campaign.
+                    filtered += 1
+                    self.filtered += 1
+                    if filtered <= self.max_filtered:
+                        continue
+                    return ""
+                return (choices[0].get("message", {}).get("content") or "").strip()
             except urllib.error.HTTPError as e:
                 if e.code not in RETRY_STATUS:
                     detail = _error_body(e)

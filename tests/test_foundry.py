@@ -120,6 +120,16 @@ def test_content_filter_becomes_a_checkpointed_invalid_draw_after_resampling():
     assert chat.filtered == 3
 
 
+def test_empty_choices_are_resampled_then_checkpointed_as_invalid():
+    chat, slept = client([{"choices": []}, {"choices": []}, OK], max_filtered=2)
+    assert chat.complete([]) == "3"
+    assert chat.filtered == 2 and slept == []
+
+    chat, _ = client([{} for _ in range(3)], max_filtered=2)
+    assert chat.complete([]) == ""
+    assert chat.filtered == 3
+
+
 def test_other_400_raises_with_its_body():
     chat, _ = client([http_error(400, body=b'{"error":"max_tokens too large"}')])
     with pytest.raises(CallFailed, match="max_tokens too large"):
