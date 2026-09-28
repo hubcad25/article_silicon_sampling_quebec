@@ -11,11 +11,14 @@ from article_silicon_sampling_quebec.inference import (
     DEFAULT_MAX_TOKENS,
     DEFAULT_MODEL,
     EXPECTED_ITEM_CELL_PAIRS,
+    EXPECTED_REMAINING_ITEM_CELL_PAIRS,
     DrawTask,
     ItemCell,
+    RespondentContext,
     RunSettings,
     StallError,
     attach_stratum_context,
+    build_manifest,
     build_item_cells,
     cell_distribution,
     ensure_manifest,
@@ -23,7 +26,13 @@ from article_silicon_sampling_quebec.inference import (
     make_tasks,
     run,
 )
-from article_silicon_sampling_quebec.prompts import ContextDistribution, ItemSpec, Option, Persona
+from article_silicon_sampling_quebec.prompts import (
+    ContextAnswer,
+    ContextDistribution,
+    ItemSpec,
+    Option,
+    Persona,
+)
 
 
 class FakeChat:
@@ -57,7 +66,9 @@ def pair() -> ItemCell:
 
 def manifest_files(tmp_path: Path) -> dict[str, Path]:
     paths = {}
-    for name in ("pilot_csv", "heldout_respondents", "items", "strata_definition"):
+    for name in (
+        "pilot_csv", "heldout_respondents", "heldout_halves", "items", "strata_definition"
+    ):
         path = tmp_path / name
         path.write_text(name, encoding="utf-8")
         paths[name] = path
@@ -77,6 +88,17 @@ def test_frozen_pilot_has_exact_item_cell_coverage_and_persona_dimensions():
         assert tuple(p.persona.fields) == p.dimensions
         assert len(p.cell.split("|")) == len(p.dimensions)
         assert p.heldout_valid_n >= 30
+
+
+def test_frozen_remaining_has_exact_48_question_885_cell_coverage():
+    pairs = build_item_cells(subset="remaining")
+    assert len(pairs) == EXPECTED_REMAINING_ITEM_CELL_PAIRS
+    assert len({p.item_idx for p in pairs}) == 48
+    assert not ({p.item_idx for p in pairs} & {p.item_idx for p in build_item_cells(subset="pilot")})
+    assert len(make_tasks(
+        pairs,
+        RunSettings(subset="remaining", temperatures=(1.0,), draws=250),
+    )) == 221_250
 
 
 def test_successful_invalid_completion_is_checkpointed_and_resume_skips_it(tmp_path):
@@ -161,6 +183,24 @@ def test_manifest_refuses_incompatible_resume(tmp_path):
         ensure_manifest(path, {**base, "settings": {"draws": 2}})
 
 
+def test_remaining_manifest_records_confirmatory_contract(tmp_path):
+    settings = RunSettings(subset="remaining", temperatures=(1.0,), draws=250)
+    manifest = build_manifest(settings, 885, manifest_files(tmp_path))
+    assert manifest["scientific_contract"].endswith(
+        "0006-inference-48-questions-amelioration.md"
+    )
+    assert manifest["settings"]["subset"] == "remaining"
+    assert manifest["settings"]["draws"] == 250
+    assert manifest["settings"]["temperatures"] == (1.0,)
+    assert manifest["expected"] == {
+        "subset": "remaining",
+        "questions": 48,
+        "frozen_item_cell_pairs": 885,
+        "selected_item_cell_pairs": 885,
+        "tasks": 221_250,
+    }
+
+
 def test_draw_key_is_stable():
     task = DrawTask(pair(), 1.0, 4)
     assert task.key == "7|25_34|woman|1|4"
@@ -192,6 +232,11 @@ def test_arms_map_to_model_condition_and_context():
     assert (RunSettings(arm="A").condition, RunSettings(arm="A").context) == ("C0", "none")
     assert (RunSettings(arm="B").condition, RunSettings(arm="B").context) == ("C1", "stratum")
     assert (RunSettings(arm="B0").condition, RunSettings(arm="B0").context) == ("C1", "none")
+    assert (RunSettings(arm="A20").condition, RunSettings(arm="A20").context) == ("C0", "none")
+    assert (RunSettings(arm="B020").condition, RunSettings(arm="B020").context) == ("C1", "none")
+    assert (RunSettings(arm="BR8").condition, RunSettings(arm="BR8").context) == (
+        "C1", "respondent_half"
+    )
 
 
 def test_cell_distribution_is_weighted_and_ignores_invalid_codes():
@@ -216,6 +261,44 @@ def test_arm_b_renders_stratum_context_and_a_does_not(tmp_path):
         record = next(iter(load_checkpoint(tmp_path / f"{arm}.jsonl").values()))
         assert record["arm"] == arm and record["n_context"] == int(expected)
     assert (tmp_path / "B.context.csv").exists() and not (tmp_path / "A.context.csv").exists()
+
+
+def test_respondent_context_cycles_evenly_over_draws(tmp_path):
+    contexts = (
+        RespondentContext(
+            respondent_id="r1",
+            answers=(ContextAnswer.from_item(neighbour(), "1"),),
+            cosines=(0.8,),
+        ),
+        RespondentContext(
+            respondent_id="r2",
+            answers=(ContextAnswer.from_item(neighbour(), "2"),),
+            cosines=(0.8,),
+        ),
+    )
+    with_context = replace(pair(), respondent_contexts=contexts)
+    chat = FakeChat(["Yes"] * 3)
+    settings = RunSettings(
+        arm="BR8", temperatures=(1.0,), draws=3, workers=1,
+        limit_item_cell_pairs=1,
+    )
+    run(
+        settings, tmp_path / "BR8.csv", chat=chat, pairs=[with_context],
+        manifest_paths=manifest_files(tmp_path),
+    )
+
+    users = [call[0][-1]["content"] for call in chat.calls]
+    assert "Another question → Agree" in users[0]
+    assert "Another question → Disagree" in users[1]
+    assert "Another question → Agree" in users[2]
+    records = sorted(load_checkpoint(tmp_path / "BR8.jsonl").values(),
+                     key=lambda row: row["draw_idx"])
+    assert [row["context_respondent_id"] for row in records] == ["r1", "r2", "r1"]
+    with (tmp_path / "BR8.context.csv").open(newline="", encoding="utf-8") as handle:
+        audit = list(DictReader(handle))
+    assert [(row["context_respondent_id"], row["assigned_draws"]) for row in audit] == [
+        ("r1", "2"), ("r2", "1")
+    ]
 
 
 def test_stratum_context_uses_heldout_cell_and_never_the_target(tmp_path):

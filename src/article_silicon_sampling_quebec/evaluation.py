@@ -36,6 +36,17 @@ ARM_PATHS = {
 ARM_CAMPAIGNS = {
     "A": "c0-8k", "B": "c1-8k", "B0": "c1-8k", "R": "base", "BS": "c1-8k",
 }
+SECOND_BRIEF_ARM_PATHS = {
+    "A20": Path("c0-20k/A20.csv"),
+    "B020": Path("c1-20k/B020.csv"),
+    "BR8": Path("c1-8k/BR8.csv"),
+    "BR20": Path("c1-20k/BR20.csv"),
+}
+SECOND_BRIEF_ARM_CAMPAIGNS = {
+    "A20": "c0-20k", "B020": "c1-20k", "BR8": "c1-8k", "BR20": "c1-20k",
+}
+ALL_ARM_PATHS = {**ARM_PATHS, **SECOND_BRIEF_ARM_PATHS}
+ALL_ARM_CAMPAIGNS = {**ARM_CAMPAIGNS, **SECOND_BRIEF_ARM_CAMPAIGNS}
 
 DISTRIBUTION_COLUMNS = ("arm", "item_idx", "cell", "temperature", "code", "share", "n")
 DIAGNOSTIC_COLUMNS = (
@@ -149,7 +160,7 @@ def build_model_tables(
 ) -> tuple[pl.DataFrame, pl.DataFrame]:
     """Validate complete draw files and return distributions plus diagnostics."""
     expected_arms = set(arms) if arms is not None else set(ARM_PATHS)
-    unknown_arms = expected_arms - set(ARM_PATHS)
+    unknown_arms = expected_arms - set(ALL_ARM_PATHS)
     if unknown_arms:
         raise ValueError(f"unknown arms: {sorted(unknown_arms)}")
     if set(draws_by_arm) != expected_arms:
@@ -195,7 +206,7 @@ def build_model_tables(
         actual_arms = set(frame["arm"].unique().to_list())
         if actual_arms != {expected_arm}:
             raise ValueError(f"{expected_arm}.csv contains arm values {sorted(actual_arms)}")
-        campaign = CAMPAIGNS[ARM_CAMPAIGNS[expected_arm]]
+        campaign = CAMPAIGNS[ALL_ARM_CAMPAIGNS[expected_arm]]
         expected_metadata = {
             "deployment": campaign.deployment,
             "model": campaign.model,
@@ -208,9 +219,10 @@ def build_model_tables(
                 raise ValueError(
                     f"arm {expected_arm} has {column} values {sorted(actual)}, expected {expected!r}"
                 )
-        if expected_arm not in {"B", "BS"} and set(frame["n_context"].unique().to_list()) != {0}:
+        has_context = ARMS[expected_arm].context != "none"
+        if not has_context and set(frame["n_context"].unique().to_list()) != {0}:
             raise ValueError(f"arm {expected_arm} must have n_context = 0")
-        if expected_arm in {"B", "BS"} and frame.filter(
+        if has_context and frame.filter(
             pl.col("n_context").is_null()
             | (pl.col("n_context") < 0)
             | (pl.col("n_context") > 6)
@@ -333,12 +345,12 @@ def read_arm_draws(
 ) -> dict[str, pl.DataFrame]:
     """Read selected production arm CSVs without inferring option codes as numbers."""
     selected = list(arms) if arms is not None else list(ARM_PATHS)
-    unknown_arms = set(selected) - set(ARM_PATHS)
+    unknown_arms = set(selected) - set(ALL_ARM_PATHS)
     if unknown_arms:
         raise ValueError(f"unknown arms: {sorted(unknown_arms)}")
     frames = {}
     for arm in selected:
-        relative_path = ARM_PATHS[arm]
+        relative_path = ALL_ARM_PATHS[arm]
         path = Path(inference_root) / relative_path
         if not path.is_file():
             raise FileNotFoundError(f"missing inference output for arm {arm}: {path}")
@@ -411,6 +423,7 @@ def _write_csv_atomic(frame: pl.DataFrame, path: Path) -> None:
 
 
 __all__ = [
-    "ANALYSIS_ROOT", "ARM_PATHS", "INFERENCE_ROOT", "build_model_tables",
+    "ALL_ARM_PATHS", "ANALYSIS_ROOT", "ARM_PATHS", "INFERENCE_ROOT",
+    "SECOND_BRIEF_ARM_PATHS", "build_model_tables",
     "build_observed_tables", "read_arm_draws", "write_distribution_outputs",
 ]

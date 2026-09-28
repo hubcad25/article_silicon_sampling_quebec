@@ -33,12 +33,15 @@ def fake_pair() -> ItemCell:
 def fake_draws(arm: str, *, invalid: bool = False) -> pl.DataFrame:
     campaign_name = {
         "A": "c0-8k", "B": "c1-8k", "B0": "c1-8k", "R": "base", "BS": "c1-8k",
+        "A20": "c0-20k", "B020": "c1-20k", "BR8": "c1-8k", "BR20": "c1-20k",
     }[arm]
     campaign = CAMPAIGNS[campaign_name]
     condition, context = {
         "A": ("C0", "none"), "B": ("C1", "stratum"),
         "B0": ("C1", "none"), "R": ("base", "none"),
         "BS": ("C1", "stratum_half"),
+        "A20": ("C0", "none"), "B020": ("C1", "none"),
+        "BR8": ("C1", "respondent_half"), "BR20": ("C1", "respondent_half"),
     }[arm]
     rows = []
     for draw_idx, code in enumerate(("1", None if invalid else "1", "2")):
@@ -51,7 +54,7 @@ def fake_draws(arm: str, *, invalid: bool = False) -> pl.DataFrame:
             "model": campaign.model,
             "condition": condition,
             "context": context,
-            "n_context": 1 if arm in {"B", "BS"} else 0,
+            "n_context": 1 if arm in {"B", "BS", "BR8", "BR20"} else 0,
             "temperature": 0.7,
             "item_idx": 4,
             "block": "block",
@@ -135,6 +138,16 @@ def test_model_distributions_accept_explicit_interim_arm_subset():
 
     assert set(distributions["arm"]) == set(arms)
     assert set(diagnostics["arm"]) == set(arms)
+
+
+def test_model_distributions_accept_second_brief_respondent_arm():
+    distributions, diagnostics = build_model_tables(
+        {"BR8": fake_draws("BR8")}, [fake_pair()],
+        temperatures=(0.7,), draws_per_group=3, arms=("BR8",),
+    )
+
+    assert set(distributions["arm"]) == {"BR8"}
+    assert diagnostics.row(0, named=True)["effective_n"] == 3
 
 
 def test_model_distributions_reject_substituted_draw_index():

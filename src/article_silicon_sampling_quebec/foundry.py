@@ -58,7 +58,8 @@ class FoundryChat:
     retries: int = 0
     throttled: int = 0
     filtered: int = 0
-    #: Content-filter refusals tolerated for one call before it raises.
+    #: Content-filter refusals resampled before the filtered draw is returned
+    #: as an empty (therefore invalid, but checkpointed) response.
     max_filtered: int = 5
 
     def __post_init__(self) -> None:
@@ -119,11 +120,12 @@ class FoundryChat:
             except urllib.error.HTTPError as e:
                 if e.code not in RETRY_STATUS:
                     detail = _error_body(e)
-                    if (e.code == 400 and any(m in detail for m in FILTER_MARKERS)
-                            and filtered < self.max_filtered):
+                    if e.code == 400 and any(m in detail for m in FILTER_MARKERS):
                         filtered += 1
                         self.filtered += 1
-                        continue
+                        if filtered <= self.max_filtered:
+                            continue
+                        return ""
                     raise CallFailed(f"HTTP {e.code} on {self.deployment}: {detail[:500]}") from e
                 if e.code == 429:
                     self.throttled += 1

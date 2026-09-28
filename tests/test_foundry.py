@@ -114,10 +114,10 @@ def test_content_filter_400_is_resampled_and_counted():
     assert chat.filtered == 1 and slept == []
 
 
-def test_content_filter_gives_up_after_max_filtered():
+def test_content_filter_becomes_a_checkpointed_invalid_draw_after_resampling():
     chat, _ = client([http_error(400, body=FILTERED) for _ in range(3)], max_filtered=2)
-    with pytest.raises(CallFailed, match="content_filter"):
-        chat.complete([])
+    assert chat.complete([]) == ""
+    assert chat.filtered == 3
 
 
 def test_other_400_raises_with_its_body():

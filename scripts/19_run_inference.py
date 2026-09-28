@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import shutil
+import statistics
 import subprocess
 import sys
 import time
@@ -35,6 +36,7 @@ from article_silicon_sampling_quebec.inference import (  # noqa: E402
     DEFAULT_TEMPERATURES,
     Campaign,
     RunSettings,
+    attach_respondent_context,
     build_item_cells,
     run,
 )
@@ -107,6 +109,22 @@ def delete_deployment(deployment: str) -> None:
     _arm_request("DELETE", deployment)
 
 
+def wait_for_deployment_absence(deployment: str, timeout: float = 86_400) -> None:
+    """Queue behind a quota-sharing deployment, observing its full active cycle."""
+    _log(f"waiting for deployment {deployment} to become active")
+    deadline = time.monotonic() + timeout
+    while _arm_request("GET", deployment) is None:
+        if time.monotonic() > deadline:
+            raise RuntimeError(f"timed out waiting for deployment {deployment} creation")
+        time.sleep(30)
+    _log(f"deployment {deployment} observed; waiting for its deletion")
+    while _arm_request("GET", deployment) is not None:
+        if time.monotonic() > deadline:
+            raise RuntimeError(f"timed out waiting for deployment {deployment} deletion")
+        time.sleep(60)
+    _log(f"deployment {deployment} is absent; continuing")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -118,10 +136,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--temperatures", type=float, nargs="+",
                         default=list(DEFAULT_TEMPERATURES))
     parser.add_argument("--draws", type=int, default=DEFAULT_DRAWS)
+    parser.add_argument("--subset", choices=("pilot", "remaining", "all"), default="pilot")
     parser.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
     parser.add_argument("--limit-item-cell-pairs", type=int)
     parser.add_argument("--stall-seconds", type=float, default=600)
     parser.add_argument("--ensure-deployment", action="store_true")
+    parser.add_argument("--wait-for-deployment-absence")
     parser.add_argument(
         "--delete-deployment-after", action="store_true",
         help="Delete the deployment when every arm has exited, including after failure.")
@@ -139,15 +159,33 @@ def main() -> int:
     if unknown:
         raise SystemExit(f"{campaign.name} serves arms {campaign.arms}, not {sorted(unknown)}")
 
+    base_pairs = build_item_cells(subset=args.subset)
+    respondent_pairs = None
+    if any(RunSettings(arm=arm).context == "respondent_half" for arm in arms):
+        respondent_pairs = attach_respondent_context(base_pairs)
+        counts = [len(pair.respondent_contexts) for pair in respondent_pairs]
+        positive = [count for count in counts if count]
+        _log(
+            "respondent context preflight: "
+            f"{len(counts)} pairs; min/median/max among covered pairs "
+            f"{min(positive)}/{statistics.median(positive):g}/{max(positive)}; "
+            f"{sum(count == 0 for count in counts)} pairs without an eligible neighbour"
+        )
+
     def one_arm(arm: str) -> dict:
         settings = RunSettings(
             deployment=campaign.deployment, model=campaign.model, arm=arm,
             temperatures=tuple(args.temperatures), draws=args.draws,
             workers=args.workers, max_tokens=args.max_tokens,
             limit_item_cell_pairs=args.limit_item_cell_pairs,
+            subset=args.subset,
         )
         _log(f"arm {arm}: start")
-        summary = run(settings, args.root / f"{arm}.csv", stall_seconds=args.stall_seconds)
+        pairs = respondent_pairs if settings.context == "respondent_half" else base_pairs
+        summary = run(
+            settings, args.root / f"{arm}.csv", pairs=pairs,
+            stall_seconds=args.stall_seconds,
+        )
         _log(f"arm {arm}: done {json.dumps(summary)}")
         return summary
 
@@ -155,7 +193,8 @@ def main() -> int:
     try:
         # Download the survey parquets once: concurrent arms would otherwise
         # race on the same cache file.
-        build_item_cells()
+        if args.wait_for_deployment_absence:
+            wait_for_deployment_absence(args.wait_for_deployment_absence)
         if args.ensure_deployment:
             ensure_deployment(campaign)
         with ThreadPoolExecutor(max_workers=len(arms)) as pool:

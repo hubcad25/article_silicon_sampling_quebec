@@ -88,6 +88,7 @@ def evaluate_distributions(
     alpha: float = DEFAULT_ALPHA,
     confidence: float = DEFAULT_CONFIDENCE,
     min_cell_n: int = MIN_CELL_N,
+    contrasts: Sequence[tuple[str, str]] = CONTRASTS,
 ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     """Return cell metrics, item means, arm summaries, and paired contrasts."""
     if repetitions < 1 or not 0 < confidence < 1 or min_cell_n < 1:
@@ -271,7 +272,7 @@ def evaluate_distributions(
                     )
                 summary_rows.append(row)
 
-        for left, right in CONTRASTS:
+        for left, right in contrasts:
             for temperature in temperatures:
                 left_rows = scoped.filter(
                     (pl.col("arm") == left) & (pl.col("temperature") == temperature)
@@ -527,6 +528,7 @@ def evaluate_ses_subgroups(
     repetitions: int = DEFAULT_BOOTSTRAPS,
     seed: int = DEFAULT_SEED,
     confidence: float = DEFAULT_CONFIDENCE,
+    contrasts: Sequence[tuple[str, str]] = CONTRASTS,
 ) -> tuple[pl.DataFrame, pl.DataFrame]:
     """Return exploratory SES summaries and item-bootstrap paired contrasts."""
     keys = ["item_idx", "cell"]
@@ -567,7 +569,7 @@ def evaluate_ses_subgroups(
                         "mean_tv": float(arm_group["mean_tv"].mean()),
                         "mean_kl": float(arm_group["mean_kl"].mean()),
                     })
-                for left, right in CONTRASTS:
+                for left, right in contrasts:
                     left_rows = group.filter(pl.col("arm") == left)
                     right_rows = group.filter(pl.col("arm") == right)
                     pair_keys = sorted(

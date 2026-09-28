@@ -16,18 +16,23 @@ success or failure. Results live on the Azure File share ``inference``
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 import json
+import re
 import subprocess
 import sys
 import tarfile
 import tempfile
+import time
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 
-from article_silicon_sampling_quebec.inference import CAMPAIGNS  # noqa: E402
+from article_silicon_sampling_quebec.inference import CAMPAIGNS, DEFAULT_DRAWS  # noqa: E402
 
 SUBSCRIPTION = "a54061e5-b5f7-49c0-94f0-d2e7b95de4a4"  # sponsored: the credits
 RESOURCE_GROUP = "rg-opubliq-sondages"
@@ -39,6 +44,8 @@ IDENTITY = (f"/subscriptions/{SUBSCRIPTION}/resourcegroups/{RESOURCE_GROUP}/prov
             "Microsoft.ManagedIdentity/userAssignedIdentities/c0-inference-runner")
 IDENTITY_CLIENT_ID = "9f2e33c5-9817-4ccf-b910-d92b69f7b4a3"
 PIP = "polars pyarrow duckdb numpy python-dotenv azure-storage-blob azure-identity"
+ACI_API = "2023-05-01"
+COGNITIVE_API = "2024-10-01"
 
 #: What the container needs, relative to the repo. Survey microdata is pulled
 #: from blob storage at run time.
@@ -72,6 +79,45 @@ def az_json(*args: str) -> dict | list | None:
     return json.loads(result.stdout) if result.stdout.strip() else None
 
 
+@lru_cache(maxsize=1)
+def arm_token() -> str:
+    return subprocess.run(
+        ["az", "account", "get-access-token", "--query", "accessToken", "-o", "tsv"],
+        check=True, capture_output=True, text=True, timeout=60,
+    ).stdout.strip()
+
+
+def arm_request(method: str, path: str, body: dict | None = None,
+                *, api: str = ACI_API) -> dict | None:
+    """Call Azure Resource Manager directly; avoids slow ``az container`` discovery."""
+    separator = "&" if "?" in path else "?"
+    url = f"https://management.azure.com{path}{separator}api-version={api}"
+    request = urllib.request.Request(
+        url, method=method,
+        data=None if body is None else json.dumps(body).encode(),
+        headers={"Authorization": f"Bearer {arm_token()}", "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=120) as response:
+            payload = response.read()
+            return json.loads(payload) if payload else {}
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return None
+        detail = exc.read().decode(errors="replace")[:1000]
+        raise RuntimeError(f"ARM {method} {path}: HTTP {exc.code}: {detail}") from exc
+
+
+def container_path(name: str) -> str:
+    return (f"/subscriptions/{SUBSCRIPTION}/resourceGroups/{RESOURCE_GROUP}"
+            f"/providers/Microsoft.ContainerInstance/containerGroups/{name}")
+
+
+def deployment_path(name: str) -> str:
+    return (f"/subscriptions/{SUBSCRIPTION}/resourceGroups/{RESOURCE_GROUP}"
+            f"/providers/Microsoft.CognitiveServices/accounts/{ACCOUNT}/deployments/{name}")
+
+
 def check_subscription() -> None:
     current = az("account", "show", "--query", "id", "-o", "tsv")
     if current != SUBSCRIPTION:
@@ -79,8 +125,7 @@ def check_subscription() -> None:
 
 
 def storage_key() -> str:
-    return az("storage", "account", "keys", "list", "-g", RESOURCE_GROUP, "-n", STORAGE,
-              "--query", "[0].value", "-o", "tsv")
+    return env_value("AZURE_STORAGE_KEY")
 
 
 def container_name(campaign: str) -> str:
@@ -108,35 +153,71 @@ def build_payload() -> Path:
     return Path(handle.name)
 
 
-def ensure_share() -> None:
-    exists = az_json("storage", "share-rm", "exists", "-g", RESOURCE_GROUP,
-                     "--storage-account", STORAGE, "-n", SHARE)
+def ensure_share(key: str) -> None:
+    exists = az_json("storage", "share", "exists", "--account-name", STORAGE,
+                     "--account-key", key, "--name", SHARE)
     if not (exists or {}).get("exists"):
-        az("storage", "share-rm", "create", "-g", RESOURCE_GROUP, "--storage-account", STORAGE,
-           "-n", SHARE, "--quota", "100", "-o", "none")
+        az("storage", "share", "create", "--account-name", STORAGE,
+           "--account-key", key, "--name", SHARE, "--quota", "100", "-o", "none")
+
+
+def campaign_folder(name: str, output_id: str | None, smoke: bool) -> str:
+    """Return an isolated Azure Files folder; reject paths that could escape it."""
+    if output_id is None:
+        return f"{name}-smoke" if smoke else name
+    root = PurePosixPath(output_id)
+    if (root.is_absolute() or not root.parts
+            or any(part in {"", ".", ".."} for part in root.parts)
+            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", output_id) is None):
+        raise ValueError("output_id must be a non-empty relative Azure Files path")
+    suffix = f"{output_id}-smoke" if smoke else output_id
+    return f"{suffix}/{name}"
+
+
+def ensure_directory(key: str, folder: str) -> None:
+    current = []
+    for part in PurePosixPath(folder).parts:
+        current.append(part)
+        az("storage", "directory", "create", "--account-name", STORAGE,
+           "--account-key", key, "--share-name", SHARE,
+           "--name", "/".join(current), "-o", "none")
 
 
 def launch(name: str, key: str, workers: int | None, smoke: bool,
-           arms: list[str] | None = None) -> None:
+           arms: list[str] | None = None,
+           temperatures: list[float] | None = None, draws: int = DEFAULT_DRAWS,
+           subset: str = "pilot", output_id: str | None = None,
+           wait_for_deployment_absence: str | None = None) -> None:
     campaign = CAMPAIGNS[name]
     arms = arms or list(campaign.arms)
     unknown = sorted(set(arms) - set(campaign.arms))
     if unknown:
         raise SystemExit(f"{name} serves arms {campaign.arms}, not {unknown}")
+    deployments = {candidate.deployment for candidate in CAMPAIGNS.values()}
+    if wait_for_deployment_absence not in deployments | {None}:
+        raise SystemExit(
+            f"unknown deployment to wait for: {wait_for_deployment_absence}"
+        )
+    if wait_for_deployment_absence == campaign.deployment:
+        raise SystemExit(f"{name} cannot wait for its own deployment")
     workers = workers or max(1, 24 // len(arms))
     if campaign.model is None:
         raise SystemExit(f"{name}: model not trained yet — set it in inference.CAMPAIGNS")
-    state = az_json("container", "show", "-g", RESOURCE_GROUP, "-n", container_name(name),
-                    "--query", "instanceView.state")
+    current = arm_request("GET", container_path(container_name(name)))
+    state = (current or {}).get("properties", {}).get("instanceView", {}).get("state")
     if state == "Running":
         raise SystemExit(f"{name}: container already running (status / stop first)")
-    if state is not None:
-        az("container", "delete", "-g", RESOURCE_GROUP, "-n", container_name(name),
-           "--yes", "-o", "none")
+    if current is not None:
+        arm_request("DELETE", container_path(container_name(name)))
+        for _ in range(60):
+            if arm_request("GET", container_path(container_name(name))) is None:
+                break
+            time.sleep(2)
+        else:
+            raise RuntimeError(f"timed out deleting {container_name(name)}")
 
-    folder = f"{name}-smoke" if smoke else name
-    az("storage", "directory", "create", "--account-name", STORAGE, "--account-key", key,
-       "--share-name", SHARE, "--name", folder, "-o", "none")
+    folder = campaign_folder(name, output_id, smoke)
+    ensure_directory(key, folder)
     payload = build_payload()
     az("storage", "file", "upload", "--account-name", STORAGE, "--account-key", key,
        "--share-name", SHARE, "--source", str(payload),
@@ -144,27 +225,52 @@ def launch(name: str, key: str, workers: int | None, smoke: bool,
     payload.unlink()
 
     run_args = (f"--campaign {name} --arms {' '.join(arms)} "
-                f"--root /mnt/{SHARE}/{folder} --workers {workers} "
-                "--ensure-deployment --delete-deployment-after")
+                 f"--root /mnt/{SHARE}/{folder} --workers {workers} "
+                 f"--subset {subset} --draws {2 if smoke else draws} "
+                 "--ensure-deployment --delete-deployment-after")
     if smoke:
-        run_args += " --limit-item-cell-pairs 2 --draws 2 --temperatures 0.7"
+        values = temperatures or [1.0]
+        run_args += " --limit-item-cell-pairs 2 --temperatures " + " ".join(
+            str(value) for value in values
+        )
+    elif temperatures:
+        run_args += " --temperatures " + " ".join(str(value) for value in temperatures)
+    if wait_for_deployment_absence:
+        run_args += f" --wait-for-deployment-absence {wait_for_deployment_absence}"
     command = (f"mkdir -p /work && tar -xzf /mnt/{SHARE}/{folder}/runner.tar.gz -C /work "
                f"&& cd /work && pip install --no-cache-dir -q {PIP} "
                f"&& python -u scripts/19_run_inference.py {run_args}")
-    az("container", "create", "-g", RESOURCE_GROUP, "-n", container_name(name),
-       "--location", LOCATION, "--image", "python:3.11-slim", "--os-type", "Linux",
-       "--cpu", "2", "--memory", "8", "--restart-policy", "Never",
-       "--assign-identity", IDENTITY,
-       "--azure-file-volume-account-name", STORAGE, "--azure-file-volume-account-key", key,
-       "--azure-file-volume-share-name", SHARE, "--azure-file-volume-mount-path", f"/mnt/{SHARE}",
-       "--environment-variables",
-       f"FOUNDRY_CHAT_ENDPOINT={env_value('FOUNDRY_CHAT_ENDPOINT')}",
-       f"AZURE_STORAGE_ACCOUNT={STORAGE}",
-       f"AZURE_STORAGE_CONTAINER={env_value('AZURE_STORAGE_CONTAINER')}",
-       f"AZURE_SUBSCRIPTION_ID={SUBSCRIPTION}", f"AZURE_CLIENT_ID={IDENTITY_CLIENT_ID}",
-       "--secure-environment-variables",
-       f"FOUNDRY_CHAT_KEY={env_value('FOUNDRY_CHAT_KEY')}", f"AZURE_STORAGE_KEY={key}",
-       "--command-line", f"/bin/sh -c '{command}'", "-o", "none")
+    environment = [
+        {"name": "FOUNDRY_CHAT_ENDPOINT", "value": env_value("FOUNDRY_CHAT_ENDPOINT")},
+        {"name": "AZURE_STORAGE_ACCOUNT", "value": STORAGE},
+        {"name": "AZURE_STORAGE_CONTAINER", "value": env_value("AZURE_STORAGE_CONTAINER")},
+        {"name": "AZURE_SUBSCRIPTION_ID", "value": SUBSCRIPTION},
+        {"name": "AZURE_CLIENT_ID", "value": IDENTITY_CLIENT_ID},
+        {"name": "FOUNDRY_CHAT_KEY", "secureValue": env_value("FOUNDRY_CHAT_KEY")},
+        {"name": "AZURE_STORAGE_KEY", "secureValue": key},
+    ]
+    arm_request("PUT", container_path(container_name(name)), {
+        "location": LOCATION,
+        "identity": {"type": "UserAssigned", "userAssignedIdentities": {IDENTITY: {}}},
+        "properties": {
+            "osType": "Linux", "restartPolicy": "Never",
+            "containers": [{
+                "name": container_name(name),
+                "properties": {
+                    "image": "python:3.11-slim",
+                    "command": ["/bin/sh", "-c", command],
+                    "resources": {"requests": {"cpu": 2, "memoryInGB": 8}},
+                    "environmentVariables": environment,
+                    "volumeMounts": [{"name": "inference", "mountPath": f"/mnt/{SHARE}"}],
+                },
+            }],
+            "volumes": [{
+                "name": "inference",
+                "azureFile": {"shareName": SHARE, "storageAccountName": STORAGE,
+                              "storageAccountKey": key},
+            }],
+        },
+    })
     print(f"{name}: launched {container_name(name)} → {SHARE}/{folder}/ "
           f"({', '.join(arms)}; {campaign.deployment} "
           f"{campaign.sku} x {campaign.capacity})")
@@ -190,19 +296,22 @@ def _age(stamp: str | None) -> str:
     return f"{seconds / 60:.0f} min" if seconds >= 90 else f"{seconds:.0f} s"
 
 
-def status(names: list[str], key: str, smoke: bool) -> None:
-    deployments = {d["name"]: d for d in az_json(
-        "cognitiveservices", "account", "deployment", "list",
-        "-g", RESOURCE_GROUP, "-n", ACCOUNT) or []}
+def status(names: list[str], key: str, smoke: bool, output_id: str | None = None) -> None:
     for name in names:
         campaign = CAMPAIGNS[name]
-        folder = f"{name}-smoke" if smoke else name
-        container = az_json("container", "show", "-g", RESOURCE_GROUP, "-n", container_name(name),
-                            "--query", "{state:instanceView.state, "
-                            "exit:containers[0].instanceView.currentState.exitCode}")
-        dep = deployments.get(campaign.deployment)
+        folder = campaign_folder(name, output_id, smoke)
+        container_raw = arm_request("GET", container_path(container_name(name)))
+        properties = (container_raw or {}).get("properties", {})
+        instances = properties.get("containers", [])
+        current_state = (instances[0].get("properties", {}).get("instanceView", {})
+                         .get("currentState", {}) if instances else {})
+        container = None if container_raw is None else {
+            "state": properties.get("instanceView", {}).get("state"),
+            "exit": current_state.get("exitCode"),
+        }
+        dep = arm_request("GET", deployment_path(campaign.deployment), api=COGNITIVE_API)
         dep_text = ("absent" if dep is None else
-                    f"{dep['properties']['provisioningState']} "
+                     f"{dep['properties']['provisioningState']} "
                     f"({dep['sku']['name']} x {dep['sku']['capacity']})")
         cont_text = ("absent" if container is None else
                      f"{container['state']}" + (f" exit={container['exit']}"
@@ -225,8 +334,8 @@ def status(names: list[str], key: str, smoke: bool) -> None:
                 print(f"        error: {p['error']}")
 
 
-def fetch(name: str, key: str, smoke: bool) -> None:
-    folder = f"{name}-smoke" if smoke else name
+def fetch(name: str, key: str, smoke: bool, output_id: str | None = None) -> None:
+    folder = campaign_folder(name, output_id, smoke)
     dest = REPO / "data" / "analysis" / "inference"
     dest.mkdir(parents=True, exist_ok=True)
     for arm in CAMPAIGNS[name].arms:
@@ -240,12 +349,10 @@ def fetch(name: str, key: str, smoke: bool) -> None:
 
 
 def stop(name: str, keep_deployment: bool) -> None:
-    az("container", "delete", "-g", RESOURCE_GROUP, "-n", container_name(name), "--yes",
-       "-o", "none", check=False)
+    arm_request("DELETE", container_path(container_name(name)))
     print(f"{name}: container deleted")
     if not keep_deployment:
-        az("cognitiveservices", "account", "deployment", "delete", "-g", RESOURCE_GROUP,
-           "-n", ACCOUNT, "--deployment-name", CAMPAIGNS[name].deployment, check=False)
+        arm_request("DELETE", deployment_path(CAMPAIGNS[name].deployment), api=COGNITIVE_API)
         print(f"{name}: deployment {CAMPAIGNS[name].deployment} deleted")
 
 
@@ -258,13 +365,23 @@ def main() -> None:
         p.add_argument("campaigns", nargs="*" if command == "status" else "+",
                        metavar="campaign", help=f"one of {sorted(CAMPAIGNS)}")
         p.add_argument("--smoke", action="store_true",
-                       help="2 pairs x 2 draws x T=0.7, into <campaign>-smoke/")
+                        help="2 pairs x 2 draws, T from --temperatures (default 1.0).")
+        if command in {"launch", "status", "fetch"}:
+            p.add_argument("--output-id", help="Persistent output namespace, e.g. final48-250.")
         if command == "launch":
             p.add_argument("--arms", nargs="+",
                            help="Subset of the campaign's arms (default: all).")
             p.add_argument("--workers", type=int,
                            help="Per arm. Default: 24 split across the campaign's arms "
-                                "(the deployment caps at ~1 000 calls/min anyway).")
+                                 "(the deployment caps at ~1 000 calls/min anyway).")
+            p.add_argument("--temperatures", type=float, nargs="+",
+                           help="Temperatures passed to the inference runner.")
+            p.add_argument("--draws", type=int, default=DEFAULT_DRAWS)
+            p.add_argument("--subset", choices=("pilot", "remaining", "all"), default="pilot")
+            p.add_argument(
+                "--wait-for-deployment-absence",
+                help="Queue this campaign until the named quota-sharing deployment is deleted.",
+            )
         if command == "stop":
             p.add_argument("--keep-deployment", action="store_true")
     args = parser.parse_args()
@@ -285,14 +402,18 @@ def main() -> None:
         return
     key = storage_key()
     if args.command == "launch":
-        ensure_share()
+        if not args.output_id:
+            parser.error("launch requires --output-id to isolate resumable outputs")
+        ensure_share(key)
         for name in names:
-            launch(name, key, args.workers, args.smoke, args.arms)
+            launch(name, key, args.workers, args.smoke, args.arms, args.temperatures,
+                   args.draws, args.subset, args.output_id,
+                   args.wait_for_deployment_absence)
     elif args.command == "status":
-        status(names, key, args.smoke)
+        status(names, key, args.smoke, args.output_id)
     elif args.command == "fetch":
         for name in names:
-            fetch(name, key, args.smoke)
+            fetch(name, key, args.smoke, args.output_id)
 
 
 if __name__ == "__main__":

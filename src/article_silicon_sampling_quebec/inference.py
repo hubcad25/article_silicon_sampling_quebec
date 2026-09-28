@@ -30,6 +30,7 @@ import csv
 import json
 import math
 import os
+import random
 import subprocess
 import tempfile
 import time
@@ -47,7 +48,7 @@ from .corpus.ses import SesCrosswalk
 from .dataset import normalise_code
 from .foundry import FoundryChat
 from .prompts import (
-    ContextDistribution, ItemSpec, Persona, PromptTemplate, build_item_specs,
+    ContextAnswer, ContextDistribution, ItemSpec, Persona, PromptTemplate, build_item_specs,
     nearest_context_items,
 )
 from .split import CELL_N_CONTRAST, HELDOUT_ITEMS_PATH, load_split, sha256_file
@@ -68,6 +69,7 @@ DEFAULT_DEPLOYMENT = "c0-8k-txt"
 DEFAULT_MODEL = "Llama-3.3-70B-Instruct-9.ft-0413559e867f42a59860f17f6153597b-c0-8k-txt"
 DEFAULT_WORKERS = 3
 DEFAULT_CONTEXT_K = 6
+RESPONDENT_CONTEXT_SEED = 20260927
 #: A context line backed by fewer valid held-out answers than this is dropped.
 DEFAULT_CONTEXT_MIN_N = 10
 #: Candidates retrieved before the n floor and the dedup; the index keeps 50.
@@ -78,6 +80,15 @@ CONTEXT_CANDIDATES = 50
 DEFAULT_MAX_TOKENS = 32
 EXPECTED_PILOT_ITEMS = 12
 EXPECTED_ITEM_CELL_PAIRS = 275
+EXPECTED_REMAINING_ITEMS = 48
+EXPECTED_REMAINING_ITEM_CELL_PAIRS = 885
+EXPECTED_ALL_ITEMS = EXPECTED_PILOT_ITEMS + EXPECTED_REMAINING_ITEMS
+EXPECTED_ALL_ITEM_CELL_PAIRS = EXPECTED_ITEM_CELL_PAIRS + EXPECTED_REMAINING_ITEM_CELL_PAIRS
+SUBSET_COVERAGE = {
+    "pilot": (EXPECTED_PILOT_ITEMS, EXPECTED_ITEM_CELL_PAIRS),
+    "remaining": (EXPECTED_REMAINING_ITEMS, EXPECTED_REMAINING_ITEM_CELL_PAIRS),
+    "all": (EXPECTED_ALL_ITEMS, EXPECTED_ALL_ITEM_CELL_PAIRS),
+}
 
 @dataclass(frozen=True)
 class Arm:
@@ -91,6 +102,10 @@ ARMS: dict[str, Arm] = {
     "B0": Arm(model_condition="C1", context="none"),
     "R": Arm(model_condition="base", context="none"),
     "BS": Arm(model_condition="C1", context="stratum_half"),
+    "A20": Arm(model_condition="C0", context="none"),
+    "B020": Arm(model_condition="C1", context="none"),
+    "BR8": Arm(model_condition="C1", context="respondent_half"),
+    "BR20": Arm(model_condition="C1", context="respondent_half"),
 }
 
 
@@ -114,9 +129,14 @@ CAMPAIGNS: dict[str, Campaign] = {c.name: c for c in (
     Campaign("c0-8k", DEFAULT_MODEL, "c0-8k-txt", ("A",)),
     Campaign("c1-8k",
              "Llama-3.3-70B-Instruct-9.ft-5dfdb814460746c69cf0ed69177d8608-c1-8k-txt",
-             "c1-8k-txt", ("B", "B0", "BS"), sku="DataZoneStandard"),
-    Campaign("c0-20k", None, "c0-20k-txt", ("A",)),
-    Campaign("c1-20k", None, "c1-20k-txt", ("B", "B0", "BS"), sku="DataZoneStandard"),
+             "c1-8k-txt", ("B", "B0", "BS", "BR8"),
+             sku="DataZoneStandard", capacity=500),
+    Campaign("c0-20k",
+             "Llama-3.3-70B-Instruct-9.ft-0595d652bcdb427597b606acd51e3659-c0-20k-txt",
+             "c0-20k-txt", ("A20",)),
+    Campaign("c1-20k",
+             "Llama-3.3-70B-Instruct-9.ft-fb27ec8bfd52411d8929c944cceb355f-c1-20k-txt",
+             "c1-20k-txt", ("B020", "BR20"), sku="DataZoneStandard", capacity=500),
     # The base the fine-tunes were trained from ("…-Instruct-9.ft-…"): version 9.
     # Its own quota: 250 units, GlobalStandard.
     Campaign("base", "Llama-3.3-70B-Instruct", "llama33-70b-base", ("R",),
@@ -126,10 +146,19 @@ CAMPAIGNS: dict[str, Campaign] = {c.name: c for c in (
 RESULT_FIELDS = (
     "draw_key", "arm", "deployment", "model", "condition", "context", "n_context", "temperature", "top_p",
     "max_tokens", "item_idx", "block", "survey_id", "variable", "language",
-    "cell", "heldout_valid_n", "draw_idx", "raw_response", "matched_code", "valid",
+    "cell", "heldout_valid_n", "draw_idx", "context_respondent_id", "raw_response", "matched_code", "valid",
     "started_at", "completed_at", "latency_seconds", "client_retries_total",
     "client_throttled_total", "client_filtered_total",
 )
+
+
+@dataclass(frozen=True)
+class RespondentContext:
+    """One held-out context respondent and their valid neighbouring answers."""
+
+    respondent_id: str
+    answers: tuple[ContextAnswer, ...]
+    cosines: tuple[float, ...]
 
 
 @dataclass(frozen=True)
@@ -147,6 +176,8 @@ class ItemCell:
     #: Arm B only: the rendered context, in order (empty in A and B0).
     context: tuple[ContextDistribution, ...] = ()
     context_cosines: tuple[float, ...] = ()
+    #: Arms BR8 / BR20: admissible context-half respondents in seeded order.
+    respondent_contexts: tuple[RespondentContext, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -175,10 +206,13 @@ class RunSettings:
     limit_item_cell_pairs: int | None = None
     context_k: int = DEFAULT_CONTEXT_K
     context_min_n: int = DEFAULT_CONTEXT_MIN_N
+    subset: str = "pilot"
 
     def __post_init__(self) -> None:
         if self.arm not in ARMS:
             raise ValueError(f"arm must be one of {sorted(ARMS)}")
+        if self.subset not in SUBSET_COVERAGE:
+            raise ValueError(f"subset must be one of {sorted(SUBSET_COVERAGE)}")
         if self.context_k < 1 or self.context_min_n < 1:
             raise ValueError("context_k and context_min_n must be positive")
         if not self.temperatures or self.draws < 1 or self.workers < 1:
@@ -205,7 +239,9 @@ class RunSettings:
         return ARMS[self.arm].context
 
     def template(self) -> PromptTemplate:
-        """A and B0 render no context; B renders the cell's distributions."""
+        """Render no context, cell distributions, or one respondent's answers."""
+        if self.context == "respondent_half":
+            return PromptTemplate(condition="C1", ses_dropout="none", k=self.context_k)
         if self.context != "none":
             return PromptTemplate(condition="C2", ses_dropout="none", k=self.context_k)
         return PromptTemplate(condition="C0", ses_dropout="none")
@@ -223,16 +259,25 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _pilot_rows(path: Path) -> list[dict[str, Any]]:
+def _selected_rows(path: Path, subset: str) -> list[dict[str, Any]]:
+    if subset not in SUBSET_COVERAGE:
+        raise ValueError(f"subset must be one of {sorted(SUBSET_COVERAGE)}")
     frame = pl.read_csv(path)
     required = {"item_idx", "block", "pilot", "survey_id", "variable", "language",
                 "cells_ge30"}
     missing = required - set(frame.columns)
     if missing:
         raise ValueError(f"pilot CSV is missing columns: {sorted(missing)}")
-    rows = frame.filter(pl.col("pilot") == True).sort("item_idx").to_dicts()  # noqa: E712
-    if len(rows) != EXPECTED_PILOT_ITEMS:
-        raise ValueError(f"expected exactly {EXPECTED_PILOT_ITEMS} pilot items, got {len(rows)}")
+    if subset == "pilot":
+        frame = frame.filter(pl.col("pilot") == True)  # noqa: E712
+    elif subset == "remaining":
+        frame = frame.filter(pl.col("pilot") == False)  # noqa: E712
+    rows = frame.sort("item_idx").to_dicts()
+    expected_items, _ = SUBSET_COVERAGE[subset]
+    if len(rows) != expected_items:
+        raise ValueError(
+            f"expected exactly {expected_items} {subset} items, got {len(rows)}"
+        )
     if len({(r["survey_id"], r["variable"]) for r in rows}) != len(rows):
         raise ValueError("pilot CSV contains duplicate item keys")
     return rows
@@ -243,12 +288,13 @@ def build_item_cells(
     items_path: Path = ITEMS_PATH,
     heldout_path: Path = HELDOUT_PATH,
     *,
+    subset: str = "pilot",
     survey_loader: Callable[[str, list[str] | None], pl.DataFrame] = blob.read_survey,
     definition: strata.StrataDefinition | None = None,
     crosswalk: SesCrosswalk | None = None,
 ) -> list[ItemCell]:
-    """Build and gate the 275 frozen item-cell pairs, without network calls."""
-    pilot = _pilot_rows(Path(pilot_path))
+    """Build one explicitly selected frozen item-cell subset, with coverage gates."""
+    selected_rows = _selected_rows(Path(pilot_path), subset)
     items = pl.read_parquet(items_path)
     specs = build_item_specs(items.iter_rows(named=True))
     heldout = pl.read_parquet(heldout_path).with_columns(
@@ -258,8 +304,8 @@ def build_item_cells(
     crosswalk = crosswalk or SesCrosswalk.load()
     pairs: list[ItemCell] = []
 
-    for survey_id in sorted({str(r["survey_id"]) for r in pilot}):
-        survey_rows = [r for r in pilot if r["survey_id"] == survey_id]
+    for survey_id in sorted({str(r["survey_id"]) for r in selected_rows}):
+        survey_rows = [r for r in selected_rows if r["survey_id"] == survey_id]
         variables = [str(r["variable"]) for r in survey_rows]
         micro = survey_loader(survey_id, ["__respondent_id", *variables]).with_columns(
             pl.col("__respondent_id").cast(pl.Utf8)
@@ -307,9 +353,10 @@ def build_item_cells(
                 ))
 
     pairs.sort(key=lambda p: (p.item_idx, p.cell))
-    if len(pairs) != EXPECTED_ITEM_CELL_PAIRS:
+    _, expected_pairs = SUBSET_COVERAGE[subset]
+    if len(pairs) != expected_pairs:
         raise ValueError(
-            f"expected exactly {EXPECTED_ITEM_CELL_PAIRS} pilot item-cell pairs, got {len(pairs)}"
+            f"expected exactly {expected_pairs} {subset} item-cell pairs, got {len(pairs)}"
         )
     return pairs
 
@@ -406,6 +453,102 @@ def attach_stratum_context(
     return [out[(p.item_idx, p.cell)] for p in pairs]
 
 
+def attach_respondent_context(
+    pairs: Sequence[ItemCell],
+    *,
+    k: int = DEFAULT_CONTEXT_K,
+    seed: int = RESPONDENT_CONTEXT_SEED,
+    items_path: Path = ITEMS_PATH,
+    heldout_path: Path = HELDOUT_PATH,
+    similarity_path: Path = SIMILARITY_PATH,
+    heldout_items_path: Path = HELDOUT_ITEMS_PATH,
+    halves_path: Path = HELDOUT_HALVES_PATH,
+    survey_loader: Callable[[str, list[str] | None], pl.DataFrame] = blob.read_survey,
+) -> list[ItemCell]:
+    """Attach real, individual context respondents to every item-cell pair.
+
+    Respondents come only from the frozen context half and the same cell.  For
+    each target, the six nearest eligible neighbours are selected exactly as at
+    training; a respondent keeps whichever of those they answered validly.
+    Respondents with no usable answer are dropped.  The remaining pool is put
+    in a stable seeded order and later traversed cyclically over the 100 draws.
+    """
+    items = pl.read_parquet(items_path)
+    specs = build_item_specs(items.iter_rows(named=True))
+    split = load_split(items_path=heldout_items_path)
+    pool = [key for key in specs if not split.is_test_item(key)]
+    index = similarity.load_index(similarity_path)
+    heldout = pl.read_parquet(heldout_path).with_columns(
+        pl.col("__respondent_id").cast(pl.Utf8)
+    )
+    context_half = pl.read_csv(
+        halves_path, schema_overrides={"__respondent_id": pl.Utf8}
+    ).filter(pl.col("half") == "context").select(
+        "__survey_id", "__respondent_id", "cell"
+    )
+    heldout = heldout.join(
+        context_half, on=["__survey_id", "__respondent_id", "cell"],
+        how="semi",
+    )
+    template = PromptTemplate(condition="C1", ses_dropout="none", k=k)
+
+    by_survey: dict[str, list[ItemCell]] = {}
+    candidates: dict[tuple[str, str], list[tuple[tuple[str, str], float]]] = {}
+    for pair in pairs:
+        by_survey.setdefault(pair.survey_id, []).append(pair)
+        key = (pair.survey_id, pair.variable)
+        if key not in candidates:
+            candidates[key] = [
+                (nkey, cosine)
+                for nkey, cosine in nearest_context_items(
+                    index, key, k=k, same_survey_only=True, eligible=pool
+                )
+                if nkey in specs and specs[nkey].options
+            ]
+
+    out: dict[tuple[int, str], ItemCell] = {}
+    for survey_id, survey_pairs in sorted(by_survey.items()):
+        variables = sorted({
+            nkey[1]
+            for pair in survey_pairs
+            for nkey, _ in candidates[(pair.survey_id, pair.variable)]
+        })
+        micro = survey_loader(survey_id, ["__respondent_id", *variables]).with_columns(
+            pl.col("__respondent_id").cast(pl.Utf8)
+        )
+        joined = heldout.filter(pl.col("__survey_id") == survey_id).join(
+            micro, on="__respondent_id", how="inner", validate="1:1"
+        )
+        for pair in survey_pairs:
+            neighbours = candidates[(pair.survey_id, pair.variable)]
+            cosine_by_key = dict(neighbours)
+            respondent_contexts: list[RespondentContext] = []
+            for row in joined.filter(pl.col("cell") == pair.cell).iter_rows(named=True):
+                answers = []
+                for nkey, _ in neighbours:
+                    spec = specs[nkey]
+                    code = spec.canonical_code(normalise_code(row.get(nkey[1])))
+                    if code is not None and spec.option_label(code) is not None:
+                        answers.append(ContextAnswer.from_item(spec, code))
+                kept = template.select_context(pair.item, answers)
+                if kept:
+                    respondent_contexts.append(RespondentContext(
+                        respondent_id=str(row["__respondent_id"]),
+                        answers=tuple(kept),
+                        cosines=tuple(cosine_by_key[answer.item.key] for answer in kept),
+                    ))
+            rng = random.Random(f"{seed}:{pair.item_idx}:{pair.cell}")
+            rng.shuffle(respondent_contexts)
+            if neighbours and not respondent_contexts:
+                raise ValueError(
+                    f"no admissible context respondent for item {pair.item_idx}, cell {pair.cell}"
+                )
+            out[(pair.item_idx, pair.cell)] = replace(
+                pair, respondent_contexts=tuple(respondent_contexts)
+            )
+    return [out[(pair.item_idx, pair.cell)] for pair in pairs]
+
+
 def write_context_table(path: Path, pairs: Sequence[ItemCell]) -> None:
     """Sidecar: exactly what arm B shows, per pair — the audit trail of §3.3."""
     rows = []
@@ -425,6 +568,49 @@ def write_context_table(path: Path, pairs: Sequence[ItemCell]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", newline="", encoding="utf-8", dir=path.parent,
                                      prefix=f".{path.name}.", delete=False) as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+        temp = Path(handle.name)
+    temp.replace(path)
+
+
+def write_respondent_context_table(path: Path, pairs: Sequence[ItemCell], draws: int) -> None:
+    """Audit table for the seeded respondent-to-draw assignment and answers."""
+    rows = []
+    for pair in pairs:
+        pool = pair.respondent_contexts
+        if not pool:
+            continue
+        counts = [draws // len(pool) + int(i < draws % len(pool)) for i in range(len(pool))]
+        for respondent_rank, (respondent, assigned_draws) in enumerate(
+            zip(pool, counts, strict=True), start=1
+        ):
+            for answer_rank, (answer, cosine) in enumerate(
+                zip(respondent.answers, respondent.cosines, strict=True), start=1
+            ):
+                rows.append({
+                    "item_idx": pair.item_idx, "cell": pair.cell,
+                    "context_respondent_id": respondent.respondent_id,
+                    "respondent_rank": respondent_rank,
+                    "assigned_draws": assigned_draws,
+                    "answer_rank": answer_rank,
+                    "context_survey_id": answer.item.survey_id,
+                    "context_variable": answer.item.variable,
+                    "cosine": round(float(cosine), 6),
+                    "answer_code": answer.code,
+                    "answer_label": answer.label,
+                })
+    fields = (
+        "item_idx", "cell", "context_respondent_id", "respondent_rank",
+        "assigned_draws", "answer_rank", "context_survey_id", "context_variable",
+        "cosine", "answer_code", "answer_label",
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        "w", newline="", encoding="utf-8", dir=path.parent,
+        prefix=f".{path.name}.", delete=False,
+    ) as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
@@ -483,12 +669,17 @@ def build_manifest(settings: RunSettings, n_pairs: int, paths: Mapping[str, Path
         "item_similarity": SIMILARITY_PATH,
         "heldout_items": HELDOUT_ITEMS_PATH,
         **({"heldout_halves": HELDOUT_HALVES_PATH}
-           if settings.context == "stratum_half" else {}),
+           if settings.context in {"stratum_half", "respondent_half"} else {}),
     }
     split_manifest = json.loads(Path(paths["split_manifest"]).read_text(encoding="utf-8"))
+    expected_items, expected_pairs = SUBSET_COVERAGE[settings.subset]
     return {
         "schema_version": "1.0",
-        "scientific_contract": "docs/adr/0001-sous-ensemble-pilote-blocs-thematiques.md",
+        "scientific_contract": (
+            "docs/adr/0006-inference-48-questions-amelioration.md"
+            if settings.subset == "remaining"
+            else "docs/adr/0001-sous-ensemble-pilote-blocs-thematiques.md"
+        ),
         "created_at": utc_now(),
         "git_commit": _git_commit(),
         "input_hashes": {name: sha256_file(path) for name, path in paths.items()},
@@ -496,8 +687,9 @@ def build_manifest(settings: RunSettings, n_pairs: int, paths: Mapping[str, Path
         "settings": {**asdict(settings), "condition": settings.condition,
                      "context": settings.context},
         "expected": {
-            "pilot_items": EXPECTED_PILOT_ITEMS,
-            "frozen_item_cell_pairs": EXPECTED_ITEM_CELL_PAIRS,
+            "subset": settings.subset,
+            "questions": expected_items,
+            "frozen_item_cell_pairs": expected_pairs,
             "selected_item_cell_pairs": n_pairs,
             "tasks": n_pairs * len(settings.temperatures) * settings.draws,
         },
@@ -635,7 +827,16 @@ def _complete(chat: FoundryChat, template: PromptTemplate, settings: RunSettings
     started = utc_now()
     before = time.monotonic()
     pair = task.pair
-    context = pair.context if settings.context != "none" else ()
+    context_respondent_id = None
+    if settings.context == "respondent_half":
+        if pair.respondent_contexts:
+            respondent = pair.respondent_contexts[task.draw_idx % len(pair.respondent_contexts)]
+            context = respondent.answers
+            context_respondent_id = respondent.respondent_id
+        else:
+            context = ()
+    else:
+        context = pair.context if settings.context != "none" else ()
     messages = template.build_messages(
         pair.persona, pair.item, context, dimensions=pair.dimensions
     )
@@ -651,7 +852,8 @@ def _complete(chat: FoundryChat, template: PromptTemplate, settings: RunSettings
         "block": pair.block, "survey_id": pair.survey_id,
         "variable": pair.variable, "language": pair.language, "cell": pair.cell,
         "heldout_valid_n": pair.heldout_valid_n,
-        "draw_idx": task.draw_idx, "raw_response": raw,
+        "draw_idx": task.draw_idx, "context_respondent_id": context_respondent_id,
+        "raw_response": raw,
         "matched_code": matched, "valid": matched is not None,
         "started_at": started, "completed_at": utc_now(),
         "latency_seconds": round(time.monotonic() - before, 6),
@@ -686,8 +888,10 @@ def run(settings: RunSettings, output_csv: Path, *,
     output_csv = Path(output_csv)
     if output_csv.suffix.lower() != ".csv":
         raise ValueError("output path must end in .csv")
-    all_pairs = list(pairs) if pairs is not None else build_item_cells()
-    if pairs is None and settings.context != "none":
+    all_pairs = list(pairs) if pairs is not None else build_item_cells(subset=settings.subset)
+    if pairs is None and settings.context == "respondent_half":
+        all_pairs = attach_respondent_context(all_pairs, k=settings.context_k)
+    elif pairs is None and settings.context != "none":
         all_pairs = attach_stratum_context(
             all_pairs, k=settings.context_k, min_n=settings.context_min_n,
             halves_path=HELDOUT_HALVES_PATH if settings.context == "stratum_half" else None)
@@ -699,7 +903,11 @@ def run(settings: RunSettings, output_csv: Path, *,
     diagnostics_path = _diagnostics_path(output_csv)
     progress_path = _progress_path(output_csv)
     ensure_manifest(manifest_path, manifest)
-    if settings.context != "none":
+    if settings.context == "respondent_half":
+        write_respondent_context_table(
+            _context_path(output_csv), selected_pairs, settings.draws
+        )
+    elif settings.context != "none":
         write_context_table(_context_path(output_csv), selected_pairs)
     records = load_checkpoint(checkpoint_path)
     expected_keys = {task.key for task in tasks}
@@ -799,7 +1007,8 @@ def run(settings: RunSettings, output_csv: Path, *,
 
 __all__ = [
     "ARMS", "CAMPAIGNS", "HELDOUT_HALVES_PATH", "Arm", "Campaign", "StallError",
-    "attach_stratum_context", "cell_distribution", "write_context_table",
+    "RespondentContext", "attach_respondent_context", "attach_stratum_context",
+    "cell_distribution", "write_context_table", "write_respondent_context_table",
     "DEFAULT_DEPLOYMENT", "DEFAULT_DRAWS", "DEFAULT_MAX_TOKENS", "DEFAULT_MODEL",
     "DEFAULT_TEMPERATURES", "DEFAULT_WORKERS", "DrawTask",
     "EXPECTED_ITEM_CELL_PAIRS", "EXPECTED_PILOT_ITEMS", "ItemCell", "RunSettings",
