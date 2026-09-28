@@ -15,152 +15,125 @@ header-includes:
 - \usepackage{float}
 - \usepackage{graphicx}
 - \floatplacement{figure}{H}
-- \newcommand{\notesubtitle}{Plan du deuxième test · modèles 20k · répondants réels · modèle statistique}
+- \newcommand{\notesubtitle}{Résultats saillants · décision · prochaines étapes}
 - \input{note_style.tex}
+- \fancyhead[L]{\footnotesize\color{muted} Silicon sampling au Québec · deuxième test}
 ---
 
 ```{=latex}
 \begin{encadre}
 ```
-**Document de travail.** Cette note préparera le deuxième brief de résultats. Elle répondra à trois
-questions laissées ouvertes par le premier test : est-ce que davantage d'exemples d'entraînement
-améliorent les estimations, est-ce que les indices deviennent utiles lorsqu'ils sont présentés comme
-les réponses d'une vraie personne, et comment les modèles de langage se comparent-ils à un modèle
-statistique entraîné sur les mêmes données?
+**Conclusion.** Retenir **Entraîné 8k** pour la prochaine étape. Sur les 12 questions testées, passer
+à 20k exemples ou ajouter les réponses de personnes réelles n'améliore pas clairement les
+estimations. Le modèle 8k affiche la meilleure distance moyenne, avec le montage le plus simple et
+le moins coûteux. Il faut maintenant confirmer ce choix sur les 48 questions gelées restantes.
 ```{=latex}
 \end{encadre}
 ```
 
-# 1. Point de départ
+# 1. Résultats saillants
 
-Le premier brief, daté du 27 septembre, établit trois résultats sur 12 questions et 275
-sous-groupes :
+La **variation totale** mesure l'écart entre les répartitions simulée et observée. Une valeur de
+0,219 signifie qu'il faudrait, en moyenne, **réaffecter au minimum environ 22 réponses sur 100** à
+une autre option pour reproduire la répartition observée. Il ne s'agit pas d'un taux d'erreur
+individuel. La divergence KL, moins directement interprétable, est conservée comme mesure de
+robustesse dans les résultats détaillés.
 
-- **Entraîné 8k** réduit fortement la distance aux vrais répondants par rapport à **Non entraîné**;
-- **Entraîné avec indices 8k** ne bat ni **Entraîné 8k** ni **Indices retirés 8k**;
-- une température de 1,0 donne le meilleur compromis et est retenue pour la suite.
+| Résultat | Ce que montrent les données | Implication |
+|---|---|---|
+| **20k ne bat pas 8k** | Entraîné 20k exige 22,4 réaffectations sur 100, contre 21,9 pour Entraîné 8k. L'écart est incertain : +0,5 [−1,9 ; +3,1]. | Ne pas investir davantage dans le volume d'entraînement pour l'instant. |
+| **Les réponses individuelles n'ajoutent pas de gain démontré** | À 20k, le modèle avec répondants et le modèle simple sont à égalité : 22,4 réaffectations sur 100 chacun. À 8k, le modèle avec répondants demeure légèrement derrière le modèle simple. | Mettre en pause les montages avec indices, plus complexes et plus coûteux. |
+| **Le LLM entraîné bat le modèle statistique** | Entraîné 8k exige environ 22 réaffectations sur 100, contre 28 pour le modèle statistique : un avantage de **6 réponses sur 100** [2 ; 9]. | Conserver le modèle statistique comme référence, mais pas comme méthode principale. |
 
-Les modèles **Entraîné 20k** et **Entraîné avec indices 20k** ont depuis terminé leur entraînement.
-La prochaine étape ne répète pas le balayage de température : toutes les nouvelles inférences sont
-faites à température 1,0, sur les mêmes 275 couples question × sous-groupe et avec 100 réponses par
-couple.
+Le plancher humain se situe à environ **19 réaffectations sur 100**. **Entraîné 8k** n'en est séparé
+que par environ 3 réponses sur 100, mais ce plancher reflète lui-même le bruit de deux échantillons de
+répondants.
 
-# 2. Les trois questions du deuxième test
+## Ce qui explique l'échec des indices
 
-## Est-ce que plus d'entraînement aide?
+Présenter les indices sous forme de réponses individuelles corrige en partie la faiblesse des anciens
+pourcentages, sans dépasser le modèle simple. Le diagnostic des anciens indices montre pourquoi :
+ils font bouger les probabilités, mais pas plus souvent dans la bonne direction que dans la mauvaise
+(47,1 %), et reproduisent trop peu les écarts réels entre sous-groupes. Leur signal est donc peu
+exploitable, plutôt que trop concentré sur une réponse dominante.
 
-Le passage de 8 000 à 20 000 exemples est évalué séparément pour les deux entraînements :
+# 2. Décision et prochaines étapes
 
-- **Entraîné 20k** contre **Entraîné 8k**;
-- **Indices retirés 20k** contre **Indices retirés 8k**.
+## Montage retenu
 
-La première comparaison mesure l'effet du volume pour le modèle qui n'a jamais reçu de réponses
-voisines. La seconde le mesure pour le modèle entraîné à lire les réponses voisines, mais sans lui en
-donner à l'inférence.
+**Entraîné 8k**, à température 1,0, sans indices. C'est le meilleur résultat moyen observé (0,219),
+avec le montage le plus simple et le moins coûteux parmi les variantes entraînées.
 
-## Les indices fonctionnent-ils dans le format appris?
+## Priorités
 
-La nouvelle condition est appelée **Entraîné avec répondants**. Chaque réponse simulée reçoit les
-réponses individuelles d'un répondant réel du même sous-groupe à des questions voisines, dans le
-format utilisé à l'entraînement. La distribution du sous-groupe émerge des réponses simulées pour
-plusieurs personnes plutôt que d'un résumé en pourcentages.
+1. **Évaluer Entraîné 8k sur les 48 questions gelées restantes** pour vérifier que son avantage se
+   généralise au-delà des 12 premières questions.
+2. **Terminer les diagnostics susceptibles de nuancer la décision** : résultats par question,
+   concentration des réponses et aplatissement des différences entre sous-groupes.
+3. **Ne pas lancer de nouvelle campagne 20k ou avec indices** à moins qu'un diagnostic révèle un gain
+   ciblé sur certains types de questions ou de sous-groupes.
+4. **Garder le modèle statistique dans l'évaluation finale** comme référence plus simple et sans
+   échantillonnage, malgré sa précision moyenne inférieure.
 
-Cette condition est évaluée avec les modèles 8k et 20k. Les comparaisons principales sont :
+## Limite à garder en tête
 
-- **Entraîné avec répondants 8k − Indices retirés 8k** : effet des réponses individuelles;
-- **Entraîné avec répondants 8k − Entraîné avec indices 8k** : nouveau format contre pourcentages;
-- **Entraîné avec répondants 8k − Entraîné 8k** : meilleur montage contre modèle simple;
-- **Entraîné avec répondants 20k − Indices retirés 20k** : effet des réponses individuelles à 20k;
-- **Entraîné avec répondants 20k − Entraîné 20k** : meilleur montage 20k contre modèle simple 20k;
-- **Entraîné avec répondants 20k − Entraîné avec répondants 8k** : effet du volume dans le nouveau
-  montage.
+Ces conclusions portent sur 12 questions et 275 couples question × sous-groupe. Les intervalles
+excluent un gain moyen important de plusieurs variantes, mais pas de petits effets ni des avantages
+ciblés. La validation sur les questions gelées doit donc précéder toute conclusion générale.
 
-Le diagnostic prévu dans l'ADR 0005 sera d'abord calculé sur les résultats existants afin de vérifier
-si les pourcentages poussaient le modèle dans la bonne direction tout en exagérant les différences et
-en concentrant trop les réponses. Ce diagnostic ne demande aucun nouvel appel au modèle.
+# Annexe A — Résultats détaillés
 
-## Les modèles de langage battent-ils le modèle statistique?
+<!-- DÉBUT RÉSULTATS AUTOMATIQUES -->
 
-Le **modèle statistique** reçoit le profil sociodémographique, la question et ses options. Il est
-entraîné sur les mêmes 8 000 exemples que **Entraîné 8k** et produit directement une distribution,
-sans échantillonner 100 réponses. Il sera comparé au plancher humain et à toutes les conditions 8k,
-sans choisir après coup le modèle de langage qui lui est le plus favorable.
+<!-- Généré par scripts/29_prepare_second_brief.py; ne pas modifier à la main. -->
 
-# 3. Travail restant
+## Résultats disponibles
 
-## Quatre campagnes d'inférence
+Nouvelles campagnes complètes incluses : **Entraîné 20k, Indices retirés 20k, Entraîné avec répondants 8k, Entraîné avec répondants 20k**. Les quatre nouvelles campagnes sont complètes.
 
-| Nouvelle campagne | Modèle utilisé | Information ajoutée à l'inférence | Appels |
-|---|---|---|---:|
-| **Entraîné 20k** | entraîné sans réponses voisines, 20k | aucune | 27 500 |
-| **Indices retirés 20k** | entraîné avec réponses voisines, 20k | aucune | 27 500 |
-| **Entraîné avec répondants 8k** | entraîné avec réponses voisines, 8k | réponses individuelles | 27 500 |
-| **Entraîné avec répondants 20k** | entraîné avec réponses voisines, 20k | réponses individuelles | 27 500 |
-| **Total** | | | **110 000** |
+| Condition | Variation totale | IC 95 % | KL | Sous-groupes |
+|---|---|---|---|---|
+| Plancher humain | 0,186 | [0,153 ; 0,222] | — | 275 |
+| Entraîné 8k | 0,219 | [0,186 ; 0,255] | 0,207 | 275 |
+| Indices retirés 20k | 0,222 | [0,189 ; 0,257] | 0,209 | 275 |
+| Entraîné avec répondants 20k | 0,224 | [0,192 ; 0,254] | 0,206 | 275 |
+| Entraîné 20k | 0,224 | [0,181 ; 0,268] | 0,212 | 275 |
+| Entraîné avec répondants 8k | 0,226 | [0,191 ; 0,259] | 0,207 | 275 |
+| Indices retirés 8k | 0,242 | [0,203 ; 0,280] | 0,256 | 275 |
+| Entraîné avec indices 8k | 0,246 | [0,201 ; 0,288] | 0,251 | 275 |
+| Modèle statistique | 0,281 | [0,235 ; 0,330] | 0,277 | 275 |
+| Non entraîné | 0,548 | [0,479 ; 0,618] | 1,628 | 275 |
 
-Il n'est pas nécessaire de refaire **Entraîné avec indices** avec le modèle 20k pour répondre aux
-questions principales. La comparaison entre les pourcentages et les réponses individuelles est déjà
-isolée avec le modèle 8k. Une campagne 20k avec les anciens pourcentages ne serait ajoutée que pour
-tester explicitement une interaction entre volume d'entraînement et ancien format des indices.
+## Contrastes préannoncés disponibles
 
-## Traitements sans nouvelle inférence
+| Contraste | Différence TV | IC 95 % | Différence KL |
+|---|---|---|---|
+| Entraîné 8k − Modèle statistique | -0,062 | [-0,089 ; -0,019] | -0,069 |
+| Entraîné 20k − Entraîné 8k | 0,005 | [-0,019 ; 0,031] | 0,005 |
+| Entraîné 20k − Modèle statistique | -0,057 | [-0,075 ; -0,018] | -0,064 |
+| Indices retirés 20k − Indices retirés 8k | -0,020 | [-0,052 ; 0,010] | -0,047 |
+| Entraîné avec répondants 20k − Entraîné 20k | -0,000 | [-0,033 ; 0,034] | -0,006 |
+| Entraîné avec répondants 20k − Indices retirés 20k | 0,001 | [-0,023 ; 0,027] | -0,003 |
+| Entraîné avec répondants 20k − Entraîné avec répondants 8k | -0,003 | [-0,027 ; 0,019] | -0,001 |
+| Entraîné avec répondants 20k − Modèle statistique | -0,057 | [-0,093 ; -0,005] | -0,071 |
+| Entraîné avec répondants 8k − Entraîné 8k | 0,007 | [-0,018 ; 0,039] | 0,000 |
+| Entraîné avec répondants 8k − Indices retirés 8k | -0,016 | [-0,055 ; 0,025] | -0,049 |
+| Entraîné avec répondants 8k − Entraîné avec indices 8k | -0,019 | [-0,043 ; 0,008] | -0,044 |
+| Entraîné avec répondants 8k − Modèle statistique | -0,055 | [-0,092 ; 0,002] | -0,069 |
 
-1. terminer l'ajustement et les prédictions du **modèle statistique**;
-2. intégrer au brief le diagnostic maintenant calculé des anciens indices;
-3. intégrer les quatre nouvelles campagnes à la même analyse de variation totale, de concentration
-   et d'aplatissement des différences entre sous-groupes;
-4. produire les intervalles et contrastes appariés selon les règles déjà utilisées dans le premier
-   brief.
+<!-- FIN RÉSULTATS AUTOMATIQUES -->
 
-# 4. Structure prévue du brief final
+# Annexe B — Protocole en bref
 
-## En bref
+- Analyse principale à température 1,0 sur 12 questions et 275 couples question × sous-groupe.
+- Chaque condition LLM produit 100 réponses par couple; le modèle statistique produit directement
+  une distribution.
+- Quatre nouvelles campagnes complètes : **Entraîné 20k**, **Indices retirés 20k**, **Entraîné avec
+  répondants 8k** et **Entraîné avec répondants 20k**, pour 110 000 appels au total.
+- Le modèle statistique et **Entraîné 8k** utilisent les mêmes 8 000 exemples d'entraînement.
+- Les comparaisons sont appariées et leurs intervalles à 95 % reposent sur un bootstrap par question.
 
-Trois résultats à remplir après l'analyse : effet du passage à 20k, effet des réponses individuelles
-et comparaison avec le modèle statistique.
-
-## Est-ce que 20k bat 8k?
-
-Tableau des distances moyennes, contrastes appariés et résultats question par question pour
-**Entraîné** et **Indices retirés**.
-
-## Est-ce que les répondants réels rendent les indices utiles?
-
-Comparaison de **Entraîné avec répondants** avec **Indices retirés**, **Entraîné avec indices** et
-**Entraîné**, puis examen de la concentration et des différences entre sous-groupes.
-
-## LLM ou modèle statistique?
-
-Comparaison des erreurs, de la calibration, du coût et de la simplicité opérationnelle. La différence
-entre une distribution exacte du modèle statistique et une distribution estimée à partir de 100
-réponses du LLM sera indiquée explicitement.
-
-## Quel montage retenir?
-
-Le brief se terminera par une décision avant l'évaluation des 48 questions gelées restantes : modèle
-retenu, format des indices retenu et pertinence ou non d'augmenter encore le volume d'entraînement.
-
-# 5. Tableaux et figures à préparer
-
-- tableau principal : plancher humain, modèle statistique et toutes les conditions 8k et 20k retenues;
-- figure des contrastes appariés pour les six comparaisons préannoncées;
-- figure par question montrant l'effet de 20k et celui des répondants réels;
-- tableau de concentration des réponses;
-- diagnostic des anciens indices : direction, amplification et entropie;
-- diagnostic d'aplatissement entre sous-groupes, recalculé pour **Entraîné avec répondants**.
-
-# 6. État d'avancement
-
-| Élément | État au 1er octobre |
-|---|---|
-| **Entraîné 20k** | entraînement terminé; inférence à faire |
-| **Indices retirés 20k** | entraînement terminé; inférence à faire |
-| **Entraîné avec répondants 8k** | protocole fixé; implémentation et inférence à faire |
-| **Entraîné avec répondants 20k** | protocole fixé; implémentation et inférence à faire |
-| **Modèle statistique** | implémentation en cours; exécution complète à terminer |
-| Diagnostic des anciens indices | terminé; voir l'annexe A |
-
-# Annexe A — Diagnostic des anciens indices en pourcentages
+# Annexe C — Diagnostic des anciens indices en pourcentages
 
 À température 1,0, l'ajout des indices déplace les probabilités dans la direction des écarts humains
 pour **47,1 % [43,4 % ; 50,7 %]** des unités question × cellule × option. La pente des écarts entre
@@ -173,15 +146,9 @@ L'entropie moyenne est de **1,188 [0,929 ; 1,460]** nat chez les répondants et 
 **1,268 [1,027 ; 1,506]** avec les indices. La différence de **+0,080 [0,021 ; 0,142]** indique que
 les réponses synthétiques sont moins concentrées, et non davantage.
 
-**En clair**, les pourcentages donnés en indices font bouger le modèle, mais ils ne l'aident pas à
-repérer de façon fiable ce qui distingue un sous-groupe. Ses déplacements ne vont pas plus souvent
-dans la bonne direction que dans la mauvaise et demeurent beaucoup trop faibles. Contrairement à ce
-qu'on soupçonnait, le modèle ne semble pas non plus se rabattre excessivement sur la réponse
-majoritaire : il disperse plutôt ses réponses davantage que les vrais répondants.
-
-Ainsi, les trois prédictions de l'hypothèse 3 de l'ADR 0005 ne sont pas vérifiées. L'échec des anciens
-indices ne s'explique donc pas par une lecture du groupe comme s'il s'agissait d'une seule personne
-typique; le format en pourcentages semble surtout fournir au modèle un signal peu exploitable.
+Les trois prédictions de l'hypothèse 3 de l'ADR 0005 ne sont donc pas vérifiées. Les pourcentages font
+bouger le modèle, mais ne l'aident pas à repérer de façon fiable ce qui distingue un sous-groupe. Le
+format semble surtout fournir un signal peu exploitable.
 
 Les calculs détaillés et le texte reproductible se trouvent dans
 `data/analysis/second_brief/diagnostic_anciens_indices_*`. Les intervalles à 95 % reposent sur un
