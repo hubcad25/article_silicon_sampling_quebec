@@ -75,6 +75,33 @@ des quatre modèles.
 - **Combinaison des modèles :** à compléter.
 - **Régularisation des écarts entre sous-groupes :** à compléter.
 
+## Où est-ce que ça marche?
+
+On retient d'abord la meilleure méthode sur l'ensemble des 48 questions. On vérifie ensuite si son
+gain tient selon le thème et selon la proximité de la question avec le corpus d'entraînement. On ne
+choisit pas une méthode différente après coup pour chaque catégorie.
+
+| Thème | Questions | Entraîné 8k | Méthode retenue | Écart |
+|---|---:|---:|---:|---:|
+| Partis et vote | 9 | — | — | — |
+| Démocratie et engagement | 9 | — | — | — |
+| Valeurs sociales | 8 | — | — | — |
+| Santé | 6 | — | — | — |
+| État et économie | 6 | — | — | — |
+| Économie perçue | 5 | — | — | — |
+| Identité et fédéralisme | 5 | — | — | — |
+
+| Proximité avec l'entraînement | Questions | Entraîné 8k | Méthode retenue | Écart |
+|---|---:|---:|---:|---:|
+| Isolée (< 0,70) | 10 | — | — | — |
+| Loin (0,70–0,775) | 9 | — | — | — |
+| Modérée (0,775–0,85) | 10 | — | — | — |
+| Proche (0,85–0,95) | 10 | — | — | — |
+| Quasi-doublon (≥ 0,95) | 9 | — | — | — |
+
+**Lecture : à compléter.** Le gain demeure-t-il sur les questions isolées? Le 20k aide-t-il surtout
+loin du corpus? Une méthode échoue-t-elle dans un thème précis?
+
 # Décision
 
 **Méthode retenue : à compléter.**
@@ -82,7 +109,3 @@ des quatre modèles.
 **Gain par rapport à Entraîné 8k : à compléter.**
 
 **Pourquoi : à compléter.**
-
-Les contrastes sont appariés sur les mêmes questions et sous-groupes. Les intervalles à 95 % sont
-obtenus par bootstrap des 48 questions. La divergence KL est conservée dans les résultats détaillés
-comme vérification secondaire.
