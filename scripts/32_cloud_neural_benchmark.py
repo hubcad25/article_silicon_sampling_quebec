@@ -156,8 +156,11 @@ def launch(key: str) -> None:
         "--environment-variables",
         f"AOAI_ENDPOINT={env_value('AOAI_ENDPOINT')}",
         f"AOAI_EMBED_DEPLOYMENT={env_value('AOAI_EMBED_DEPLOYMENT')}",
+        f"AZURE_STORAGE_ACCOUNT={env_value('AZURE_STORAGE_ACCOUNT')}",
+        f"AZURE_STORAGE_CONTAINER={env_value('AZURE_STORAGE_CONTAINER')}",
         "--secure-environment-variables",
         f"AOAI_KEY={env_value('AOAI_KEY')}",
+        f"AZURE_STORAGE_KEY={env_value('AZURE_STORAGE_KEY')}",
         "--command-line", f"/bin/sh -c '{command}'", "-o", "none",
     )
     print(f"launched {CONTAINER} -> {SHARE}/{FOLDER}/ (4 CPU, 16 GiB)")
