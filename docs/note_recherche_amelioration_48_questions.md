@@ -129,3 +129,18 @@ Les contrastes sont appariés sur les mêmes questions et sous-groupes. Les inte
 obtenus par bootstrap des 48 questions. Chaque question reçoit le même poids après calcul de la
 moyenne de ses sous-groupes. La divergence KL, qui mène aux mêmes conclusions générales, est
 conservée dans les résultats détaillés.
+
+# Prochaines étapes
+
+- **Mesurer la marge restante :** calculer le plancher humain sur les 48 questions et séparer
+  l'erreur sur la distribution générale de chaque question de celle sur les écarts entre sous-groupes.
+- **Investir dans les répondants réels :** entraîner à plus grande échelle, avec plusieurs réponses
+  d'une même personne et exactement le même format de contexte à l'entraînement et à l'inférence.
+- **Cibler les échecs :** comprendre pourquoi les réponses individuelles nuisent aux valeurs sociales
+  et tester un repli préspécifié vers le modèle simple lorsque le contexte est peu fiable.
+- **Améliorer la calibration :** tester une combinaison où le LLM estime les différences entre profils
+  et un modèle statistique stabilise la distribution générale de la question.
+- **Repartir sur un test aveugle :** geler de nouvelles questions, inclure davantage de thèmes
+  difficiles et privilégier des sous-groupes d'évaluation plus grands.
+- **Ne pas prioriser :** davantage de températures ou de tirages, les anciens indices en pourcentages,
+  une régularisation plus complexe ou des ensembles génériques.
