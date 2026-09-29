@@ -1,0 +1,47 @@
+{
+  "selected_method": "BR20",
+  "parameters": {
+    "questions": 48,
+    "item_cell_pairs": 885,
+    "draws": 250,
+    "temperature": 1.0,
+    "bootstrap_repetitions": 2000,
+    "bootstrap_seed": 20260925,
+    "aggregation": "unweighted cells within question, then equal weight to questions",
+    "derived_method_kl_effective_n": 250,
+    "regularization": {
+      "A_REG_deviation_retained": 0.2,
+      "AVG4_REG_deviation_retained": 0.55
+    }
+  },
+  "sources": {
+    "data/analysis/inference/final48-250/c0-8k/A.csv": "625a9b23d84d459e80b3e8d79d3c06f3e87380a012f8480b1a3e7a698ce54d61",
+    "data/analysis/inference/final48-250/c0-20k/A20.csv": "34d4249807691f48f8bcdd08adb29e5d6b15af87fc522ed6a3366b30fcfb064c",
+    "data/analysis/inference/final48-250/c1-20k/B020.csv": "4ad89d51ada5fb3ab7085999b9ea4315e9a545b4383725459105dfe801e90e22",
+    "data/analysis/inference/final48-250/c1-20k/BR20.csv": "95f74382af515368674955d2bb1a354f002350336124eb3449b38d03700e5309",
+    "data/analysis/inference/final48-250/c0-8k/A.manifest.json": "22f69fb09151e8bcd7858c12a1624deb9fc3e9166215b9b762f33b2d784298bb",
+    "data/analysis/inference/final48-250/c0-20k/A20.manifest.json": "25e311e49e6750defe9a8286b2e8fd7cf8fa6a1de82fceb7df4ce5c374918efa",
+    "data/analysis/inference/final48-250/c1-20k/B020.manifest.json": "11253729fe723079ebeacdf4c5d555a2196b702b4c7f89511475f451ea1530dc",
+    "data/analysis/inference/final48-250/c1-20k/BR20.manifest.json": "e4ce0756f74792facf4eb2550d8e94df8f4bbc9cfe4ec5cd89406a18a5543a72",
+    "data/analysis/inference/final48-250/c0-8k/A.progress.json": "54ee2eb889e2ca57817fb2025c2ce8724d73865d73472ef8f3e5cd58d028802a",
+    "data/analysis/inference/final48-250/c0-20k/A20.progress.json": "b88cb14bd44face54dd4b48715361149001661aaac7664366a8b6373f08add32",
+    "data/analysis/inference/final48-250/c1-20k/B020.progress.json": "4f03ee4724ca554a7c5f5a7e9ddb4e8fe3733e43dc2c2c6258b3b2098d8f153e",
+    "data/analysis/inference/final48-250/c1-20k/BR20.progress.json": "12156b03665e97a4400ad95dbbfd4c917c1939d18cc33bb568471658d03e4503",
+    "data/split/heldout_respondents.parquet": "ea3068736245d89b2b539937b36d8c9cb97e52d4f2903a98117bd561276f6606",
+    "data/split/heldout_halves.csv": "ec798b32a624e0225c3093cb154a11abf81a4b528d77bf82a04da9c268e3c54b",
+    "data/analysis/test_blocks.csv": "a790aa40496145edc9586feda7948145ebf71a39f6097508a8cd86f536a7ed30",
+    "docs/adr/0006-inference-48-questions-amelioration.md": "23dcee54bf31bce2179cb1901e5c482c399e3a795d8011032712089c9c1dd8a9"
+  },
+  "outputs": {
+    "distributions.csv": "3d48e62e61a2215c0cb395660153ca77e91ba0b04b2654198083df440307e15d",
+    "observed_responses.csv": "e2b03484788178e75a727edcf42c9b7cf99f9148270b1bce63e8ddb315bbe1c5",
+    "distribution_diagnostics.csv": "ae64dd4d010db6c8afd04c694c882b30524d8343625935c80078742a9120bf1d",
+    "cell_metrics.csv": "037bc52f091d3ae0c7e4cb43878bb8bb9254d0f85cfa919af13dcd0cc9f471ba",
+    "item_metrics.csv": "7fd55ea3b5ca7850eb34536f7b26ee618fa795e29f105c7f9b39735b78cc9a1e",
+    "method_summary.csv": "933bf6a0013828b90691994afef59e537ecad910de2bc8af7ea68a7306cf945a",
+    "method_contrasts.csv": "7f1212f24a2254ba57a9869f984c9de4c861af9f5f992ade9ac7099555314e58",
+    "theme_breakdown.csv": "3da9583f51086313b393f25f19a81b828efdf98bb3c421c31e8134ff173f678a",
+    "proximity_breakdown.csv": "fd23bc63ae7459d262db5afba2ca0fab52b16ed956653932f886be195f523137",
+    "invalidity.csv": "11dae84f01cd2f8070ddcc239da31a607a1f041552b534a7f43566dfca5f991a"
+  }
+}

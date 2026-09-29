@@ -385,6 +385,27 @@ class ItemSpec:
         for raw, kept in self.code_map:
             if raw == code:
                 return kept
+        offered = {option.code for option in self.options}
+        if code in offered:
+            return code
+        # ``normalise_code`` removes numeric formatting inherited from source
+        # files (3.0 -> 3). Some string-coded surveys instead offer zero-padded
+        # modalities (03). Reconcile the two only when the numeric match is
+        # unique, so genuinely distinct textual codes are never collapsed.
+        try:
+            numeric = float(code)
+        except ValueError:
+            equivalents = []
+        else:
+            equivalents = []
+            for candidate in offered:
+                try:
+                    if float(candidate) == numeric:
+                        equivalents.append(candidate)
+                except ValueError:
+                    continue
+        if len(equivalents) == 1:
+            return equivalents[0]
         return code
 
     @property
