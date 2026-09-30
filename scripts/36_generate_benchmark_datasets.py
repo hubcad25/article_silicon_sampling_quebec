@@ -99,7 +99,9 @@ ds.RESPONSE_LANGUAGE.update({
 def load_items() -> pl.DataFrame:
     frames = [pl.read_parquet(p) for p in ITEMS]
     items = pl.concat(frames, how="diagonal_relaxed").filter(pl.col("survey_id").is_in(SURVEYS))
-    return items.unique(["survey_id", "variable"], keep="last", maintain_order=True)
+    items = items.unique(["survey_id", "variable"], keep="last", maintain_order=True)
+    # Qualtrics appends " - Selected Choice" to items with a write-in option.
+    return items.with_columns(pl.col("question_text").str.replace(r"\s*-\s*Selected Choice$", ""))
 
 
 def item_vectors(items: pl.DataFrame) -> np.ndarray:

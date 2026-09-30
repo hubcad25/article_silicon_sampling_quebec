@@ -112,7 +112,8 @@ The file is built once, with a fixed seed, and handed unchanged to every model.
 **Profiles.** For each of the 15 cells, draw **1,000 respondents** from the anchor source survey
 (the Democracy Checkup 2024), with replacement and with probability proportional to their survey weight. A
 respondent belongs to a cell through their province and their **age in 2025** (age in 2024 + 1; the survey has no one who is 18 in 2025, a negligible gap).
-Each profile carries: age in 2025, gender, province, language, education and household income.
+Each profile carries, in the canonical categories used at training: age band in 2025, gender,
+province, education, household income and first language.
 
 **Injected answers (anchors).** Each profile also carries that same real respondent's answers to
 **the same nine anchor questions**, chosen from varied themes (table below). The anchors are
@@ -145,27 +146,45 @@ all ten items, each in a separate call.
 
 # 5. Prompt
 
-One template, in English and French; a profile gets the version matching its language. Only the
-chat-template wrapping (special tokens) may differ between models. Temperature 1.0, no system
-prompt beyond the template, no retries on a completed answer (transport failures are retried).
+The prompt is **exactly the training template** of every model we train (`prompts.py` in our repo),
+so the model sees at inference the format it learned. It exists in English and French; a profile
+gets the version of the language it answered the DC 2024 in, and the CES 2025 item is shown in its
+codebook wording in that language. The persona is a system message, the rest a user message. At
+inference every persona field is shown (training randomly drops some, so the model tolerates
+missing fields). Temperature 1.0; no retry on a completed answer (transport failures are retried).
+Only the chat-template wrapping (special tokens) may differ between models.
 
 ```text
-You are a {age}-year-old {gender} living in {province}, Canada. It is 2025.
-Your first language is {language}. Your highest level of education is {education}.
-Your household income is {income}.
+[system]
+You are a respondent to an opinion survey conducted in 2025.
+Population : Canada
+Age : {age band, e.g. 25 to 34 years}
+Gender : {gender}
+Education : {education}
+Province : {province}
+Household income : {income band}
+First language : {language}
 
-In 2024, you answered these survey questions:
-- {anchor_question_1} {answer_1}
+[user]
+Your answers to other questions in the survey:
+- {anchor 1 wording} → {answer, e.g. 5 out of 10 (0 = Left, 10 = Right)}
+- {anchor 2 wording} → {answer}
 - ...
-- {anchor_question_9} {answer_9}
+- {anchor 9 wording} → {answer}
 
-Answer the following question from a 2025 survey. Reply with one option exactly as written.
+Question : {CES 2025 item wording}
+Options :
+- {option 1}
+- ...
+- Don't know/ Prefer not to answer
 
-{item_wording}
-{option_1}
-...
-Don't know / Prefer not to answer
+Answer with the exact text of the chosen option only.
 ```
+
+French version: *Tu es un répondant à un sondage d'opinion mené en 2025.* · *Tes réponses à
+d'autres questions du sondage :* · *Réponds uniquement par le texte exact de l'option choisie.*,
+with French field names and labels. The anchors are presented as answers to the same survey, as at
+training, and the survey year is 2025.
 
 # 6. Scoring
 

@@ -60,6 +60,11 @@ SKIP_VARIABLE = re.compile(
     r"province|gender|education|income|language_\d|^language$|attention|postal",
     re.I,
 )
+#: Qualtrics piping and layout residue: an item carrying any of it is dropped,
+#: never shown to the model half-rendered.
+ARTEFACT = re.compile(r"\$\{|e://|Display This|Selected Choice|\[Display Order\]|_TEXT\b", re.I)
+#: Survey-administration variables that parse like items.
+ADMIN_VARIABLE = re.compile(r"^(dc\d\d_)?(wave|feedback|feeback)", re.I)
 DK_LABEL = re.compile(r"don.?t know|prefer not|ne sais pas|préfère ne pas", re.I)
 
 LR_ITEMS = {
@@ -143,7 +148,7 @@ def ingest(year: int) -> tuple[list[dict], dict]:
 
     items, french = [], {}
     for variable, blocks in entries.items():
-        if SKIP_VARIABLE.search(variable) or not blocks[0]["text"]:
+        if SKIP_VARIABLE.search(variable) or ADMIN_VARIABLE.search(variable) or not blocks[0]["text"]:
             continue
         values = pd.to_numeric(frame[variable], errors="coerce")
         observed = {int(v) for v in values.dropna().unique() if v >= 0 and float(v).is_integer()}
@@ -158,6 +163,10 @@ def ingest(year: int) -> tuple[list[dict], dict]:
             fr_ends = endpoints(fr_block["layout"]) if fr_block else None
             fr_options = ({str(o["code"]): o["label"] for o in slider_options(*fr_ends)}
                           if fr_ends else {})
+        texts = [english["text"], *(o["label"] for o in options),
+                 fr_block["text"] if fr_block else "", *fr_options.values()]
+        if any(ARTEFACT.search(t) for t in texts):
+            continue
         codes = {o["code"] for o in options}
         if len(options) < 2 or len(codes) != len(options) or not observed <= codes:
             continue
