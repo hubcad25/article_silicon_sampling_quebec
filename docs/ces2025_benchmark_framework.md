@@ -116,7 +116,7 @@ Each profile carries, in the canonical categories used at training: age band in 
 province, education, household income and first language.
 
 **Injected answers (anchors).** Each profile also carries that same real respondent's answers to
-**the same nine anchor questions**, chosen from varied themes (table below). The anchors are
+**the same seven anchor questions**, chosen from varied themes (table below). The anchors are
 identical for all profiles, all target items and all models. None is a target item or a close
 equivalent of one. Fixed anchors were preferred to random or semantically nearest questions:
 they give every model and every item exactly the same information, and they avoid near-duplicates
@@ -128,14 +128,16 @@ the other anchors only.
 | 1 | Ideology | `dc24_lr_self_1` | Left–right self-placement | 0 (left) to 10 (right) |
 | 2 | Partisanship | `dc24_party_id` | Federal party identification | Liberal, Conservative, NDP, Bloc, Green, PPC, other, none |
 | 3 | Redistribution | `dc24_inequality_gap` | How much should be done to reduce the gap between rich and poor | Much more … much less (5) |
-| 4 | Moral traditionalism | `dc24_pos_family_val` | Fewer problems with more emphasis on traditional family values | Strongly agree … strongly disagree (4) |
-| 5 | Language and identity | `dc24_pos_bilingualis` | We have gone too far in pushing bilingualism | Strongly agree … strongly disagree (4) |
-| 6 | Social trust | `dc24_trust2` | Most people can be trusted, or you need to be very careful | 2 options |
-| 7 | Canada–US relations | `dc24_ties_us` | Canada's ties with the United States should be… | Much closer … much more distant (5) |
-| 8 | Secularism | `dc24_pos_relig_sym` | There should be restrictions on religious symbols in public life | Strongly agree … strongly disagree (4) |
-| 9 | Equal rights | `dc24_pos_equal_1` | We have gone too far in pushing equal rights | Strongly agree … strongly disagree (4) |
+| 4 | Language and identity | `dc24_pos_bilingualis` | We have gone too far in pushing bilingualism | Strongly agree … strongly disagree (4) |
+| 5 | Social trust | `dc24_trust2` | Most people can be trusted, or you need to be very careful | 2 options |
+| 6 | Canada–US relations | `dc24_ties_us` | Canada's ties with the United States should be… | Much closer … much more distant (5) |
+| 7 | Equal rights | `dc24_pos_equal_1` | We have gone too far in pushing equal rights | Strongly agree … strongly disagree (4) |
 
-All nine were asked of every DC 2024 respondent, with more than 98% substantive answers. Items
+All seven were asked of every DC 2024 respondent, with more than 98% substantive answers. Two
+further anchors (traditional family values, restrictions on religious symbols) were dropped because
+Azure's fine-tuning data check flags them as hate/fairness content; so are, in training, every item
+scoring 4+ on Azure Content Safety's hate scale (0-7), notably the "Canada should admit" series
+and several immigration and gender-role statements. Items
 too close to a target were ruled out: confidence in government (demsat), job creation by the
 private sector (jobs vs environment), and the DC 2024 versions of immigration, democracy
 satisfaction and jobs vs environment. Anchors are shown with the respondent's exact option label.
@@ -170,7 +172,7 @@ Your answers to other questions in the survey:
 - {anchor 1 wording} → {answer, e.g. 5 out of 10 (0 = Left, 10 = Right)}
 - {anchor 2 wording} → {answer}
 - ...
-- {anchor 9 wording} → {answer}
+- {anchor 7 wording} → {answer}
 
 Question : {CES 2025 item wording}
 Options :

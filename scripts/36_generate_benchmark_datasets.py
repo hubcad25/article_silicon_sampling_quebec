@@ -1,16 +1,16 @@
 """Training datasets for the CES 2025 benchmark: two context arms, three sizes.
 
 Plan: docs/ces2025_benchmark_framework.md. Every example is one real
-respondent answering one item, with the persona and nine of their own answers
+respondent answering one item, with the persona and seven of their own answers
 to other items of the same survey as context. The two arms render the **same
 pairs** (same respondent, same target, same SES dropout); only the choice of
 the context items differs:
 
-    SEM  the 9 items of the survey nearest the target (embedding cosine)
-    FIX  the survey's items for the nine anchor dimensions of the benchmark
+    SEM  the 7 items of the survey nearest the target (embedding cosine)
+    FIX  the survey's items for the seven anchor dimensions of the benchmark
          (data/anchor_map/anchor_map.csv): ideology, partisanship,
-         redistribution, moral traditionalism, language and identity, social
-         trust, Canada-US relations, secularism, equal rights
+         redistribution, language and identity, social trust, Canada-US
+         relations, equal rights
 
 Both arms drop the target itself and any item at cosine >= 0.95 of it (the
 anti-leak rule of prompts.nearest_context_items).
@@ -73,7 +73,9 @@ load_dotenv(REPO / ".env")
 SURVEYS = ("ces_2019_online", "ces_2021", "dc_2019", "dc_2020", "dc_2021", "dc_2022",
            "dc_2023", "dc_2024")
 SEED = 20260930
-K = 9
+#: Seven, not nine: the secularism and moral-traditionalism anchors fail the
+#: Foundry hate/fairness data check (scripts/38), so both arms get seven.
+K = 7
 TRAIN_SIZES = (20_000, 50_000, 100_000)
 VALIDATION_SIZE = 500
 #: DC waves hold 60-100 items for ~12 500 pairs each: the cap must let an
@@ -84,10 +86,15 @@ ARMS = ("sem", "fix")
 
 OUT = REPO / "data" / "datasets_ces2025"
 ANCHOR_MAP = REPO / "data" / "anchor_map" / "anchor_map.csv"
+#: Items whose rendering scores this hate severity or more (Azure Content
+#: Safety, 0-7) in either language are dropped as targets and as context:
+#: Foundry rejects a training file with too many such lines (scripts/38).
+HATE_SCREEN = REPO / "data" / "content_safety" / "item_hate.csv"
+MAX_HATE_SEVERITY = 4
 ITEMS = [REPO / "data" / "items.parquet", REPO / "data" / "items_extra.parquet"]
 FRENCH = [ds.FRENCH_WORDING_PATH, REPO / "data" / "extra_french_wording.json"]
-DIMENSIONS = ("ideology", "partisanship", "redistribution", "moral_traditionalism",
-              "language_identity", "social_trust", "canada_us", "secularism", "equal_rights")
+DIMENSIONS = ("ideology", "partisanship", "redistribution", "language_identity",
+              "social_trust", "canada_us", "equal_rights")
 
 #: Interview language of the DC waves; CES entries already in dataset.py.
 ds.RESPONSE_LANGUAGE.update({
@@ -100,6 +107,10 @@ def load_items() -> pl.DataFrame:
     frames = [pl.read_parquet(p) for p in ITEMS]
     items = pl.concat(frames, how="diagonal_relaxed").filter(pl.col("survey_id").is_in(SURVEYS))
     items = items.unique(["survey_id", "variable"], keep="last", maintain_order=True)
+    screened = pl.read_csv(HATE_SCREEN).filter(
+        pl.max_horizontal("target_severity", "context_severity") >= MAX_HATE_SEVERITY)
+    items = items.join(screened.select("survey_id", "variable").unique(),
+                       on=["survey_id", "variable"], how="anti")
     # Qualtrics appends " - Selected Choice" to items with a write-in option.
     return items.with_columns(pl.col("question_text").str.replace(r"\s*-\s*Selected Choice$", ""))
 
@@ -189,7 +200,7 @@ def build():
     rng.shuffle(pairs)
 
     anchor_map = pd.read_csv(ANCHOR_MAP)
-    anchor_map = anchor_map[anchor_map.survey_id.isin(SURVEYS)]
+    anchor_map = anchor_map[anchor_map.survey_id.isin(SURVEYS) & anchor_map.dimension.isin(DIMENSIONS)]
     anchor_map["order"] = anchor_map.dimension.map({d: i for i, d in enumerate(DIMENSIONS)})
     anchors = {s: [(s, v) for v in g.sort_values("order").variable]
                for s, g in anchor_map.groupby("survey_id")}
