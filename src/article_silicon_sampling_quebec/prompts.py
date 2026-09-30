@@ -134,6 +134,7 @@ PERSONA_DIMENSIONS: tuple[str, ...] = (
 NATIONAL_SURVEYS: frozenset[str] = frozenset({
     "cecd_elxn_can_2011", "cecd_sante_can_usa",
     "ces_2019_online", "ces_2019_phone", "ces_2021", "ces_2025",
+    "dc_2019", "dc_2020", "dc_2021", "dc_2022", "dc_2023", "dc_2024",
 })
 
 #: Stata caps a variable label at 80 characters, so ``question_text`` is

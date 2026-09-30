@@ -21,6 +21,12 @@ data/processed/*
 # Small, text, and an input of the item table — it belongs in the repo.
 !data/ces_full_wording.json
 
+# Anchor dimension -> variable per survey: validated by hand, input of the
+# FIX training arm (scripts/34, scripts/36).
+!data/anchor_map/
+data/anchor_map/*
+!data/anchor_map/anchor_map.csv
+
 !data/raw/
 data/raw/*
 !data/raw/ces_2021/
