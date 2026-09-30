@@ -64,9 +64,16 @@ from the codebook in the respondent's language; the order of options is the code
 | 9 | Satisfaction with democracy | `demsat` | D |
 | 10 | Personal finances over the past year | `own_fin_retro` | F |
 
-S: less / about the same / more. A: five-point agree–disagree. I: more / fewer / about the same.
-D: four-point satisfaction. F: better / same / worse. **Every scale keeps its "don't know / prefer
-not to answer" option (DK)**, both in the prompt and in scoring.
+Answer scales:
+
+- **S (spending):** less · about the same · more.
+- **A (agreement):** strongly disagree · somewhat disagree · neither agree nor disagree · somewhat agree · strongly agree.
+- **I (immigration):** more immigrants · fewer immigrants · about the same number.
+- **D (democracy):** very satisfied · fairly satisfied · not very satisfied · not at all satisfied.
+- **F (finances):** got better · stayed about the same · got worse.
+
+**Every scale also keeps its "don't know / prefer not to answer" option (DK)**, both in the prompt
+and in scoring.
 
 # 3. Subgroups and human distributions
 
@@ -108,7 +115,7 @@ respondent belongs to a cell through their province and their **age in 2025** (a
 Each profile carries: age in 2025, gender, province, language, education and household income.
 
 **Injected answers (anchors).** Each profile also carries that same real respondent's answers to
-**the same five anchor questions**, chosen from varied themes (table below). The anchors are
+**the same nine anchor questions**, chosen from varied themes (table below). The anchors are
 identical for all profiles, all target items and all models. None is a target item or a close
 equivalent of one. Fixed anchors were preferred to random or semantically nearest questions:
 they give every model and every item exactly the same information, and they avoid near-duplicates
@@ -122,8 +129,12 @@ the other anchors only.
 | 3 | Redistribution | `dc24_inequality_gap` | How much should be done to reduce the gap between rich and poor | Much more … much less (5) |
 | 4 | Moral traditionalism | `dc24_pos_family_val` | Fewer problems with more emphasis on traditional family values | Strongly agree … strongly disagree (4) |
 | 5 | Language and identity | `dc24_pos_bilingualis` | We have gone too far in pushing bilingualism | Strongly agree … strongly disagree (4) |
+| 6 | Social trust | `dc24_trust2` | Most people can be trusted, or you need to be very careful | 2 options |
+| 7 | Canada–US relations | `dc24_ties_us` | Canada's ties with the United States should be… | Much closer … much more distant (5) |
+| 8 | Secularism | `dc24_pos_relig_sym` | There should be restrictions on religious symbols in public life | Strongly agree … strongly disagree (4) |
+| 9 | Equal rights | `dc24_pos_equal_1` | We have gone too far in pushing equal rights | Strongly agree … strongly disagree (4) |
 
-All five were asked of every DC 2024 respondent, with more than 98% substantive answers. Items
+All nine were asked of every DC 2024 respondent, with more than 98% substantive answers. Items
 too close to a target were ruled out: confidence in government (demsat), job creation by the
 private sector (jobs vs environment), and the DC 2024 versions of immigration, democracy
 satisfaction and jobs vs environment. Anchors are shown with the respondent's exact option label.
@@ -146,7 +157,7 @@ Your household income is {income}.
 In 2024, you answered these survey questions:
 - {anchor_question_1} {answer_1}
 - ...
-- {anchor_question_5} {answer_5}
+- {anchor_question_9} {answer_9}
 
 Answer the following question from a 2025 survey. Reply with one option exactly as written.
 
@@ -176,12 +187,17 @@ each cell's share of CES 2025 weight.
 
 # 7. Reference points and uncertainty
 
-Every model is reported next to two references, computed once.
+Every model is reported next to three references, computed once.
 
 - **Human floor.** Each CES 2025 cell is split at random into two halves; TV between the two
   halves' weighted distributions, averaged over 200 random splits. It shows how much TV comes from
   sampling noise alone. Each half has only half the respondents, so this floor is conservative.
 - **Untrained model.** The base model with the same file and prompt.
+- **Modal baseline (no model).** For each item, the single most common answer in CES 2025 overall
+  (weighted; ties go to the smallest code) is given by every profile in every cell. It ignores all
+  subgroup differences, so a model must beat it to show it captures them. It is selected from the
+  evaluation data itself: a diagnostic reference, not a forecast. We report how many of the 150
+  cells each model improves over it.
 
 **Uncertainty.** 2,000 bootstrap replicates. Human respondents are resampled within cells with their
 weights; profiles are resampled within cells with all their answers. The same resampled profile IDs
