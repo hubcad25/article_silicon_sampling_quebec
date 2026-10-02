@@ -31,8 +31,8 @@
     "model": "Llama-3.3-70B-Instruct-9.ft-6ad6d412700c41fab1999e062bc386f7-ces25-fix-20k",
     "version": "1",
     "deployment": "bench-ces25-fix-20k",
-    "sku": "GlobalStandard",
-    "capacity": 1000,
+    "sku": "DataZoneStandard",
+    "capacity": 500,
     "training": "fix context, 20000 examples, 8 federal surveys 2019-2024"
   },
   "ces25-fix-50k": {
@@ -40,8 +40,8 @@
     "model": "Llama-3.3-70B-Instruct-9.ft-edbf665715f54535afa3f11a6fea9609-ces25-fix-50k",
     "version": "1",
     "deployment": "bench-ces25-fix-50k",
-    "sku": "GlobalStandard",
-    "capacity": 1000,
+    "sku": "DataZoneStandard",
+    "capacity": 500,
     "training": "fix context, 50000 examples, 8 federal surveys 2019-2024"
   },
   "ces25-fix-100k": {
@@ -49,8 +49,8 @@
     "model": "Llama-3.3-70B-Instruct-9.ft-7ba75351f07b4662996a3726c469b0a9-ces25-fix-100k",
     "version": "1",
     "deployment": "bench-ces25-fix-100k",
-    "sku": "GlobalStandard",
-    "capacity": 1000,
+    "sku": "DataZoneStandard",
+    "capacity": 500,
     "training": "fix context, 100000 examples, 8 federal surveys 2019-2024"
   },
   "llama33-70b-base": {
