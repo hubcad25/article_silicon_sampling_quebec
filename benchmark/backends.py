@@ -57,15 +57,22 @@ def _arm(method: str, path: str, body: dict | None = None) -> dict | None:
                                      data=None if body is None else json.dumps(body).encode(),
                                      headers={"Authorization": f"Bearer {token}",
                                               "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            payload = response.read()
-            return json.loads(payload) if payload else {}
-    except urllib.error.HTTPError as error:
-        if error.code == 404:
-            return None
-        raise RuntimeError(f"{method} {path}: HTTP {error.code} "
-                           f"{error.read().decode(errors='replace')[:500]}") from error
+    for attempt in range(40):
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                payload = response.read()
+                return json.loads(payload) if payload else {}
+        except urllib.error.HTTPError as error:
+            if error.code == 404:
+                return None
+            if error.code == 409 and attempt < 39:
+                # Another deployment operation on the account: they are serialized.
+                time.sleep(30)
+                request = urllib.request.Request(request.full_url, method=method,
+                                                 data=request.data, headers=dict(request.headers))
+                continue
+            raise RuntimeError(f"{method} {path}: HTTP {error.code} "
+                               f"{error.read().decode(errors='replace')[:500]}") from error
 
 
 class FoundryBackend:

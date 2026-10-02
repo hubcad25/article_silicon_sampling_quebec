@@ -86,11 +86,11 @@ def main() -> None:
     print(f"{args.model}: {len(done)} done, {len(requests)} to go", flush=True)
 
     started = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    if args.deploy:
-        backend.ensure()
     lock, progress = threading.Lock(), Counter()
     tick = time.monotonic()
     try:
+        if args.deploy:
+            backend.ensure()
         with checkpoint.open("a", encoding="utf-8") as handle:
             def work(request: dict) -> None:
                 nonlocal tick
