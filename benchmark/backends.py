@@ -89,14 +89,23 @@ class FoundryBackend:
         self.chat = FoundryChat(deployment=deployment)
 
     def ensure(self, timeout: float = 3600) -> None:
+        deadline = time.monotonic() + timeout
         if _arm("GET", f"deployments/{self.deployment}") is None:
             _log(f"creating deployment {self.deployment} ({self.sku} x {self.capacity})")
-            _arm("PUT", f"deployments/{self.deployment}", {
-                "sku": {"name": self.sku, "capacity": self.capacity},
-                "properties": {"model": {"format": "Meta", "name": self.model,
-                                         "version": self.version},
-                               "raiPolicyName": RAI_POLICY}})
-        deadline = time.monotonic() + timeout
+            while True:
+                try:
+                    _arm("PUT", f"deployments/{self.deployment}", {
+                        "sku": {"name": self.sku, "capacity": self.capacity},
+                        "properties": {"model": {"format": "Meta", "name": self.model,
+                                                 "version": self.version},
+                                       "raiPolicyName": RAI_POLICY}})
+                    break
+                except RuntimeError as error:
+                    # A deployment deleted moments ago still holds the quota.
+                    if "InsufficientQuota" not in str(error) or time.monotonic() > deadline:
+                        raise
+                    _log("quota still held by a previous deployment; retrying in 60 s")
+                    time.sleep(60)
         while True:
             state = ((_arm("GET", f"deployments/{self.deployment}") or {})
                      .get("properties", {}).get("provisioningState"))
@@ -107,9 +116,14 @@ class FoundryBackend:
                 raise RuntimeError(f"deployment {self.deployment}: {state}")
             time.sleep(20)
 
-    def teardown(self) -> None:
+    def teardown(self, timeout: float = 1800) -> None:
         _log(f"deleting deployment {self.deployment}")
         _arm("DELETE", f"deployments/{self.deployment}")
+        deadline = time.monotonic() + timeout
+        while _arm("GET", f"deployments/{self.deployment}") is not None \
+                and time.monotonic() < deadline:
+            time.sleep(20)
+        _log(f"deployment {self.deployment} gone")
 
     def complete(self, messages: list[dict], temperature: float, max_tokens: int) -> str:
         return self.chat.complete(messages, temperature=temperature, max_tokens=max_tokens)

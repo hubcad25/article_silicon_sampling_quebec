@@ -136,13 +136,16 @@ def launch(lane: str, models: list[str], workers: int) -> None:
 
 def status() -> None:
     for model in az_list(f"{REMOTE}/runs"):
+        files = az_list(f"{REMOTE}/runs/{model}")
+        if "responses.jsonl" not in files:
+            print(f"{model:<20} (no responses yet)")
+            continue
         props = az("storage", "file", "show", "--share-name", SHARE,
                    "--path", f"{REMOTE}/runs/{model}/responses.jsonl",
                    "--query", "[properties.contentLength, properties.lastModified]", "-o", "tsv")
         size, modified = (props.split() + ["?", "?"])[:2]
-        done = az_list(f"{REMOTE}/runs/{model}")
         print(f"{model:<20} {int(size) / 1e6 if size.isdigit() else 0:>7.1f} MB  "
-              f"last write {modified}  {'DONE' if 'run_manifest.json' in done else ''}")
+              f"last write {modified}  {'DONE' if 'run_manifest.json' in files else ''}")
     for lane in ("gs", "dzs", "base"):
         group = cloud20.arm_request("GET", cloud20.container_path(container(lane)))
         if group:
