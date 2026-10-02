@@ -80,7 +80,10 @@ def main() -> None:
     done = {}
     if checkpoint.exists():
         for line in checkpoint.read_text(encoding="utf-8").splitlines():
-            record = json.loads(line)
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:  # a line cut by a killed process: redo that request
+                continue
             done[record["request_id"]] = record
     requests = [r for r in load_requests(args.profiles_per_cell) if r["request_id"] not in done]
     print(f"{args.model}: {len(done)} done, {len(requests)} to go", flush=True)

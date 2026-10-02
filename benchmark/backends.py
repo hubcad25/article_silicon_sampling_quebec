@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import shutil
 import subprocess
 import sys
 import time
@@ -51,8 +52,13 @@ def _arm(method: str, path: str, body: dict | None = None) -> dict | None:
     url = (f"https://management.azure.com/subscriptions/{SUBSCRIPTION}/resourceGroups/"
            f"{RESOURCE_GROUP}/providers/Microsoft.CognitiveServices/accounts/{ACCOUNT}"
            f"/{path}?api-version={ARM_API}")
-    token = subprocess.run(["az", "account", "get-access-token", "--query", "accessToken",
-                            "-o", "tsv"], check=True, capture_output=True, text=True).stdout.strip()
+    if shutil.which("az"):
+        token = subprocess.run(["az", "account", "get-access-token", "--query", "accessToken",
+                                "-o", "tsv"], check=True, capture_output=True, text=True).stdout.strip()
+    else:  # cloud container: its user-assigned managed identity
+        from azure.identity import ManagedIdentityCredential
+        token = ManagedIdentityCredential(client_id=os.environ.get("AZURE_CLIENT_ID")).get_token(
+            "https://management.azure.com/.default").token
     request = urllib.request.Request(url, method=method,
                                      data=None if body is None else json.dumps(body).encode(),
                                      headers={"Authorization": f"Bearer {token}",

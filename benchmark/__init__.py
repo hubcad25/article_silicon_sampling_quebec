@@ -8,12 +8,14 @@
 moves messages to a backend and ``score`` only reads answers and CES 2025.
 """
 
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent
-FROZEN = ROOT / "frozen"
-RUNS = ROOT / "runs"
+#: Overridable so a cloud container reads the frozen set and writes runs on the share.
+FROZEN = Path(os.environ.get("BENCH_FROZEN", ROOT / "frozen"))
+RUNS = Path(os.environ.get("BENCH_RUNS", ROOT / "runs"))
 RESULTS = ROOT / "results"
 
 REGIONS = ("BC", "Prairies", "ON", "QC", "Atlantic")
