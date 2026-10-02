@@ -222,12 +222,15 @@ Every model is reported next to three references, computed once.
 
 **Uncertainty.** 2,000 bootstrap replicates. Human respondents are resampled within cells with their
 weights; profiles are resampled within cells with all their answers. The same resampled profile IDs
-are used for every model, so differences between models are **paired**. We report percentile 95%
-intervals for each model's score and for each pairwise difference. Cells with fewer than 30
+are used for every model, so differences between models are **paired**. We report basic (reverse-percentile) 95% intervals, because TV is biased upward under
+resampling and percentile intervals would sit above the estimate. They are reported for each model's score and for each pairwise difference. Cells with fewer than 30
 respondents (raw or effective) are flagged but kept.
 
 # 8. What a run delivers
 
-One CSV per model, one row per call: `model_id`, `profile_id`, `cell`, `item`, `raw_response`,
-`code` (empty if invalid). The scoring script reads only this file and the frozen inputs, and
-writes the 150 TVs, the summaries and the intervals.
+The framework lives in `benchmark/` of our repo. `build` writes the frozen set once (15,000 profiles,
+150,000 rendered requests, with their sha256). `run` sends it to any model through a backend (an
+Azure Foundry deployment or any OpenAI-compatible endpoint) and writes one row per request:
+`request_id`, `profile_id`, `cell`, `language`, `item`, `raw_response`, `code` (empty if invalid).
+`score` reads only these rows and CES 2025, and writes the 150 TVs, the summaries, the references
+and the paired contrasts.

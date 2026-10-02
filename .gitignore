@@ -59,3 +59,7 @@ litt/
 scratch/*.jsonl
 scratch/*.log
 scratch/wording/
+
+# CES 2025 benchmark: frozen set and raw runs are regenerable/large
+benchmark/frozen/
+benchmark/runs/

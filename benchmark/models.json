@@ -1,0 +1,65 @@
+{
+  "ces25-sem-20k": {
+    "backend": "foundry",
+    "model": "Llama-3.3-70B-Instruct-9.ft-de855e67d60e4007b2a339c23a16fd08-ces25-sem-20k",
+    "version": "1",
+    "deployment": "bench-ces25-sem-20k",
+    "sku": "GlobalStandard",
+    "capacity": 1000,
+    "training": "sem context, 20000 examples, 8 federal surveys 2019-2024"
+  },
+  "ces25-sem-50k": {
+    "backend": "foundry",
+    "model": "Llama-3.3-70B-Instruct-9.ft-61c863a48c804b62b3774fcbf96c01c2-ces25-sem-50k",
+    "version": "1",
+    "deployment": "bench-ces25-sem-50k",
+    "sku": "GlobalStandard",
+    "capacity": 1000,
+    "training": "sem context, 50000 examples, 8 federal surveys 2019-2024"
+  },
+  "ces25-sem-100k": {
+    "backend": "foundry",
+    "model": "Llama-3.3-70B-Instruct-9.ft-5604eb312ac747a6a0a1029bad568ba3-ces25-sem-100k",
+    "version": "1",
+    "deployment": "bench-ces25-sem-100k",
+    "sku": "GlobalStandard",
+    "capacity": 1000,
+    "training": "sem context, 100000 examples, 8 federal surveys 2019-2024"
+  },
+  "ces25-fix-20k": {
+    "backend": "foundry",
+    "model": "Llama-3.3-70B-Instruct-9.ft-6ad6d412700c41fab1999e062bc386f7-ces25-fix-20k",
+    "version": "1",
+    "deployment": "bench-ces25-fix-20k",
+    "sku": "GlobalStandard",
+    "capacity": 1000,
+    "training": "fix context, 20000 examples, 8 federal surveys 2019-2024"
+  },
+  "ces25-fix-50k": {
+    "backend": "foundry",
+    "model": "Llama-3.3-70B-Instruct-9.ft-edbf665715f54535afa3f11a6fea9609-ces25-fix-50k",
+    "version": "1",
+    "deployment": "bench-ces25-fix-50k",
+    "sku": "GlobalStandard",
+    "capacity": 1000,
+    "training": "fix context, 50000 examples, 8 federal surveys 2019-2024"
+  },
+  "ces25-fix-100k": {
+    "backend": "foundry",
+    "model": "Llama-3.3-70B-Instruct-9.ft-7ba75351f07b4662996a3726c469b0a9-ces25-fix-100k",
+    "version": "1",
+    "deployment": "bench-ces25-fix-100k",
+    "sku": "GlobalStandard",
+    "capacity": 1000,
+    "training": "fix context, 100000 examples, 8 federal surveys 2019-2024"
+  },
+  "llama33-70b-base": {
+    "backend": "foundry",
+    "model": "Llama-3.3-70B-Instruct",
+    "version": "9",
+    "deployment": "bench-llama33-70b-base",
+    "sku": "GlobalStandard",
+    "capacity": 250,
+    "training": "none (untrained base)"
+  }
+}
