@@ -234,3 +234,24 @@ Azure Foundry deployment or any OpenAI-compatible endpoint) and writes one row p
 `request_id`, `profile_id`, `cell`, `language`, `item`, `raw_response`, `code` (empty if invalid).
 `score` reads only these rows and CES 2025, and writes the 150 TVs, the summaries, the references
 and the paired contrasts.
+
+# 9. Adding a model
+
+Any model can join the comparison, trained by us or by anyone else, if it follows four rules.
+
+1. **Training data.** No CES 2025 data in any form. The model comes with a short manifest: base
+   model, training sources, number of examples, whether the DC 2024 was used.
+2. **Training format.** Train on the prompt of §5 (`PromptTemplate` in our repo, or our training
+   JSONL files as a model): persona as a system message; anchors, question and options as the user
+   message; the assistant answers with the **exact text of one option**, never its number. A model
+   trained on another format is scored on a format it has never seen.
+3. **Inference settings.** The frozen messages unchanged (only the model's chat-template wrapping
+   may differ), temperature 1.0, at most 32 output tokens, one answer per request. Reasoning modes
+   are off (e.g. `enable_thinking=False` for Qwen3): the reply must be the option alone.
+4. **Delivery.** Either (a) the model runs on its owner's machine behind an OpenAI-compatible server
+   (Ollama, llama.cpp, vLLM, `mlx_lm.server`), `benchmark.run` is executed there on our frozen
+   `requests.jsonl`, and `responses.csv` plus `run_manifest.json` are sent back — the manifest
+   carries the sha256 of the frozen set, so we can check the requests were ours; or (b) the model
+   is reachable at an OpenAI-compatible endpoint and we run it ourselves. We score every model with
+   the same `benchmark.score`.
+
