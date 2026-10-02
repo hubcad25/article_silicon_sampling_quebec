@@ -32,7 +32,7 @@
     "version": "1",
     "deployment": "bench-ces25-fix-20k",
     "sku": "DataZoneStandard",
-    "capacity": 500,
+    "capacity": 1000,
     "training": "fix context, 20000 examples, 8 federal surveys 2019-2024"
   },
   "ces25-fix-50k": {
@@ -41,7 +41,7 @@
     "version": "1",
     "deployment": "bench-ces25-fix-50k",
     "sku": "DataZoneStandard",
-    "capacity": 500,
+    "capacity": 1000,
     "training": "fix context, 50000 examples, 8 federal surveys 2019-2024"
   },
   "ces25-fix-100k": {
@@ -50,7 +50,7 @@
     "version": "1",
     "deployment": "bench-ces25-fix-100k",
     "sku": "DataZoneStandard",
-    "capacity": 500,
+    "capacity": 1000,
     "training": "fix context, 100000 examples, 8 federal surveys 2019-2024"
   },
   "llama33-70b-base": {
