@@ -69,3 +69,13 @@ llama33-70b-base,pos_jobs,0.3877
 llama33-70b-base,imm,0.2964
 llama33-70b-base,demsat,0.2706
 llama33-70b-base,own_fin_retro,0.1789
+ces2021-persistence,spend_afford_h,0.0589
+ces2021-persistence,spend_nation_c,0.0791
+ces2021-persistence,spend_defence,0.3249
+ces2021-persistence,spend_rec_indi,0.1649
+ces2021-persistence,pos_life,0.0647
+ces2021-persistence,pos_energy,0.1347
+ces2021-persistence,pos_jobs,0.1076
+ces2021-persistence,imm,0.3077
+ces2021-persistence,demsat,0.0416
+ces2021-persistence,own_fin_retro,0.1251

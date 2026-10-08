@@ -15,8 +15,10 @@ Writes benchmark/results/:
     contrasts.csv    every pair of models: difference of headline, paired 95% CI
 
 References, scored like models: ``human-floor`` (TV between two random halves
-of each cell, mean of 200 splits) and ``modal-baseline`` (the national
-weighted mode of each item, for everyone).
+of each cell, mean of 200 splits), ``modal-baseline`` (the national
+weighted mode of each item, for everyone) and ``ces2021-persistence`` (each
+cell's weighted CES 2021 distribution, same wording and codes: the forecast
+"the last CES, unchanged", which uses no 2025 data).
 Bootstrap: 2,000 replicates, basic (reverse-percentile) intervals; human respondents resampled within cells with
 their weights; model profiles resampled within cells, the same profile ids for
 every model, so contrasts are paired.
@@ -57,15 +59,23 @@ def options() -> dict[str, list[str]]:
     return out
 
 
-def human_data() -> pd.DataFrame:
-    columns = ["cps25_province", "cps25_age_in_years", "cps25_weight_general_all"]
-    frame = read_survey("ces_2025", columns + [f"cps25_{t}" for t in TARGETS]).to_pandas()
-    frame["region"] = frame.cps25_province.map(PROVINCES).map(REGION_OF)
-    frame["age_group"] = [age_band(a) for a in frame.cps25_age_in_years]
+def human_data(year: int = 25) -> pd.DataFrame:
+    """CES respondents of 20<year> in the 15 cells, item columns renamed to cps25_*.
+
+    Age is the age at the time of that survey; CES 2021 shares 2025's province
+    and option codes for every target item.
+    """
+    p = f"cps{year}_"
+    age = {25: "cps25_age_in_years", 21: "cps21_age"}[year]
+    columns = [p + "province", age, p + "weight_general_all"]
+    frame = read_survey(f"ces_20{year}", columns + [p + t for t in TARGETS]).to_pandas()
+    frame = frame.rename(columns={p + t: f"cps25_{t}" for t in TARGETS})
+    frame["region"] = frame[p + "province"].map(PROVINCES).map(REGION_OF)
+    frame["age_group"] = [age_band(a) for a in frame[age]]
     frame = frame[frame.region.notna() & frame.age_group.notna()
-                  & (frame.cps25_weight_general_all > 0)].copy()
+                  & (frame[p + "weight_general_all"] > 0)].copy()
     frame["cell"] = frame.region + "|" + frame.age_group
-    frame["w"] = frame.cps25_weight_general_all
+    frame["w"] = frame[p + "weight_general_all"]
     return frame
 
 
@@ -196,6 +206,7 @@ def main() -> None:
     for name in runs:
         panels[name], invalid[name] = model_panel(name, profiles, opts)
     panels["modal-baseline"] = modal_panel(human, profiles, opts)
+    panels["ces2021-persistence"], _ = human_panel(human_data(21), opts)
 
     point = {name: cell_tvs(human, panel, opts) for name, panel in panels.items()}
     point["human-floor"] = human_floor(human, opts, rng)
@@ -203,12 +214,15 @@ def main() -> None:
     # Paired bootstrap of the headline (mean of 150 TVs).
     hsize = {c: len(human.weights[c]) for c in CELLS}
     msize = {c: (profiles.cell == c).sum() for c in CELLS}
+    psize = {c: len(panels["ces2021-persistence"].weights[c]) for c in CELLS}
     boot = {name: np.empty(N_BOOT) for name in panels}
     for b in range(N_BOOT):
         hrows = [rng.integers(0, hsize[c], hsize[c]) for c in CELLS]
         mrows = [rng.integers(0, msize[c], msize[c]) for c in CELLS]
+        prows = [rng.integers(0, psize[c], psize[c]) for c in CELLS]
         for name, panel in panels.items():
-            boot[name][b] = np.nanmean(cell_tvs(human, panel, opts, hrows, mrows))
+            rows = prows if name == "ces2021-persistence" else mrows
+            boot[name][b] = np.nanmean(cell_tvs(human, panel, opts, hrows, rows))
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     rows = []

@@ -16,6 +16,9 @@ Reads the runs and CES 2025 like ``score``; writes benchmark/results/:
                         national distribution plus the model's gap for that cell
                         (hybrid_x2_tv: the gap doubled).
 
+``ces2021-persistence`` (each cell's CES 2021 distribution) is always added
+to the models, its national share pooled with the CES 2025 cell weights.
+
 Also scores ``national-baseline``: every cell gets the CES 2025 national
 distribution. Like ``modal-baseline`` it is picked from the evaluation data:
 a diagnostic, not a forecast.
@@ -52,6 +55,9 @@ def gaps(dists, share, level) -> np.ndarray:
                            for members in groups.values()])
 
 
+PERSISTENCE = "ces2021-persistence"
+
+
 def hybrid(h_nat: np.ndarray, m_cell: np.ndarray, m_nat: np.ndarray, k: float) -> np.ndarray:
     """CES 2025 national share plus k times the model's gap for this cell, clipped and renormalized."""
     q = np.clip(h_nat + k * (m_cell - m_nat), 0, None)
@@ -84,8 +90,9 @@ def main() -> None:
     strata.round(4).to_csv(RESULTS / "strata.csv")
 
     national, signal = [], []
-    for name in args.models:
-        panel, _ = model_panel(name, profiles, opts)
+    for name in args.models + [PERSISTENCE]:
+        panel = (human_panel(human_data(21), opts)[0] if name == PERSISTENCE
+                 else model_panel(name, profiles, opts)[0])
         md = distributions(panel, opts)
         m_nat = pooled(md, share, CELLS)
         for j, t in enumerate(TARGETS):
