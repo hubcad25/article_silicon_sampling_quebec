@@ -94,6 +94,9 @@ def context_variables(targets_frame: pl.DataFrame, pool: pl.DataFrame) -> dict[s
 
     fix: the anchors. rich: the core minus near-duplicates of the target, then
     the N_NEAR nearest non-core items below CONTEXT_MAX_COSINE (scripts/40).
+    An item worded exactly like the target is dropped too: DC 2024 repeats some
+    CES questions verbatim (demsat, pos_jobs) at a cosine under 0.95, and its
+    answer would be the respondent's own answer to the target, a year earlier.
     """
     if CONTEXT != "rich":
         return {t: list(ANCHORS) for t in TARGETS}
@@ -102,9 +105,13 @@ def context_variables(targets_frame: pl.DataFrame, pool: pl.DataFrame) -> dict[s
     vectors = module.l2_normalize(module.item_vectors(both))
     tv, pv = vectors[:targets_frame.height], vectors[targets_frame.height:]
     pool_vars = list(pool["variable"])
+    def norm(text):
+        return " ".join(str(text).lower().split())
+    pool_text = dict(zip(pool_vars, map(norm, pool["question_text"])))
     out = {}
     for i, variable in enumerate(targets_frame["variable"]):
-        sims = pv @ tv[i]
+        same = {v for v, t in pool_text.items() if t == norm(targets_frame["question_text"][i])}
+        sims = np.where(np.isin(pool_vars, list(same)), 1.0, pv @ tv[i])
         cos = dict(zip(pool_vars, sims))
         core = [v for v in ANCHORS if cos.get(v, 0) < CONTEXT_MAX_COSINE]
         near = [pool_vars[j] for j in np.argsort(-sims)
