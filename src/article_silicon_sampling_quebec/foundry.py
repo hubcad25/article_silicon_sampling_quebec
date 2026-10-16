@@ -104,7 +104,11 @@ class FoundryChat:
         if resp.status >= 400:
             raise urllib.error.HTTPError(self.url, resp.status, resp.reason,
                                          resp.headers, io.BytesIO(payload))
-        return json.loads(payload)
+        try:
+            return json.loads(payload)
+        except json.JSONDecodeError as e:  # empty or cut 200 body: retry like a dropped connection
+            self._drop_connection()
+            raise urllib.error.URLError(f"unreadable body ({len(payload)} bytes)") from e
 
     def complete(self, messages: list[dict], *, temperature: float = 1.0,
                  max_tokens: int = 8, top_p: float = 1.0) -> str:
