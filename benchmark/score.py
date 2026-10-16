@@ -34,7 +34,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from . import CELLS, FROZEN, REGION_OF, REPO, RESULTS, RUNS, TARGETS, age_band
+from . import CELLS, FROZEN, REGION_OF, REPO, RESULTS, RUNS, SET, TARGET_VARS, TARGETS, age_band
 
 sys.path.insert(0, str(REPO / "src"))
 
@@ -68,8 +68,9 @@ def human_data(year: int = 25) -> pd.DataFrame:
     p = f"cps{year}_"
     age = {25: "cps25_age_in_years", 21: "cps21_age"}[year]
     columns = [p + "province", age, p + "weight_general_all"]
-    frame = read_survey(f"ces_20{year}", columns + [p + t for t in TARGETS]).to_pandas()
-    frame = frame.rename(columns={p + t: f"cps25_{t}" for t in TARGETS})
+    variables = TARGET_VARS if year == 25 else [p + t for t in TARGETS]
+    frame = read_survey(f"ces_20{year}", columns + list(variables)).to_pandas()
+    frame = frame.rename(columns={v: f"cps25_{t}" for v, t in zip(variables, TARGETS)})
     frame["region"] = frame[p + "province"].map(PROVINCES).map(REGION_OF)
     frame["age_group"] = [age_band(a) for a in frame[age]]
     frame = frame[frame.region.notna() & frame.age_group.notna()
@@ -206,7 +207,8 @@ def main() -> None:
     for name in runs:
         panels[name], invalid[name] = model_panel(name, profiles, opts)
     panels["modal-baseline"] = modal_panel(human, profiles, opts)
-    panels["ces2021-persistence"], _ = human_panel(human_data(21), opts)
+    if SET == "main":  # the novel items have no CES 2021 version
+        panels["ces2021-persistence"], _ = human_panel(human_data(21), opts)
 
     point = {name: cell_tvs(human, panel, opts) for name, panel in panels.items()}
     point["human-floor"] = human_floor(human, opts, rng)
@@ -214,7 +216,8 @@ def main() -> None:
     # Paired bootstrap of the headline (mean of 150 TVs).
     hsize = {c: len(human.weights[c]) for c in CELLS}
     msize = {c: (profiles.cell == c).sum() for c in CELLS}
-    psize = {c: len(panels["ces2021-persistence"].weights[c]) for c in CELLS}
+    psize = ({c: len(panels["ces2021-persistence"].weights[c]) for c in CELLS}
+             if "ces2021-persistence" in panels else msize)
     boot = {name: np.empty(N_BOOT) for name in panels}
     for b in range(N_BOOT):
         hrows = [rng.integers(0, hsize[c], hsize[c]) for c in CELLS]

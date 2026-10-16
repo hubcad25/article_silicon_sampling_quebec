@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 
-from . import AGES, CELLS, FROZEN, REGION_OF, REGIONS, REPO, TARGETS, age_band
+from . import AGES, CELLS, FROZEN, REGION_OF, REGIONS, REPO, SET, TARGET_VARS, TARGETS, age_band
 
 sys.path.insert(0, str(REPO / "src"))
 
@@ -58,7 +58,7 @@ ds.RESPONSE_LANGUAGE[SOURCE] = ("UserLanguage", frozenset({"FR-CA"}))
 def specs() -> tuple[ds.SpecSet, ds.SpecSet]:
     items = pl.read_parquet(REPO / "data" / "items.parquet")
     ces = items.filter((pl.col("survey_id") == "ces_2025")
-                       & pl.col("variable").is_in([f"cps25_{t}" for t in TARGETS]))
+                       & pl.col("variable").is_in(TARGET_VARS))
     extra = pl.read_parquet(REPO / "data" / "items_extra.parquet").filter(
         (pl.col("survey_id") == SOURCE) & pl.col("variable").is_in(ANCHORS))
     if ces.height != len(TARGETS) or extra.height != len(ANCHORS):
@@ -135,8 +135,8 @@ def main() -> None:
                          "weight": p.weight, "language": language, "age_2025": p.age_2025,
                          **{f"persona_{k}": v for k, v in who.fields.items()},
                          "n_anchors": len(context), **{f"anchor_{v}": c for v, c in answers.items()}})
-            for target in TARGETS:
-                item = targets.for_language(("ces_2025", f"cps25_{target}"), language)
+            for target, variable in zip(TARGETS, TARGET_VARS):
+                item = targets.for_language(("ces_2025", variable), language)
                 messages = template.build_messages(who, item, context, dimensions=list(who.fields))
                 record = {"request_id": f"{p.profile_id}:{target}", "profile_id": p.profile_id,
                           "cell": p.cell, "language": language, "item": target, "messages": messages,
@@ -148,7 +148,7 @@ def main() -> None:
     manifest = {
         "generated_by": "benchmark/build.py", "plan": "docs/ces2025_benchmark_framework.md",
         "seed": SEED, "source_survey": SOURCE, "profiles_per_cell": PROFILES_PER_CELL,
-        "cells": list(CELLS), "targets": list(TARGETS), "anchors": list(ANCHORS),
+        "cells": list(CELLS), "target_set": SET, "targets": list(TARGET_VARS), "anchors": list(ANCHORS),
         "template": {"condition": "C1", "k": len(ANCHORS), "ses_dropout": "none", "year": YEAR},
         "n_profiles": len(profiles), "n_requests": n,
         "pool_sizes": profiles.groupby("cell").pool_size.first().to_dict(),

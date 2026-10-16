@@ -12,6 +12,8 @@ while its model is being queried. Runs resume from their checkpoint.
     python -m benchmark.cloud status
     python -m benchmark.cloud fetch                            # share -> benchmark/runs/
     python -m benchmark.cloud stop gs
+
+Set BENCH_SET=novel for the second target set (frozen_novel/, runs_novel/).
 """
 
 from __future__ import annotations
@@ -23,7 +25,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 
-from . import REPO, ROOT
+from . import FROZEN, REPO, ROOT, RUNS, SET, SUFFIX
 
 _spec = importlib.util.spec_from_file_location("cloud20", REPO / "scripts" / "20_cloud.py")
 cloud20 = importlib.util.module_from_spec(_spec)
@@ -55,31 +57,31 @@ def mkdir(remote: str) -> None:
 
 
 def upload_frozen() -> None:
-    mkdir(f"{REMOTE}/frozen")
+    mkdir(f"{REMOTE}/frozen{SUFFIX}")
     for name in ("requests.jsonl", "manifest.json", "profiles.csv"):
-        upload(ROOT / "frozen" / name, f"{REMOTE}/frozen/{name}")
-        print(f"uploaded frozen/{name}")
+        upload(FROZEN / name, f"{REMOTE}/frozen{SUFFIX}/{name}")
+        print(f"uploaded frozen{SUFFIX}/{name}")
 
 
 def push_runs() -> None:
-    for folder in sorted((ROOT / "runs").iterdir()):
+    for folder in sorted(RUNS.iterdir()):
         if folder.name.endswith("-smoke") or not (folder / "responses.jsonl").exists():
             continue
-        mkdir(f"{REMOTE}/runs/{folder.name}")
-        upload(folder / "responses.jsonl", f"{REMOTE}/runs/{folder.name}/responses.jsonl")
-        print(f"pushed runs/{folder.name}")
+        mkdir(f"{REMOTE}/runs{SUFFIX}/{folder.name}")
+        upload(folder / "responses.jsonl", f"{REMOTE}/runs{SUFFIX}/{folder.name}/responses.jsonl")
+        print(f"pushed runs{SUFFIX}/{folder.name}")
 
 
 def fetch() -> None:
-    for folder in az_list(f"{REMOTE}/runs"):
-        local = ROOT / "runs" / folder
+    for folder in az_list(f"{REMOTE}/runs{SUFFIX}"):
+        local = RUNS / folder
         local.mkdir(parents=True, exist_ok=True)
         for name in ("responses.jsonl", "responses.csv", "run_manifest.json"):
             subprocess.run(["az", "storage", "file", "download", "--share-name", SHARE,
-                            "--path", f"{REMOTE}/runs/{folder}/{name}", "--dest", str(local / name),
+                            "--path", f"{REMOTE}/runs{SUFFIX}/{folder}/{name}", "--dest", str(local / name),
                             "--account-name", STORAGE, "--account-key", cloud20.storage_key(),
                             "-o", "none"], capture_output=True)
-        print(f"fetched runs/{folder}")
+        print(f"fetched runs{SUFFIX}/{folder}")
 
 
 def az_list(remote: str) -> list[str]:
@@ -109,8 +111,9 @@ def launch(lane: str, models: list[str], workers: int) -> None:
     command = (f"mkdir -p /work && tar -xzf {MOUNT}/{REMOTE}/lanes/{lane}/payload.tar.gz -C /work "
                f"&& cd /work && pip install --no-cache-dir -q {PIP} && {runs}")
     env = [
-        {"name": "BENCH_FROZEN", "value": f"{MOUNT}/{REMOTE}/frozen"},
-        {"name": "BENCH_RUNS", "value": f"{MOUNT}/{REMOTE}/runs"},
+        {"name": "BENCH_SET", "value": SET},
+        {"name": "BENCH_FROZEN", "value": f"{MOUNT}/{REMOTE}/frozen{SUFFIX}"},
+        {"name": "BENCH_RUNS", "value": f"{MOUNT}/{REMOTE}/runs{SUFFIX}"},
         {"name": "FOUNDRY_CHAT_ENDPOINT", "value": cloud20.env_value("FOUNDRY_CHAT_ENDPOINT")},
         {"name": "AZURE_CLIENT_ID", "value": cloud20.IDENTITY_CLIENT_ID},
         {"name": "PYTHONPATH", "value": "/work/src:/work"},
@@ -135,18 +138,18 @@ def launch(lane: str, models: list[str], workers: int) -> None:
 
 
 def status() -> None:
-    for model in az_list(f"{REMOTE}/runs"):
-        files = az_list(f"{REMOTE}/runs/{model}")
+    for model in az_list(f"{REMOTE}/runs{SUFFIX}"):
+        files = az_list(f"{REMOTE}/runs{SUFFIX}/{model}")
         if "responses.jsonl" not in files:
             print(f"{model:<20} (no responses yet)")
             continue
         props = az("storage", "file", "show", "--share-name", SHARE,
-                   "--path", f"{REMOTE}/runs/{model}/responses.jsonl",
+                   "--path", f"{REMOTE}/runs{SUFFIX}/{model}/responses.jsonl",
                    "--query", "[properties.contentLength, properties.lastModified]", "-o", "tsv")
         size, modified = (props.split() + ["?", "?"])[:2]
         print(f"{model:<20} {int(size) / 1e6 if size.isdigit() else 0:>7.1f} MB  "
               f"last write {modified}  {'DONE' if 'run_manifest.json' in files else ''}")
-    for lane in ("gs", "dzs", "base"):
+    for lane in az_list(f"{REMOTE}/lanes"):
         group = cloud20.arm_request("GET", cloud20.container_path(container(lane)))
         if group:
             view = group["properties"]["containers"][0]["properties"].get("instanceView", {})

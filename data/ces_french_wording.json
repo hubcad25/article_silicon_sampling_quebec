@@ -7792,11 +7792,16 @@
    "status": "wording_only"
   },
   "cps25_foreign_pol_protect": {
-   "notes": "missing FR label for codes [1, 2, 3, 5]",
-   "options_fr": {},
+   "notes": "options_fr filled 2026-10-16 from the question stem",
+   "options_fr": {
+    "1": "Très important",
+    "2": "Un peu important",
+    "3": "Pas du tout important",
+    "5": "Je ne sais pas/Préfère ne pas répondre"
+   },
    "question_text_fr": "Vous trouverez ci-dessous une liste d’objectifs potentiels en matière de politique étrangère que le Canada pourrait avoir. Pour chacun d’entre eux, veuillez indiquer si vous pensez qu'il devrait s'agir d'un objectif très important, un peu important ou pas du tout important pour le Canada. - Protéger les nations plus faibles contre les agressions étrangères",
    "source": "codebook",
-   "status": "wording_only"
+   "status": "complete"
   },
   "cps25_foreign_pol_provide": {
    "notes": "missing FR label for codes [1, 2, 3, 5]",
