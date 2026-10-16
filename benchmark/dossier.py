@@ -51,6 +51,15 @@ _spec.loader.exec_module(s36)
 
 OUT = ROOT / "results_dossier"
 HERE = OUT / SET
+DEFAULT_DEPLOYMENT = "gpt-5.5"
+
+
+def tagged(name: str, deployment: str) -> Path:
+    """Per-deployment output file; the first model (gpt-5.5) keeps the plain names."""
+    if deployment == DEFAULT_DEPLOYMENT:
+        return HERE / name
+    stem, ext = name.rsplit(".", 1)
+    return HERE / f"{stem}_{deployment}.{ext}"
 K = 8
 #: A past question this close to the target is the target asked again. 0.90
 #: let through the same wording under another name (pes21_envirojob 0.84,
@@ -301,7 +310,7 @@ def parse(reply: str, codes: list[str]) -> dict[str, np.ndarray] | None:
 def run(deployment: str, samples: int) -> None:
     chat = FoundryChat(deployment=deployment, timeout=600, api_version="2025-04-01-preview")
     dossiers = [json.loads(l) for l in (HERE / "dossiers.jsonl").read_text(encoding="utf-8").splitlines()]
-    path = HERE / "responses.jsonl"
+    path = tagged("responses.jsonl", deployment)
     done = set()
     if path.exists():
         done = {(r["item"], r["sample"]) for r in map(json.loads, path.read_text().splitlines())
@@ -311,8 +320,11 @@ def run(deployment: str, samples: int) -> None:
 
     def one(job):
         d, s = job
-        body = {"messages": d["messages"], "max_completion_tokens": 32000,
-                "response_format": {"type": "json_object"}}
+        if deployment.startswith("gpt"):
+            body = {"messages": d["messages"], "max_completion_tokens": 32000,
+                    "response_format": {"type": "json_object"}}
+        else:  # open-weight chat models: plain max_tokens, JSON asked in the prompt
+            body = {"messages": d["messages"], "max_tokens": 4096, "temperature": 1.0}
         reply, usage, error = "", {}, ""
         for attempt in range(6):
             try:
@@ -345,11 +357,12 @@ def run(deployment: str, samples: int) -> None:
 
 # -- score ----------------------------------------------------------------
 
-def score() -> None:
+def score(deployment: str = DEFAULT_DEPLOYMENT) -> None:
     from . import score as sc
 
     dossiers = {d["item"]: d for d in map(json.loads, (HERE / "dossiers.jsonl").read_text().splitlines())}
-    records = [r for r in map(json.loads, (HERE / "responses.jsonl").read_text().splitlines()) if r["valid"]]
+    responses = tagged("responses.jsonl", deployment)
+    records = [r for r in map(json.loads, responses.read_text().splitlines()) if r["valid"]]
     opts = sc.options()
     frame = sc.human_data()
     human, _ = sc.human_panel(frame, opts)
@@ -378,20 +391,19 @@ def score() -> None:
         items.append({"item": t, "n_samples": len(draws), "mean_tv": round(float(np.mean(tvs)), 4),
                       "national_tv": round(sc.tv(h_nat, m_nat), 4),
                       "floor": round(float(floor[:, j].mean()), 4)})
-    pd.DataFrame(rows).to_csv(HERE / "tv_by_cell.csv", index=False)
+    pd.DataFrame(rows).to_csv(tagged("tv_by_cell.csv", deployment), index=False)
     by_item = pd.DataFrame(items)
-    by_item.to_csv(HERE / "by_item.csv", index=False)
+    by_item.to_csv(tagged("by_item.csv", deployment), index=False)
     deployment = records[0]["deployment"] if records else ""
     summary = {"set": SET, "model": f"dossier-zeroshot-{deployment}", "n_items": len(items),
                "mean_tv": round(float(by_item.mean_tv.mean()), 4),
                "mean_national_tv": round(float(by_item.national_tv.mean()), 4),
                "floor": round(float(by_item.floor.mean()), 4),
-               "invalid_rate": round(1 - len(records) / max(1, sum(1 for _ in (HERE / "responses.jsonl")
-                                                                     .read_text().splitlines())), 4)}
+               "invalid_rate": round(1 - len(records) / max(1, len(responses.read_text().splitlines())), 4)}
     path = OUT / "summary.csv"
     old = pd.read_csv(path) if path.exists() else pd.DataFrame()
     if len(old):
-        old = old[old["set"] != SET]
+        old = old[(old["set"] != SET) | (old["model"] != summary["model"])]
     pd.concat([old, pd.DataFrame([summary])]).to_csv(path, index=False)
     print(by_item.to_string(index=False))
     print(summary)
@@ -404,14 +416,15 @@ def main() -> None:
     p = sub.add_parser("run")
     p.add_argument("--deployment", default="gpt-5.5")
     p.add_argument("--samples", type=int, default=3)
-    sub.add_parser("score")
+    p = sub.add_parser("score")
+    p.add_argument("--deployment", default=DEFAULT_DEPLOYMENT)
     args = parser.parse_args()
     if args.cmd == "build":
         build()
     elif args.cmd == "run":
         run(args.deployment, args.samples)
     else:
-        score()
+        score(args.deployment)
 
 
 if __name__ == "__main__":
