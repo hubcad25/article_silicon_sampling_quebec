@@ -10,6 +10,11 @@ Job ids are appended to data/datasets_ces2025/jobs.json. Run::
 
     .venv/bin/python scripts/37_submit_benchmark_finetunes.py            # upload + submit
     .venv/bin/python scripts/37_submit_benchmark_finetunes.py --status   # poll
+
+B round (richer context, two training seeds per size)::
+
+    .venv/bin/python scripts/37_submit_benchmark_finetunes.py --dir data/datasets_ces2025_rich \
+        --arms rich --sizes 50000 100000 150000 --seeds 2
 """
 
 from __future__ import annotations
@@ -89,20 +94,22 @@ def wait_processed(ids: list[str]) -> None:
         sys.exit(f"file processing failed: {states}")
 
 
-def submit() -> None:
-    validation = {arm: upload(DATA / f"{arm}_validation.jsonl") for arm in ARMS}
-    train = {(arm, size): upload(DATA / f"{arm}_train_{size}.jsonl") for arm in ARMS for size in SIZES}
+def submit(arms=ARMS, sizes=SIZES, n_seeds: int = 1) -> None:
+    validation = {arm: upload(DATA / f"{arm}_validation.jsonl") for arm in arms}
+    train = {(arm, size): upload(DATA / f"{arm}_train_{size}.jsonl") for arm in arms for size in sizes}
     wait_processed([*validation.values(), *train.values()])
     jobs = json.loads(JOBS.read_text()) if JOBS.exists() else []
-    for (arm, size), file_id in train.items():
-        suffix = f"ces25-{arm}-{size // 1000}k"
+    for ((arm, size), file_id), s in ((t, s) for t in train.items() for s in range(n_seeds)):
+        # One seed keeps the earlier names; several get -s1, -s2 (seed SEED + index).
+        suffix = f"ces25-{arm}-{size // 1000}k" + (f"-s{s + 1}" if n_seeds > 1 else "")
         body = {"model": MODEL, "trainingType": "globalStandard", "training_file": file_id,
-                "validation_file": validation[arm], "suffix": suffix, "seed": SEED,
+                "validation_file": validation[arm], "suffix": suffix, "seed": SEED + s,
                 "method": {"type": "supervised", "supervised": {"hyperparameters": {
                     "n_epochs": 1, "batch_size": 64, "learning_rate_multiplier": 1}}}}
         status, data = call("POST", "/openai/fine_tuning/jobs", body=body, api=JOBS_API)
         print(status, suffix, data.get("id"), data.get("status"), data.get("error") or "", flush=True)
-        jobs.append({"suffix": suffix, "arm": arm, "size": size, "job_id": data.get("id"),
+        jobs.append({"suffix": suffix, "arm": arm, "size": size, "seed": SEED + s,
+                     "job_id": data.get("id"),
                      "training_file": file_id, "validation_file": validation[arm],
                      "submitted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                      "http_status": status})
@@ -119,4 +126,10 @@ def show_status() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--status", action="store_true")
-    show_status() if parser.parse_args().status else submit()
+    parser.add_argument("--dir", type=Path, default=DATA)
+    parser.add_argument("--arms", nargs="+", default=list(ARMS))
+    parser.add_argument("--sizes", nargs="+", type=int, default=list(SIZES))
+    parser.add_argument("--seeds", type=int, default=1)
+    args = parser.parse_args()
+    DATA, JOBS = args.dir, args.dir / "jobs.json"
+    show_status() if args.status else submit(args.arms, args.sizes, args.seeds)
