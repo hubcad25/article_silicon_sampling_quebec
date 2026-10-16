@@ -12,13 +12,13 @@ header-includes:
 - \usepackage{float}
 - \usepackage{array}
 - \usepackage{needspace}
-- \newcommand{\notesubtitle}{Questions never asked before}
+- \newcommand{\notesubtitle}{Can a model answer what no poll has asked? · results of round two}
 - \input{note_style.tex}
 - \fancyhead[L]{\footnotesize\color{muted} Silicon sampling · CES 2025 · joint summary}
 - \definecolor{hgood}{HTML}{8FD3A8}
 - \definecolor{hmid}{HTML}{FFF2B3}
 - \definecolor{hbad}{HTML}{F29A8E}
-- \newcommand{\tbd}{{\color{muted}\textit{tbd}}}
+- \newcommand{\tbd}{\textcolor{muted}{\textit{tbd}}}
 ---
 
 # 1. What changed
@@ -53,6 +53,10 @@ Housing for all & The government has a responsibility to provide decent housing 
   probably those who said relations got worse. The model answers it for everyone.
 - "Housing for all" comes from the post-election wave, the others from the campaign wave.
 
+```{=latex}
+\needspace{12\baselineskip}
+```
+
 # 2. Results
 
 ```{=latex}
@@ -64,10 +68,10 @@ Housing for all & The government has a responsibility to provide decent housing 
 Fine-tuned Llama 70B & \cellcolor{hgood!15!hmid}0.178 & \tbd & 14 (repeated) · \tbd \\
 Dossier, off-the-shelf model & \tbd & \tbd & \tbd \\
 Item encoder (Justin) & \tbd & \tbd & \tbd \\
-CES 2021 reused & \cellcolor{hgood!32!hmid}0.151 & {\color{muted}n/a} & 20 (repeated) \\
+CES 2021 reused & \cellcolor{hgood!32!hmid}0.151 & \textcolor{muted}{n/a} & 20 (repeated) \\
 National mode, for everyone & \cellcolor{hbad!100!hmid}0.540 & \tbd & — \\
 \midrule
-{\color{muted}Floor (two halves of CES 2025)} & {\color{muted}0.062} & \tbd & — \\
+{\color{muted}Floor (two halves of CES 2025)} & \textcolor{muted}{0.062} & \tbd & — \\
 \bottomrule
 \end{tabular}
 \end{center}
