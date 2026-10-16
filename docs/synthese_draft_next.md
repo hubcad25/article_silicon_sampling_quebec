@@ -65,9 +65,10 @@ Housing for all & The government has a responsibility to provide decent housing 
 \toprule
  & Repeated questions (10) & New questions (8) & Same error as a real poll of… per subgroup \\
 \midrule
-Fine-tuned Llama 70B & \cellcolor{hgood!15!hmid}0.178 & \tbd & 14 (repeated) · \tbd \\
-Dossier, off-the-shelf model & \tbd & \tbd & \tbd \\
-Item encoder (Justin) & \tbd & \tbd & \tbd \\
+A. Fine-tuned Llama 70B, 7 answers & \cellcolor{hgood!15!hmid}0.178 & \tbd & 14 (repeated) · \tbd \\
+B. Same, 15--20 answers (best size) & \tbd & \tbd & \tbd \\
+C. Dossier, off-the-shelf model & \tbd & \tbd & \tbd \\
+\midrule
 CES 2021 reused & \cellcolor{hgood!32!hmid}0.151 & \textcolor{muted}{n/a} & 20 (repeated) \\
 National mode, for everyone & \cellcolor{hbad!100!hmid}0.540 & \tbd & — \\
 \midrule
@@ -84,7 +85,7 @@ about 65 (1,000, a standard poll).
 \begin{center}\small
 \begin{tabular}{l>{\centering\arraybackslash}p{1.9cm}>{\centering\arraybackslash}p{1.9cm}>{\centering\arraybackslash}p{1.9cm}c}
 \toprule
-New question & Fine-tuned Llama 70B & Dossier & Item encoder & {\color{muted}Floor} \\
+New question & A. 7 answers & B. 15--20 answers & C. Dossier & {\color{muted}Floor} \\
 \midrule
 US relations & \tbd & \tbd & \tbd & \tbd \\
 Who is to blame & \tbd & \tbd & \tbd & \tbd \\
@@ -103,15 +104,16 @@ Housing for all & \tbd & \tbd & \tbd & \tbd \\
 
 **What to read in it** (to fill once the numbers are in):
 
-- **If the fine-tuned model scores about the same on new questions as on repeated ones (≈ 0.18):**
-  it does not lean on having seen the questions; its value is real for new questions, where no
-  past poll can compete.
-- **If it does clearly worse on new questions:** part of its 0.178 came from questions close to
-  its training. The product case then rests on the dossier or the item encoder.
-- **If the dossier beats the item encoder:** the language model adds something beyond "similar
-  questions, similar gaps". That justifies training it (section 3).
-- **If the item encoder wins or ties:** a plain statistical model does the job; no need to train
-  a language model to write distributions.
+- **New vs repeated questions (A):** if A scores about the same on both sets (≈ 0.18), it does
+  not lean on having seen the questions; its value is real where no past poll can compete. If it
+  does clearly worse, part of its 0.178 came from questions close to its training.
+- **B vs A:** if more answers per person shrink the error, the flattening of subgroups came from
+  knowing too little about each person. The two training runs per size tell whether the gain is
+  larger than the noise between runs.
+- **C vs A and B:** if the dossier, with no training at all, comes close to the fine-tuned models,
+  describing a distribution beats role-playing respondents, and training C is the next step.
+- **Against the baselines:** on repeated questions, the target to reach is CES 2021 reused (0.151);
+  on new ones, the national mode and the floor frame the result.
 
 ```{=latex}
 \newpage
@@ -119,18 +121,12 @@ Housing for all & \tbd & \tbd & \tbd & \tbd \\
 
 # 3. Next steps
 
-## B. A fine-tuned model that knows each person better (in progress)
+## Train C, if it earns it
 
-Same model and same task, with 15 to 20 of the person's answers instead of 7. Training at 50,000,
-100,000 and 150,000 examples, each size twice, to see how much results vary from one training run
-to the next. Scored on both sets. Results in the next note.
+If the off-the-shelf dossier comes close to A and B, we train it. Every question of our 8 surveys
+becomes a practice exercise (its dossier built without it), with practice and test questions on
+different topics. Two ways to learn: by example (shown the right table), or by reward (a small
+program scores each proposed table).
 
-## C. From a dossier to a distribution: train it, if it earns it
-
-We train the dossier approach **only if** the off-the-shelf dossier beats the item encoder on the
-new questions. Every question of our 8 surveys then becomes a practice exercise (its dossier built
-without it), with practice and test questions on different topics. Two ways to learn: by example
-(shown the right table), or by reward (a small program scores each proposed table).
-
-If the item encoder wins, we stop C and put the effort into B and the product option already
-measured: one real national figure plus the model's subgroup gaps (0.082 on the repeated set).
+If it stays far behind, we put the effort into B and the product option already measured: one real
+national figure plus the model's subgroup gaps (0.082 on the repeated set).
