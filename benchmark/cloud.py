@@ -13,7 +13,8 @@ while its model is being queried. Runs resume from their checkpoint.
     python -m benchmark.cloud fetch                            # share -> benchmark/runs/
     python -m benchmark.cloud stop gs
 
-Set BENCH_SET=novel for the second target set (frozen_novel/, runs_novel/).
+Set BENCH_SET=novel for the second target set (frozen_novel/, runs_novel/) and
+BENCH_CONTEXT=rich for the B models (frozen*_rich/, runs*_rich/).
 """
 
 from __future__ import annotations
@@ -25,7 +26,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 
-from . import FROZEN, REPO, ROOT, RUNS, SET, SUFFIX
+from . import CONTEXT, FROZEN, REPO, ROOT, RUNS, SET, SUFFIX
 
 _spec = importlib.util.spec_from_file_location("cloud20", REPO / "scripts" / "20_cloud.py")
 cloud20 = importlib.util.module_from_spec(_spec)
@@ -112,6 +113,7 @@ def launch(lane: str, models: list[str], workers: int) -> None:
                f"&& cd /work && pip install --no-cache-dir -q {PIP} && {runs}")
     env = [
         {"name": "BENCH_SET", "value": SET},
+        {"name": "BENCH_CONTEXT", "value": CONTEXT},
         {"name": "BENCH_FROZEN", "value": f"{MOUNT}/{REMOTE}/frozen{SUFFIX}"},
         {"name": "BENCH_RUNS", "value": f"{MOUNT}/{REMOTE}/runs{SUFFIX}"},
         {"name": "FOUNDRY_CHAT_ENDPOINT", "value": cloud20.env_value("FOUNDRY_CHAT_ENDPOINT")},

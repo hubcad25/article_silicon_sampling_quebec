@@ -30,13 +30,15 @@ import numpy as np
 import pandas as pd
 import polars as pl
 
-from . import AGES, CELLS, FROZEN, REGION_OF, REGIONS, REPO, SET, TARGET_VARS, TARGETS, age_band
+from . import (AGES, CELLS, CONTEXT, FROZEN, REGION_OF, REGIONS, REPO, SET, TARGET_VARS, TARGETS,
+               age_band)
 
 sys.path.insert(0, str(REPO / "src"))
 
 from article_silicon_sampling_quebec import dataset as ds  # noqa: E402
 from article_silicon_sampling_quebec.corpus.ses import SesCrosswalk  # noqa: E402
 from article_silicon_sampling_quebec.prompts import (  # noqa: E402
+    CONTEXT_MAX_COSINE,
     ContextAnswer,
     Persona,
     PromptTemplate,
@@ -51,11 +53,17 @@ SOURCE = "dc_2024"
 ANCHORS = ("dc24_lr_self_1", "dc24_party_id", "dc24_inequality_gap", "dc24_pos_bilingualis",
            "dc24_trust2", "dc24_ties_us", "dc24_pos_equal_1")
 EXTRA_FRENCH = REPO / "data" / "extra_french_wording.json"
+#: BENCH_CONTEXT=rich: the DC 2024 core of the B datasets, then the N_NEAR
+#: DC 2024 items nearest the target -- the training policy of scripts/40.
+RICH_MANIFEST = REPO / "data" / "datasets_ces2025_rich" / "manifest.json"
+N_NEAR = 6
+if CONTEXT == "rich":
+    ANCHORS = tuple(json.loads(RICH_MANIFEST.read_text())["dc_2024_core"])
 
 ds.RESPONSE_LANGUAGE[SOURCE] = ("UserLanguage", frozenset({"FR-CA"}))
 
 
-def specs() -> tuple[ds.SpecSet, ds.SpecSet]:
+def specs() -> tuple[ds.SpecSet, ds.SpecSet, dict[str, list[str]]]:
     items = pl.read_parquet(REPO / "data" / "items.parquet")
     ces = items.filter((pl.col("survey_id") == "ces_2025")
                        & pl.col("variable").is_in(TARGET_VARS))
@@ -63,11 +71,46 @@ def specs() -> tuple[ds.SpecSet, ds.SpecSet]:
         (pl.col("survey_id") == SOURCE) & pl.col("variable").is_in(ANCHORS))
     if ces.height != len(TARGETS) or extra.height != len(ANCHORS):
         raise SystemExit(f"missing items: {ces.height} targets, {extra.height} anchors")
+    if CONTEXT == "rich":  # every screened DC 2024 item can be a nearest neighbour
+        extra = s36().load_items().filter(pl.col("survey_id") == SOURCE)
     targets = ds.SpecSet(build_item_specs(ces.iter_rows(named=True)),
                          {"fr": build_item_specs(ds.french_item_rows(ces))})
     anchors = ds.SpecSet(build_item_specs(extra.iter_rows(named=True)),
                          {"fr": build_item_specs(ds.french_item_rows(extra, EXTRA_FRENCH))})
-    return targets, anchors
+    return targets, anchors, context_variables(ces, extra)
+
+
+def s36():
+    """scripts/36, for the item screen and the embedding recipe of the datasets."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("s36", REPO / "scripts/36_generate_benchmark_datasets.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def context_variables(targets_frame: pl.DataFrame, pool: pl.DataFrame) -> dict[str, list[str]]:
+    """Per target: the context items, the same for every profile.
+
+    fix: the anchors. rich: the core minus near-duplicates of the target, then
+    the N_NEAR nearest non-core items below CONTEXT_MAX_COSINE (scripts/40).
+    """
+    if CONTEXT != "rich":
+        return {t: list(ANCHORS) for t in TARGETS}
+    module = s36()
+    both = pl.concat([targets_frame, pool], how="diagonal_relaxed")
+    vectors = module.l2_normalize(module.item_vectors(both))
+    tv, pv = vectors[:targets_frame.height], vectors[targets_frame.height:]
+    pool_vars = list(pool["variable"])
+    out = {}
+    for i, variable in enumerate(targets_frame["variable"]):
+        sims = pv @ tv[i]
+        cos = dict(zip(pool_vars, sims))
+        core = [v for v in ANCHORS if cos.get(v, 0) < CONTEXT_MAX_COSINE]
+        near = [pool_vars[j] for j in np.argsort(-sims)
+                if pool_vars[j] not in ANCHORS and sims[j] < CONTEXT_MAX_COSINE][:N_NEAR]
+        out[variable.split("_", 1)[1]] = core + near
+    return out
 
 
 def draw_profiles(panel: ds.SurveyPanel, crosswalk: SesCrosswalk) -> pd.DataFrame:
@@ -111,33 +154,38 @@ def sha256(path) -> str:
 
 
 def main() -> None:
-    targets, anchors = specs()
+    targets, anchors, contexts = specs()
     crosswalk = SesCrosswalk.load()
     panel = ds.SurveyPanel(SOURCE, crosswalk, frozenset())
     profiles = draw_profiles(panel, crosswalk)
-    template = PromptTemplate(condition="C1", k=len(ANCHORS), ses_dropout="none", year_override=YEAR)
+    k = max(len(v) for v in contexts.values())
+    template = PromptTemplate(condition="C1", k=k, ses_dropout="none", year_override=YEAR)
 
     FROZEN.mkdir(parents=True, exist_ok=True)
-    rows, n = [], 0
+    rows, n, n_shown = [], 0, 0
     with (FROZEN / "requests.jsonl").open("w", encoding="utf-8", newline="\n") as out:
         for p in profiles.itertuples():
             language = "fr" if p.UserLanguage == "FR-CA" else "en"
             who = persona(panel, crosswalk, p.row, p.age_2025, language)
-            context, answers = [], {}
-            for variable in ANCHORS:
+            given, answers = {}, {}
+            for variable in dict.fromkeys(v for vs in contexts.values() for v in vs):
                 spec = anchors.for_language((SOURCE, variable), language)
                 code = panel.answer(p.row, spec) if spec is not None else None
                 label = spec.option_label(code) if code is not None else None
-                answers[variable] = code
+                if variable in ANCHORS:
+                    answers[variable] = code
                 if label:
-                    context.append(ContextAnswer(item=spec, code=code, label=label))
+                    given[variable] = ContextAnswer(item=spec, code=code, label=label)
+            context = [given[v] for v in ANCHORS if v in given]
             rows.append({"profile_id": p.profile_id, "cell": p.cell, "respondent_id": p.respondent_id,
                          "weight": p.weight, "language": language, "age_2025": p.age_2025,
                          **{f"persona_{k}": v for k, v in who.fields.items()},
                          "n_anchors": len(context), **{f"anchor_{v}": c for v, c in answers.items()}})
             for target, variable in zip(TARGETS, TARGET_VARS):
                 item = targets.for_language(("ces_2025", variable), language)
-                messages = template.build_messages(who, item, context, dimensions=list(who.fields))
+                shown = [given[v] for v in contexts[target] if v in given]
+                n_shown += len(shown)
+                messages = template.build_messages(who, item, shown, dimensions=list(who.fields))
                 record = {"request_id": f"{p.profile_id}:{target}", "profile_id": p.profile_id,
                           "cell": p.cell, "language": language, "item": target, "messages": messages,
                           "options": {o.text: o.code for o in item.options}}
@@ -149,16 +197,18 @@ def main() -> None:
         "generated_by": "benchmark/build.py", "plan": "docs/ces2025_benchmark_framework.md",
         "seed": SEED, "source_survey": SOURCE, "profiles_per_cell": PROFILES_PER_CELL,
         "cells": list(CELLS), "target_set": SET, "targets": list(TARGET_VARS), "anchors": list(ANCHORS),
-        "template": {"condition": "C1", "k": len(ANCHORS), "ses_dropout": "none", "year": YEAR},
+        "context": CONTEXT, "context_by_target": contexts,
+        "template": {"condition": "C1", "k": k, "ses_dropout": "none", "year": YEAR},
         "n_profiles": len(profiles), "n_requests": n,
         "pool_sizes": profiles.groupby("cell").pool_size.first().to_dict(),
         "share_french": round(float(np.mean([r["language"] == "fr" for r in rows])), 4),
         "mean_anchors": round(float(np.mean([r["n_anchors"] for r in rows])), 3),
+        "mean_context_shown": round(n_shown / n, 3),
         "sha256": {name: sha256(FROZEN / name) for name in ("requests.jsonl", "profiles.csv")},
     }
     (FROZEN / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     print(json.dumps({k: manifest[k] for k in ("n_profiles", "n_requests", "share_french",
-                                                "mean_anchors", "pool_sizes")}, indent=1))
+                                                "mean_anchors", "mean_context_shown")}, indent=1))
 
 
 if __name__ == "__main__":

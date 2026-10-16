@@ -27,7 +27,11 @@ SETS = {
               "cps25_rent_security", "pes25_decent_housing"),
 }
 TARGET_VARS = SETS[SET]
-SUFFIX = "" if SET == "main" else f"_{SET}"
+#: Context given to each profile: "fix" = the 7 anchors of the plan (A models);
+#: "rich" = 12 core themes + the 6 DC 2024 items nearest the target (B models,
+#: scripts/40). Folders get a "_rich" suffix.
+CONTEXT = os.environ.get("BENCH_CONTEXT", "fix")
+SUFFIX = ("" if SET == "main" else f"_{SET}") + ("" if CONTEXT == "fix" else f"_{CONTEXT}")
 #: Overridable so a cloud container reads the frozen set and writes runs on the share.
 FROZEN = Path(os.environ.get("BENCH_FROZEN", ROOT / f"frozen{SUFFIX}"))
 RUNS = Path(os.environ.get("BENCH_RUNS", ROOT / f"runs{SUFFIX}"))
