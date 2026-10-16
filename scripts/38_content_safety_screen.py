@@ -66,7 +66,9 @@ def severity(text: str) -> int:
             "Ocp-Apim-Subscription-Key": KEY, "Content-Type": "application/json"})
         try:
             with urllib.request.urlopen(request, timeout=60) as response:
-                return json.loads(response.read())["categoriesAnalysis"][0]["severity"]
+                analysis = json.loads(response.read())["categoriesAnalysis"]
+            if analysis:  # an empty list now and then under load: retry
+                return analysis[0]["severity"]
         except urllib.error.HTTPError as error:
             if error.code not in (429, 500, 502, 503, 504):
                 raise
