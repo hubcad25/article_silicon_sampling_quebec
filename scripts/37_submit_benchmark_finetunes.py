@@ -94,7 +94,7 @@ def wait_processed(ids: list[str]) -> None:
         sys.exit(f"file processing failed: {states}")
 
 
-def submit(arms=ARMS, sizes=SIZES, n_seeds: int = 1) -> None:
+def submit(arms=ARMS, sizes=SIZES, n_seeds: int = 1, epochs: int = 1) -> None:
     validation = {arm: upload(DATA / f"{arm}_validation.jsonl") for arm in arms}
     train = {(arm, size): upload(DATA / f"{arm}_train_{size}.jsonl") for arm in arms for size in sizes}
     wait_processed([*validation.values(), *train.values()])
@@ -105,10 +105,10 @@ def submit(arms=ARMS, sizes=SIZES, n_seeds: int = 1) -> None:
         body = {"model": MODEL, "trainingType": "globalStandard", "training_file": file_id,
                 "validation_file": validation[arm], "suffix": suffix, "seed": SEED + s,
                 "method": {"type": "supervised", "supervised": {"hyperparameters": {
-                    "n_epochs": 1, "batch_size": 64, "learning_rate_multiplier": 1}}}}
+                    "n_epochs": epochs, "batch_size": 64, "learning_rate_multiplier": 1}}}}
         status, data = call("POST", "/openai/fine_tuning/jobs", body=body, api=JOBS_API)
         print(status, suffix, data.get("id"), data.get("status"), data.get("error") or "", flush=True)
-        jobs.append({"suffix": suffix, "arm": arm, "size": size, "seed": SEED + s,
+        jobs.append({"suffix": suffix, "arm": arm, "size": size, "seed": SEED + s, "epochs": epochs,
                      "job_id": data.get("id"),
                      "training_file": file_id, "validation_file": validation[arm],
                      "submitted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -130,6 +130,8 @@ if __name__ == "__main__":
     parser.add_argument("--arms", nargs="+", default=list(ARMS))
     parser.add_argument("--sizes", nargs="+", type=int, default=list(SIZES))
     parser.add_argument("--seeds", type=int, default=1)
+    parser.add_argument("--epochs", type=int, default=1,
+                        help="passes over the file; >1 for small sets like the dossier exercises")
     args = parser.parse_args()
     DATA, JOBS = args.dir, args.dir / "jobs.json"
-    show_status() if args.status else submit(args.arms, args.sizes, args.seeds)
+    show_status() if args.status else submit(args.arms, args.sizes, args.seeds, args.epochs)
