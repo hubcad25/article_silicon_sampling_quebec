@@ -326,7 +326,7 @@ def run(deployment: str, samples: int) -> None:
 
     def one(job):
         d, s = job
-        if deployment.startswith("gpt"):
+        if not deployment.startswith("bench-"):  # OpenAI models (gpt-*, o4-mini); bench-* = our Llamas
             body = {"messages": d["messages"], "max_completion_tokens": 32000,
                     "response_format": {"type": "json_object"}}
         else:  # open-weight chat models: plain max_tokens, JSON asked in the prompt

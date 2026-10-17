@@ -83,8 +83,8 @@ def _arm(method: str, path: str, body: dict | None = None) -> dict | None:
 
 class FoundryBackend:
     def __init__(self, deployment: str, model: str, version: str = "1",
-                 sku: str = "GlobalStandard", capacity: int = 1000, **_: Any):
-        self.deployment, self.model, self.version = deployment, model, version
+                 sku: str = "GlobalStandard", capacity: int = 1000, format: str = "Meta", **_: Any):
+        self.deployment, self.model, self.version, self.format = deployment, model, version, format
         self.sku, self.capacity = sku, capacity
         self.chat = FoundryChat(deployment=deployment)
 
@@ -96,7 +96,7 @@ class FoundryBackend:
                 try:
                     _arm("PUT", f"deployments/{self.deployment}", {
                         "sku": {"name": self.sku, "capacity": self.capacity},
-                        "properties": {"model": {"format": "Meta", "name": self.model,
+                        "properties": {"model": {"format": self.format, "name": self.model,
                                                  "version": self.version},
                                        "raiPolicyName": RAI_POLICY}})
                     break
