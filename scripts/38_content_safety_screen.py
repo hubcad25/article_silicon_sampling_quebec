@@ -16,6 +16,12 @@ targets and contexts alike.
 
     .venv/bin/python scripts/38_content_safety_screen.py            # score items
     .venv/bin/python scripts/38_content_safety_screen.py --lines FILE [N]  # audit N lines of a JSONL
+    .venv/bin/python scripts/38_content_safety_screen.py --filter FILE...  # drop lines >= MAX_SEVERITY
+
+``--filter`` scores whole lines in chunks of at most 9,000 characters (the API
+limit; long dossier lines would otherwise be judged on their head only), keeps
+each line's maximum, and rewrites every FILE without the flagged lines (the
+original is kept as FILE.unscreened).
 
 Scores are cached in data/content_safety/cache.json (text -> severity).
 """
@@ -128,6 +134,41 @@ def screen_items() -> None:
     print(worst.group_by("max").len().sort("max"))
 
 
+MAX_SEVERITY = 4
+CHUNK = 9000
+
+
+def chunks(text: str) -> list[str]:
+    """Pieces of at most CHUNK characters, cut at line breaks where possible."""
+    out, current = [], ""
+    for line in text.split("\n"):
+        while len(line) > CHUNK:
+            out.append(line[:CHUNK])
+            line = line[CHUNK:]
+        if len(current) + len(line) + 1 > CHUNK:
+            out.append(current)
+            current = ""
+        current = f"{current}\n{line}" if current else line
+    return out + ([current] if current else [])
+
+
+def line_text(line: str) -> str:
+    return "\n".join(m["content"] for m in json.loads(line)["messages"])
+
+
+def filter_files(paths: list[Path]) -> None:
+    lines = {p: p.read_text(encoding="utf-8").splitlines() for p in paths}
+    pieces = {p: {l: chunks(line_text(l)) for l in ls} for p, ls in lines.items()}
+    cache = score_all({c for d in pieces.values() for cs in d.values() for c in cs})
+    for path, ls in lines.items():
+        kept = [l for l in ls if max(cache[c] for c in pieces[path][l]) < MAX_SEVERITY]
+        backup = path.with_name(path.name + ".unscreened")
+        if not backup.exists():
+            path.rename(backup)
+        path.write_text("".join(l + "\n" for l in kept), encoding="utf-8")
+        print(f"{path.name}: kept {len(kept)} / {len(ls)}")
+
+
 def audit_lines(path: Path, n: int) -> None:
     lines = path.read_text(encoding="utf-8").splitlines()
     sample = random.Random(0).sample(lines, min(n, len(lines)))
@@ -139,7 +180,9 @@ def audit_lines(path: Path, n: int) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--lines":
+    if len(sys.argv) > 1 and sys.argv[1] == "--filter":
+        filter_files([Path(a) for a in sys.argv[2:]])
+    elif len(sys.argv) > 1 and sys.argv[1] == "--lines":
         audit_lines(Path(sys.argv[2]), int(sys.argv[3]) if len(sys.argv) > 3 else 500)
     else:
         screen_items()
