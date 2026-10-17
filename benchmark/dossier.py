@@ -253,10 +253,16 @@ SYSTEM = ("You are an expert analyst of Canadian public opinion. You estimate ho
           "survey questions, using evidence from earlier surveys.")
 
 
-def prompt(text: str, topic: str | None, options, blocks: list[str], profile: str) -> list[dict]:
+#: Where the new question was asked. Training exercises (scripts/41) name their own survey.
+SETTING = ("an online survey of Canadian adults (18+, ten provinces) during the April 2025 "
+           "federal election campaign")
+
+
+def prompt(text: str, topic: str | None, options, blocks: list[str], profile: str,
+           setting: str = SETTING) -> list[dict]:
     codes = [o.code for o in options]
     cells = ", ".join(CELLS)
-    user = f"""A new question was asked in an online survey of Canadian adults (18+, ten provinces) during the April 2025 federal election campaign. No earlier survey asked it. Estimate how each subgroup answered.
+    user = f"""A new question was asked in {setting}. No earlier survey asked it. Estimate how each subgroup answered.
 
 ## The new question
 "{text}"{f"{chr(10)}Topic: {topic}" if topic else ""}
