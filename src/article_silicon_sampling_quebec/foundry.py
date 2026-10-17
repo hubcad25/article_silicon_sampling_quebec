@@ -28,7 +28,10 @@ from typing import Callable
 __all__ = ["CallFailed", "FoundryChat"]
 
 #: Retried: throttling, timeouts, server-side and gateway errors.
-RETRY_STATUS = frozenset({408, 409, 429, 500, 502, 503, 504})
+#: 401 included: Foundry sometimes answers "Jwt verification fails" to a valid
+#: api-key for a few minutes (17 Oct. 2026, both benchmark lanes at once); a
+#: truly bad key still fails once max_wait is spent.
+RETRY_STATUS = frozenset({401, 408, 409, 429, 500, 502, 503, 504})
 #: A 400 whose body names the content filter: the service refused this sampled
 #: output, not the request. Resampled a bounded number of times and counted.
 FILTER_MARKERS = ("content_filter", "ResponsibleAIPolicyViolation", "content management policy")

@@ -81,5 +81,45 @@
   "capacity": 1000,
   "context": "rich",
   "training": "rich context (12 core themes + 6 nearest), 50000 examples, training seed s2, 8 federal surveys 2019-2024"
+ },
+ "ces25-rich-100k-s1": {
+  "backend": "foundry",
+  "model": "Llama-3.3-70B-Instruct-9.ft-0722632779784cd28e994f46abcdeea1-ces25-rich-100k-s1",
+  "version": "1",
+  "deployment": "bench-ces25-rich-100k-s1",
+  "sku": "DataZoneStandard",
+  "capacity": 1000,
+  "context": "rich",
+  "training": "rich context (12 core themes + 6 nearest), 100000 examples, training seed s1, 8 federal surveys 2019-2024"
+ },
+ "ces25-rich-100k-s2": {
+  "backend": "foundry",
+  "model": "Llama-3.3-70B-Instruct-9.ft-017a337ddd584630bcf43a138988afee-ces25-rich-100k-s2",
+  "version": "1",
+  "deployment": "bench-ces25-rich-100k-s2",
+  "sku": "GlobalStandard",
+  "capacity": 1000,
+  "context": "rich",
+  "training": "rich context (12 core themes + 6 nearest), 100000 examples, training seed s2, 8 federal surveys 2019-2024"
+ },
+ "ces25-rich-150k-s1": {
+  "backend": "foundry",
+  "model": "Llama-3.3-70B-Instruct-9.ft-13db717a13b746d4a8ae4301fe4df725-ces25-rich-150k-s1",
+  "version": "1",
+  "deployment": "bench-ces25-rich-150k-s1",
+  "sku": "DataZoneStandard",
+  "capacity": 1000,
+  "context": "rich",
+  "training": "rich context (12 core themes + 6 nearest), 150000 examples, training seed s1, 8 federal surveys 2019-2024"
+ },
+ "ces25-rich-150k-s2": {
+  "backend": "foundry",
+  "model": "Llama-3.3-70B-Instruct-9.ft-fd7519479a924dddbb589ed68fa77db7-ces25-rich-150k-s2",
+  "version": "1",
+  "deployment": "bench-ces25-rich-150k-s2",
+  "sku": "GlobalStandard",
+  "capacity": 1000,
+  "context": "rich",
+  "training": "rich context (12 core themes + 6 nearest), 150000 examples, training seed s2, 8 federal surveys 2019-2024"
  }
 }

@@ -111,13 +111,13 @@ def launch(lane: str, models: list[str], workers: int, sets: list[str] | None = 
     upload(Path(handle.name), f"{REMOTE}/lanes/{lane}/payload.tar.gz")
     Path(handle.name).unlink()
 
-    # Several target sets run one after the other in the same container, each
+    # Each model answers every target set in turn (one deployment at a time), each
     # with its own frozen/runs folders (the env set below only covers SET).
     runs = " && ".join(
         f"BENCH_SET={s} BENCH_FROZEN={MOUNT}/{REMOTE}/frozen{suffix(s)} "
         f"BENCH_RUNS={MOUNT}/{REMOTE}/runs{suffix(s)} "
         f"python -u -m benchmark.run --model {m} --workers {workers} --deploy --teardown"
-        for s in (sets or [SET]) for m in models)
+        for m in models for s in (sets or [SET]))
     command = (f"mkdir -p /work && tar -xzf {MOUNT}/{REMOTE}/lanes/{lane}/payload.tar.gz -C /work "
                f"&& cd /work && pip install --no-cache-dir -q {PIP} && {runs}")
     env = [
