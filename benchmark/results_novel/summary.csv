@@ -1,0 +1,4 @@
+model,mean_tv_150,ci_low,ci_high,cell_weighted_tv,cells_better_than_modal,tv_tarrifs_1,tv_tarrifs_2,tv_foreign_pol_protect,tv_safe_injection,tv_student_protes,tv_resident_2f,tv_rent_security,tv_decent_housing
+human-floor,0.0739,,,0.0609,120,0.0299,0.033,0.0446,0.1038,0.1024,0.1094,0.0989,0.0695
+ces25-fix-50k,0.243,0.2324,0.2422,0.2419,90,0.416,0.4789,0.1719,0.173,0.2199,0.1388,0.202,0.1432
+modal-baseline,0.5435,0.5386,0.5486,0.5357,0,0.1253,0.1646,0.4946,0.766,0.7763,0.692,0.6732,0.6562

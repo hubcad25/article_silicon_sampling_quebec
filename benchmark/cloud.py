@@ -91,7 +91,11 @@ def az_list(remote: str) -> list[str]:
     return [line for line in out.splitlines() if line]
 
 
-def launch(lane: str, models: list[str], workers: int) -> None:
+def suffix(target_set: str) -> str:
+    return ("" if target_set == "main" else f"_{target_set}") + ("" if CONTEXT == "fix" else f"_{CONTEXT}")
+
+
+def launch(lane: str, models: list[str], workers: int, sets: list[str] | None = None) -> None:
     current = cloud20.arm_request("GET", cloud20.container_path(container(lane)))
     state = (current or {}).get("properties", {}).get("instanceView", {}).get("state")
     if state == "Running":
@@ -107,8 +111,13 @@ def launch(lane: str, models: list[str], workers: int) -> None:
     upload(Path(handle.name), f"{REMOTE}/lanes/{lane}/payload.tar.gz")
     Path(handle.name).unlink()
 
-    runs = " && ".join(f"python -u -m benchmark.run --model {m} --workers {workers} "
-                       f"--deploy --teardown" for m in models)
+    # Several target sets run one after the other in the same container, each
+    # with its own frozen/runs folders (the env set below only covers SET).
+    runs = " && ".join(
+        f"BENCH_SET={s} BENCH_FROZEN={MOUNT}/{REMOTE}/frozen{suffix(s)} "
+        f"BENCH_RUNS={MOUNT}/{REMOTE}/runs{suffix(s)} "
+        f"python -u -m benchmark.run --model {m} --workers {workers} --deploy --teardown"
+        for s in (sets or [SET]) for m in models)
     command = (f"mkdir -p /work && tar -xzf {MOUNT}/{REMOTE}/lanes/{lane}/payload.tar.gz -C /work "
                f"&& cd /work && pip install --no-cache-dir -q {PIP} && {runs}")
     env = [
@@ -174,11 +183,12 @@ def main() -> None:
     p.add_argument("lane")
     p.add_argument("models", nargs="+")
     p.add_argument("--workers", type=int, default=16)
+    p.add_argument("--sets", nargs="+", help="target sets to run in turn (default: BENCH_SET)")
     p = sub.add_parser("stop")
     p.add_argument("lane")
     args = parser.parse_args()
     if args.cmd == "launch":
-        launch(args.lane, args.models, args.workers)
+        launch(args.lane, args.models, args.workers, args.sets)
     elif args.cmd == "stop":
         stop(args.lane)
     else:
