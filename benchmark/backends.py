@@ -56,9 +56,16 @@ def _arm(method: str, path: str, body: dict | None = None) -> dict | None:
         token = subprocess.run(["az", "account", "get-access-token", "--query", "accessToken",
                                 "-o", "tsv"], check=True, capture_output=True, text=True).stdout.strip()
     else:  # cloud container: its user-assigned managed identity
-        from azure.identity import ManagedIdentityCredential
-        token = ManagedIdentityCredential(client_id=os.environ.get("AZURE_CLIENT_ID")).get_token(
-            "https://management.azure.com/.default").token
+        from azure.identity import CredentialUnavailableError, ManagedIdentityCredential
+        credential = ManagedIdentityCredential(client_id=os.environ.get("AZURE_CLIENT_ID"))
+        for attempt in range(20):  # IMDS sometimes stops answering for a minute (18 Oct. 2026)
+            try:
+                token = credential.get_token("https://management.azure.com/.default").token
+                break
+            except CredentialUnavailableError:
+                if attempt == 19:
+                    raise
+                time.sleep(15)
     request = urllib.request.Request(url, method=method,
                                      data=None if body is None else json.dumps(body).encode(),
                                      headers={"Authorization": f"Bearer {token}",
