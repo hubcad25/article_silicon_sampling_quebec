@@ -201,6 +201,12 @@ on repeated questions — and B at 100,000 examples 0.163.
   lucky run.
 - Finish training C by example and by reward, and compare both against the untrained dossier and
   against A and B.
+- **Give the model the news it cannot know.** Every approach misses the two Trump questions because
+  the models' data stop in 2024. We will add a short briefing on current events to the prompt
+  (tariffs, annexation threats, the change of prime minister), written only from facts published
+  before the survey was fielded, never from opinion results. First test: the untrained dossier with
+  and without the briefing (about 50 requests), then the role-play model on the new questions. We
+  check that it fixes the Trump questions without hurting the others.
 - Once all rows are filled in, decide whether to keep investing in longer role-play context (B) or
   move resources into the dossier approach (C), based on which gets closest to the floor for the
   least effort.
