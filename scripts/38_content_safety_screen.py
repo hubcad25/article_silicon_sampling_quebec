@@ -28,6 +28,7 @@ Scores are cached in data/content_safety/cache.json (text -> severity).
 
 from __future__ import annotations
 
+import http.client
 import json
 import random
 import sys
@@ -78,8 +79,8 @@ def severity(text: str) -> int:
         except urllib.error.HTTPError as error:
             if error.code not in (429, 500, 502, 503, 504):
                 raise
-        except (urllib.error.URLError, TimeoutError):
-            pass
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException):
+            pass  # incl. RemoteDisconnected, raised raw by urllib under load
         time.sleep(min(2 ** attempt, 30) * (1 + random.random() / 4))
     raise RuntimeError("content safety: retries exhausted")
 
