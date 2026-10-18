@@ -83,6 +83,14 @@ the results into percentages. C skips the role-play: the model acts as an analys
 table directly. For repeated questions, any past version of the question worded exactly the same is
 removed before the model sees anything, so even "repeated" questions are new to it.
 
+A and B are trained the same way, on 50,000 to 150,000 answers from 8 Canadian surveys (2019–2024);
+each size is trained twice, because two identical training runs never give exactly the same model.
+C is tried three ways, always starting from the same Llama model as A and B. *Untrained*: the model
+reads the dossier as is. *Trained by example*: each of about 650 past survey questions becomes an
+exercise (its dossier, built without it, and the real table as the answer to copy). *Trained by
+reward*: the model writes 8 tables per exercise, a small program scores each one against the real
+table, and the model is trained only on its own best attempts; it never sees the real table.
+
 # 2. Results
 
 ```{=latex}
@@ -92,7 +100,7 @@ removed before the model sees anything, so even "repeated" questions are new to 
  & Repeated (10) & New (8) & Same error as a real poll of… per subgroup \\
 \midrule
 A. Role-play, 7 answers & \cellcolor{hgood!69!hmid}0.178 & \cellcolor{hgood!55!hmid}0.243 & 14 (repeated) · \tbd (new) \\
-B. Role-play, 16 answers & \tbd & \tbd & \tbd \\
+B. Role-play, 16 answers (100k) & \cellcolor{hgood!69!hmid}0.178 & \cellcolor{hgood!55!hmid}0.242 & \tbd \\
 C. Dossier, untrained Llama & \cellcolor{hgood!65!hmid}0.196 & \cellcolor{hgood!50!hmid}0.264 & \tbd \\
 C. Dossier, trained by example & \tbd & \tbd & \tbd \\
 C. Dossier, trained by reward & \tbd & \tbd & \tbd \\
@@ -107,7 +115,25 @@ National mode, for everyone & \cellcolor{hbad!100!hmid}0.540 & \cellcolor{hbad!1
 \end{center}
 ```
 
-Reading the last column: 0.151 is worth about 20 real respondents per subgroup (300 in total), 0.10
+A and B rows: 50,000 and 100,000 training examples; B is the mean of its two training runs. B by
+training size:
+
+```{=latex}
+\begin{center}\small
+\begin{tabular}{l>{\centering\arraybackslash}p{2.2cm}>{\centering\arraybackslash}p{2.2cm}>{\centering\arraybackslash}p{3.6cm}}
+\toprule
+ & Repeated (10) & New (8) & New, without the 2 Trump questions \\
+\midrule
+A. 7 answers, 50,000 examples & 0.178 & 0.243 & 0.175 \\
+B. 16 answers, 50,000 & 0.212 & 0.263 & 0.194 \\
+B. 16 answers, 100,000 & 0.178 & 0.242 & 0.163 \\
+B. 16 answers, 150,000 (one run so far) & \textbf{0.168} & 0.275 & 0.176 \\
+\bottomrule
+\end{tabular}
+\end{center}
+```
+
+Reading the last column of the first table: 0.151 is worth about 20 real respondents per subgroup (300 in total), 0.10
 about 40 (600), 0.08 about 65 (1,000, a standard poll).
 
 **About the GPT-5.5 line:** a recent, general-purpose model scores well on both sets with no
@@ -120,8 +146,7 @@ tell how much of its score is genuine reasoning versus having effectively seen t
 \needspace{14\baselineskip}
 ```
 
-**New questions, one by one** (role-play with 7 answers, the untrained dossier, and the floor; the
-rest fill in as training finishes):
+**New questions, one by one** (B at 100,000 examples, mean of its two runs):
 
 ```{=latex}
 \begin{center}\small
@@ -129,24 +154,24 @@ rest fill in as training finishes):
 \toprule
 New question & A. 7 answers & B. 16 answers & C. Dossier (untrained) & {\color{muted}Floor} \\
 \midrule
-US relations & \cellcolor{hbad!82!hmid}0.416 & \tbd & \cellcolor{hbad!88!hmid}0.445 & {\color{muted}0.030} \\
-Who is to blame & \cellcolor{hbad!96!hmid}0.479 & \tbd & \cellcolor{hbad!81!hmid}0.409 & {\color{muted}0.033} \\
-Protect weaker nations & \cellcolor{hgood!70!hmid}0.172 & \tbd & \cellcolor{hbad!64!hmid}0.331 & {\color{muted}0.045} \\
-Safe injection sites & \cellcolor{hgood!70!hmid}0.173 & \tbd & \cellcolor{hgood!55!hmid}0.240 & {\color{muted}0.104} \\
-Campus protests & \cellcolor{hgood!60!hmid}0.220 & \tbd & \cellcolor{hgood!59!hmid}0.222 & {\color{muted}0.102} \\
-Indigenous land & \cellcolor{hgood!77!hmid}0.139 & \tbd & \cellcolor{hgood!56!hmid}0.239 & {\color{muted}0.109} \\
-Housing worry & \cellcolor{hgood!63!hmid}0.202 & \tbd & \cellcolor{hgood!80!hmid}0.124 & {\color{muted}0.099} \\
-Housing for all & \cellcolor{hgood!76!hmid}0.143 & \tbd & \cellcolor{hgood!85!hmid}0.099 & {\color{muted}0.070} \\
+US relations & \cellcolor{hbad!82!hmid}0.416 & \cellcolor{hbad!100!hmid}0.529 & \cellcolor{hbad!88!hmid}0.445 & {\color{muted}0.030} \\
+Who is to blame & \cellcolor{hbad!96!hmid}0.479 & \cellcolor{hbad!85!hmid}0.430 & \cellcolor{hbad!81!hmid}0.409 & {\color{muted}0.033} \\
+Protect weaker nations & \cellcolor{hgood!70!hmid}0.172 & \cellcolor{hgood!78!hmid}0.131 & \cellcolor{hbad!64!hmid}0.331 & {\color{muted}0.045} \\
+Safe injection sites & \cellcolor{hgood!70!hmid}0.173 & \cellcolor{hgood!70!hmid}0.173 & \cellcolor{hgood!55!hmid}0.240 & {\color{muted}0.104} \\
+Campus protests & \cellcolor{hgood!60!hmid}0.220 & \cellcolor{hgood!65!hmid}0.192 & \cellcolor{hgood!59!hmid}0.222 & {\color{muted}0.102} \\
+Indigenous land & \cellcolor{hgood!77!hmid}0.139 & \cellcolor{hgood!76!hmid}0.142 & \cellcolor{hgood!56!hmid}0.239 & {\color{muted}0.109} \\
+Housing worry & \cellcolor{hgood!63!hmid}0.202 & \cellcolor{hgood!67!hmid}0.181 & \cellcolor{hgood!80!hmid}0.124 & {\color{muted}0.099} \\
+Housing for all & \cellcolor{hgood!76!hmid}0.143 & \cellcolor{hgood!72!hmid}0.162 & \cellcolor{hgood!85!hmid}0.099 & {\color{muted}0.070} \\
 \midrule
-\textbf{Mean} & \cellcolor{hgood!55!hmid}\textbf{0.243} & \tbd & \cellcolor{hgood!50!hmid}\textbf{0.264} & {\color{muted}\textbf{0.074}} \\
+\textbf{Mean} & \cellcolor{hgood!55!hmid}\textbf{0.243} & \cellcolor{hgood!55!hmid}\textbf{0.242} & \cellcolor{hgood!50!hmid}\textbf{0.264} & {\color{muted}\textbf{0.074}} \\
 \bottomrule
 \end{tabular}
 \end{center}
 ```
 
-The two US–Trump questions (0.416 and 0.479 for the role-play model) are the clear outliers in both
-A and the untrained dossier. On the other six new questions, the role-play model averages about
-0.175 — the same as its score on repeated questions.
+The two US–Trump questions are the clear outliers for every approach (0.41 to 0.57), and they move a
+lot from one training run to the next. On the other six new questions, A averages 0.175 — the same as
+on repeated questions — and B at 100,000 examples 0.163.
 
 # 3. What we learn so far
 
@@ -163,14 +188,17 @@ A and the untrained dossier. On the other six new questions, the role-play model
   into 2025 or 2026 may already have absorbed 2025 opinion data, or the survey itself. A good score
   from such a model is not trustworthy evidence of genuine prediction, which is why we flag the
   GPT-5.5 result rather than count it as a result.
-- **Still pending:** whether a longer, 16-answer context (B) meaningfully reduces error over the
-  7-answer version (A), and whether training the dossier approach — by example or by reward —
-  improves on its untrained score. Both are running.
+- **More about each person helps only with more training.** With 16 answers per person instead of 7,
+  the model does worse at 50,000 examples (0.212 vs 0.178), as well at 100,000, and better at
+  150,000 (0.168, our best trained result on repeated questions, still behind CES 2021 reused at
+  0.151). On new questions the gain is small (0.163 vs 0.175 without the Trump questions).
+- **Still pending:** whether training the dossier approach, by example or by reward, improves on
+  its untrained score. Both are training.
 
 # 4. Next steps
 
-- Finish scoring B at 50,000 training examples, then repeat at 100,000 and 150,000, each size
-  trained twice, to see whether more data helps and how much results vary run to run.
+- Score the second B run at 150,000 examples, to confirm that the gain at that size is not one
+  lucky run.
 - Finish training C by example and by reward, and compare both against the untrained dossier and
   against A and B.
 - Once all rows are filled in, decide whether to keep investing in longer role-play context (B) or
