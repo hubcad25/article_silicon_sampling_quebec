@@ -1,0 +1,9 @@
+item,n_samples,mean_tv,national_tv,floor
+tarrifs_1,3,0.1417,0.1397,0.0299
+tarrifs_2,3,0.1412,0.1421,0.033
+foreign_pol_protect,3,0.2475,0.2504,0.0446
+safe_injection,3,0.0941,0.038,0.1038
+student_protes,3,0.1326,0.1037,0.1024
+resident_2f,3,0.0781,0.0516,0.1094
+rent_security,3,0.1702,0.1535,0.0989
+decent_housing,3,0.1434,0.1322,0.0695

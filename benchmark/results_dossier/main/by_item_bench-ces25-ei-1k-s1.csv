@@ -1,0 +1,11 @@
+item,n_samples,mean_tv,national_tv,floor
+spend_afford_h,3,0.0838,0.069,0.0482
+spend_nation_c,3,0.2386,0.2521,0.0608
+spend_defence,3,0.1996,0.0837,0.0418
+spend_rec_indi,3,0.2441,0.2241,0.0452
+pos_life,3,0.1899,0.1779,0.0933
+pos_energy,3,0.2503,0.2303,0.1015
+pos_jobs,3,0.1696,0.1496,0.1025
+imm,3,0.3641,0.3711,0.0377
+demsat,3,0.0903,0.0475,0.05
+own_fin_retro,3,0.1664,0.1502,0.0407
