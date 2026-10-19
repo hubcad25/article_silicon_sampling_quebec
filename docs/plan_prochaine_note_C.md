@@ -1,8 +1,8 @@
 # Plan — prochaine note : fixer la recette de l'approche C
 
 *19 octobre 2026. But : trouver la meilleure façon de faire C (dossier, prompt, entraînement),
-mesurée sur une sortie qui ressemble au produit. Pas de calibration des marges ni de contexte
-d'actualité dans cette note : ça vient une fois la recette fixée.*
+mesurée sur une sortie qui ressemble au produit. Pas de calibration des marges dans cette note :
+elle vient une fois la recette fixée.*
 
 ## Ce qui change dans le test
 
@@ -24,12 +24,15 @@ d'actualité dans cette note : ça vient une fois la recette fixée.*
 |---|---|---|
 | V0 | C par l'exemple actuel | Référence (0,152 / 0,214) |
 | V1 | Dossier enrichi : 15 questions semblables au lieu de 8, tailles d'échantillon par groupe, écarts par sexe et scolarité | Plus de preuves aide-t-il ? |
-| V2 | Plus d'exercices : 10 variantes par question au lieu de 3, plus les études québécoises du corpus (EEQ, CECD), soit environ 5-10 fois plus d'exemples | Combien rapporte la quantité ? |
-| V3 | Exemple + récompense : V0 produit 8 tableaux par exercice, on réentraîne sur les meilleurs | La récompense aide-t-elle une fois partie d'un bon modèle ? |
-| V4 | Sortie en deux temps : le modèle écrit d'abord le national, puis seulement les écarts | Séparer niveau et écarts améliore-t-il les écarts ? |
+| V2 | Plus d'entraînement : plus de questions (études québécoises du corpus : EEQ, CECD) et 10 variantes de dossier par question au lieu de 3, soit environ 5-10 fois plus d'exemples | Plafonne-t-on déjà, ou la quantité rapporte-t-elle ? |
+| V3 | Exemple + récompense, en deux étapes : (1) V0 écrit 8 tableaux par exercice, notés contre la vérité ; (2) on réentraîne V0 sur ses meilleurs tableaux | La récompense aide-t-elle une fois partie d'un bon modèle ? |
+| V5 | Contexte d'actualité : un court résumé des faits de l'année, daté d'avant la collecte, ajouté au dossier, à l'entraînement (un résumé par année 2019-2024) comme au test (2025) | Corrige-t-il les questions liées à l'actualité sans nuire aux autres ? |
 
 Plus deux références sans entraînement : C Llama de base et gpt-5.5 (signalé, contamination
 possible).
+
+V4 (sortie en deux temps, national puis écarts) écartée : dans le produit hybride, le niveau vient
+de l'échantillon du client, et la qualité des écarts se mesure déjà directement.
 
 ## Avant de commencer
 
@@ -40,8 +43,9 @@ possible).
 
 ## Coût et durée estimés
 
-- Construction des dossiers et exercices : 1-2 jours.
-- 8 entraînements (V1-V4 × 2) : environ 1 jour en parallèle ; V3 demande un tour d'échantillonnage
+- Construction des dossiers et exercices : 1-2 jours ; résumés d'actualité (V5) : environ 1 jour,
+  à faire valider par Hubert (faits datés seulement, jamais de résultats d'opinion).
+- 8 entraînements (V1, V2, V3, V5 × 2) : environ 1 jour en parallèle ; V3 demande un tour d'échantillonnage
   de plus (environ 15k requêtes, ACI).
 - Inférence : environ 30 items × 3 tirages × 10 modèles, quelques milliers de requêtes ; négligeable.
 
