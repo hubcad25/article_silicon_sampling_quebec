@@ -1,7 +1,7 @@
 ---
 title: "Silicon Sampling on CES 2025: Three Ways to Extend the Model"
 author: "Hubert Cadieux & Justin Savoie"
-date: "October 16, 2026"
+date: "October 19, 2026"
 lang: en
 geometry: margin=2.1cm
 fontsize: 10pt
@@ -97,16 +97,16 @@ table, and the model is trained only on its own best attempts; it never sees the
 \begin{center}\small
 \begin{tabular}{l>{\centering\arraybackslash}p{2.4cm}>{\centering\arraybackslash}p{2.4cm}>{\centering\arraybackslash}p{3.4cm}}
 \toprule
- & Repeated (10) & New (8) & Same error as a real poll of… per subgroup \\
+ & Repeated (10) & New (8) & Same error as a real poll of… per subgroup (repeated) \\
 \midrule
-A. Role-play, 7 answers & \cellcolor{hgood!69!hmid}0.178 & \cellcolor{hgood!55!hmid}0.243 & 14 (repeated) · \tbd (new) \\
-B. Role-play, 16 answers (100k) & \cellcolor{hgood!69!hmid}0.178 & \cellcolor{hgood!55!hmid}0.242 & \tbd \\
-C. Dossier, untrained Llama & \cellcolor{hgood!65!hmid}0.196 & \cellcolor{hgood!50!hmid}0.264 & \tbd \\
-C. Dossier, trained by example & \tbd & \tbd & \tbd \\
-C. Dossier, trained by reward & \tbd & \tbd & \tbd \\
+A. Role-play, 7 answers & \cellcolor{hgood!69!hmid}0.178 & \cellcolor{hgood!55!hmid}0.243 & 14 \\
+B. Role-play, 16 answers (100k) & \cellcolor{hgood!69!hmid}0.178 & \cellcolor{hgood!55!hmid}0.242 & 14 \\
+C. Dossier, untrained Llama & \cellcolor{hgood!65!hmid}0.196 & \cellcolor{hgood!50!hmid}0.264 & 11 \\
+C. Dossier, trained by example & \cellcolor{hgood!100!hmid}\textbf{0.152} & \cellcolor{hgood!75!hmid}\textbf{0.214} & \textbf{19} \\
+C. Dossier, trained by reward & \cellcolor{hgood!62!hmid}0.202 & \cellcolor{hgood!74!hmid}0.216 & 11 \\
 \textcolor{muted}{C. Dossier, untrained GPT-5.5 (flagged)} & \textcolor{muted}{0.106} & \textcolor{muted}{0.144} & \textcolor{muted}{see note below} \\
 \midrule
-CES 2021 reused & \cellcolor{hgood!74!hmid}0.151 & \textcolor{muted}{n/a} & 20 (repeated) \\
+CES 2021 reused & \cellcolor{hgood!74!hmid}0.151 & \textcolor{muted}{n/a} & 20 \\
 National mode, for everyone & \cellcolor{hbad!100!hmid}0.540 & \cellcolor{hbad!100!hmid}0.544 & — \\
 \midrule
 {\color{muted}Floor (two halves of CES 2025)} & \textcolor{muted}{0.062} & \textcolor{muted}{0.074} & — \\
@@ -115,7 +115,8 @@ National mode, for everyone & \cellcolor{hbad!100!hmid}0.540 & \cellcolor{hbad!1
 \end{center}
 ```
 
-A and B rows: 50,000 and 100,000 training examples; B is the mean of its two training runs. B by
+A and B rows: 50,000 and 100,000 training examples. Every trained row except A is the mean of two
+training runs. B by
 training size:
 
 ```{=latex}
@@ -127,7 +128,7 @@ training size:
 A. 7 answers, 50,000 examples & 0.178 & 0.243 & 0.175 \\
 B. 16 answers, 50,000 & 0.212 & 0.263 & 0.194 \\
 B. 16 answers, 100,000 & 0.178 & 0.242 & 0.163 \\
-B. 16 answers, 150,000 (one run so far) & \textbf{0.168} & 0.275 & 0.176 \\
+B. 16 answers, 150,000 & \textbf{0.171} & 0.267 & 0.177 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -136,34 +137,27 @@ B. 16 answers, 150,000 (one run so far) & \textbf{0.168} & 0.275 & 0.176 \\
 Reading the last column of the first table: 0.151 is worth about 20 real respondents per subgroup (300 in total), 0.10
 about 40 (600), 0.08 about 65 (1,000, a standard poll).
 
-**About the GPT-5.5 line:** a recent, general-purpose model scores well on both sets with no
-training at all. We show it, muted, as a caution rather than a result. Its training data run into
-2026 and may already contain 2025 opinion data, or even CES 2025 itself — on the national-level
-defence spending question it is almost perfect, which is a sign of this, not of skill. We cannot
-tell how much of its score is genuine reasoning versus having effectively seen the answer key.
+**About the GPT-5.5 line:** a recent model, shown muted as a caution, not a result: its data run into
+2026 and may include 2025 opinion or CES 2025 itself (it is almost perfect on national defence spending).
 
-```{=latex}
-\needspace{14\baselineskip}
-```
-
-**New questions, one by one** (B at 100,000 examples, mean of its two runs):
+**New questions, one by one** (B at 100,000 examples; B and C by example: mean of two runs):
 
 ```{=latex}
 \begin{center}\small
-\begin{tabular}{l>{\centering\arraybackslash}p{1.9cm}>{\centering\arraybackslash}p{1.9cm}>{\centering\arraybackslash}p{1.9cm}c}
+\begin{tabular}{l>{\centering\arraybackslash}p{1.6cm}>{\centering\arraybackslash}p{1.6cm}>{\centering\arraybackslash}p{1.7cm}>{\centering\arraybackslash}p{1.7cm}c}
 \toprule
-New question & A. 7 answers & B. 16 answers & C. Dossier (untrained) & {\color{muted}Floor} \\
+New question & A. 7 answers & B. 16 answers & C. Dossier (untrained) & C. Dossier (by example) & {\color{muted}Floor} \\
 \midrule
-US relations & \cellcolor{hbad!82!hmid}0.416 & \cellcolor{hbad!100!hmid}0.529 & \cellcolor{hbad!88!hmid}0.445 & {\color{muted}0.030} \\
-Who is to blame & \cellcolor{hbad!96!hmid}0.479 & \cellcolor{hbad!85!hmid}0.430 & \cellcolor{hbad!81!hmid}0.409 & {\color{muted}0.033} \\
-Protect weaker nations & \cellcolor{hgood!70!hmid}0.172 & \cellcolor{hgood!78!hmid}0.131 & \cellcolor{hbad!64!hmid}0.331 & {\color{muted}0.045} \\
-Safe injection sites & \cellcolor{hgood!70!hmid}0.173 & \cellcolor{hgood!70!hmid}0.173 & \cellcolor{hgood!55!hmid}0.240 & {\color{muted}0.104} \\
-Campus protests & \cellcolor{hgood!60!hmid}0.220 & \cellcolor{hgood!65!hmid}0.192 & \cellcolor{hgood!59!hmid}0.222 & {\color{muted}0.102} \\
-Indigenous land & \cellcolor{hgood!77!hmid}0.139 & \cellcolor{hgood!76!hmid}0.142 & \cellcolor{hgood!56!hmid}0.239 & {\color{muted}0.109} \\
-Housing worry & \cellcolor{hgood!63!hmid}0.202 & \cellcolor{hgood!67!hmid}0.181 & \cellcolor{hgood!80!hmid}0.124 & {\color{muted}0.099} \\
-Housing for all & \cellcolor{hgood!76!hmid}0.143 & \cellcolor{hgood!72!hmid}0.162 & \cellcolor{hgood!85!hmid}0.099 & {\color{muted}0.070} \\
+US relations & \cellcolor{hbad!82!hmid}0.416 & \cellcolor{hbad!100!hmid}0.529 & \cellcolor{hbad!88!hmid}0.445 & \cellcolor{hbad!65!hmid}0.345 & {\color{muted}0.030} \\
+Who is to blame & \cellcolor{hbad!96!hmid}0.479 & \cellcolor{hbad!85!hmid}0.430 & \cellcolor{hbad!81!hmid}0.409 & \cellcolor{hbad!100!hmid}0.562 & {\color{muted}0.033} \\
+Protect weaker nations & \cellcolor{hgood!70!hmid}0.172 & \cellcolor{hgood!78!hmid}0.131 & \cellcolor{hbad!64!hmid}0.331 & \cellcolor{hgood!95!hmid}0.069 & {\color{muted}0.045} \\
+Safe injection sites & \cellcolor{hgood!70!hmid}0.173 & \cellcolor{hgood!70!hmid}0.173 & \cellcolor{hgood!55!hmid}0.240 & \cellcolor{hgood!76!hmid}0.147 & {\color{muted}0.104} \\
+Campus protests & \cellcolor{hgood!60!hmid}0.220 & \cellcolor{hgood!65!hmid}0.192 & \cellcolor{hgood!59!hmid}0.222 & \cellcolor{hgood!82!hmid}0.112 & {\color{muted}0.102} \\
+Indigenous land & \cellcolor{hgood!77!hmid}0.139 & \cellcolor{hgood!76!hmid}0.142 & \cellcolor{hgood!56!hmid}0.239 & \cellcolor{hgood!79!hmid}0.126 & {\color{muted}0.109} \\
+Housing worry & \cellcolor{hgood!63!hmid}0.202 & \cellcolor{hgood!67!hmid}0.181 & \cellcolor{hgood!80!hmid}0.124 & \cellcolor{hgood!63!hmid}0.214 & {\color{muted}0.099} \\
+Housing for all & \cellcolor{hgood!76!hmid}0.143 & \cellcolor{hgood!72!hmid}0.162 & \cellcolor{hgood!85!hmid}0.099 & \cellcolor{hgood!76!hmid}0.140 & {\color{muted}0.070} \\
 \midrule
-\textbf{Mean} & \cellcolor{hgood!55!hmid}\textbf{0.243} & \cellcolor{hgood!55!hmid}\textbf{0.242} & \cellcolor{hgood!50!hmid}\textbf{0.264} & {\color{muted}\textbf{0.074}} \\
+\textbf{Mean} & \cellcolor{hgood!55!hmid}\textbf{0.243} & \cellcolor{hgood!55!hmid}\textbf{0.242} & \cellcolor{hgood!50!hmid}\textbf{0.264} & \cellcolor{hgood!66!hmid}\textbf{0.214} & {\color{muted}\textbf{0.074}} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -171,7 +165,7 @@ Housing for all & \cellcolor{hgood!76!hmid}0.143 & \cellcolor{hgood!72!hmid}0.16
 
 The two US–Trump questions are the clear outliers for every approach (0.41 to 0.57), and they move a
 lot from one training run to the next. On the other six new questions, A averages 0.175 — the same as
-on repeated questions — and B at 100,000 examples 0.163.
+on repeated questions — B at 100,000 examples 0.163, and C trained by example **0.135**.
 
 # 3. What we learn so far
 
@@ -180,10 +174,13 @@ on repeated questions — and B at 100,000 examples 0.163.
   ask about something that happened in 2025, after the model's training data ends — it cannot know
   the answer, no matter how the question is asked. Questions that are merely *new* in wording, but
   not about events after the model's knowledge cutoff, are no harder than ones it has seen before.
-- **An untrained analyst is already about as good as a trained respondent.** With no training at
-  all, simply handing the model a written summary of related past results (approach C) scores close
-  to the fine-tuned role-play model (approach A) on both question sets. That is a strong signal that
-  training the dossier approach is worth doing.
+- **The trained analyst is our best approach.** C trained by example, on only about 650 past
+  questions, matches CES 2021 reused on repeated questions (0.152 vs 0.151) without ever seeing
+  them, and beats A and B on new ones (0.214 vs 0.24; 0.135 vs 0.16–0.18 without the Trump
+  questions). Its two training runs agree closely (0.151 and 0.154), so this is not one lucky run.
+- **Learning from its own best attempts helps less.** C trained by reward gains on new questions
+  (0.264 → 0.216) but not on repeated ones (0.202, no better than untrained). Showing the model the
+  real answer works better than letting it pick among its own guesses.
 - **A model's own knowledge cutoff limits how it can be judged.** Models whose training data reach
   into 2025 or 2026 may already have absorbed 2025 opinion data, or the survey itself. A good score
   from such a model is not trustworthy evidence of genuine prediction, which is why we flag the
@@ -192,21 +189,14 @@ on repeated questions — and B at 100,000 examples 0.163.
   the model does worse at 50,000 examples (0.212 vs 0.178), as well at 100,000, and better at
   150,000 (0.168, our best trained result on repeated questions, still behind CES 2021 reused at
   0.151). On new questions the gain is small (0.163 vs 0.175 without the Trump questions).
-- **Still pending:** whether training the dossier approach, by example or by reward, improves on
-  its untrained score. Both are training.
 
 # 4. Next steps
 
-- Score the second B run at 150,000 examples, to confirm that the gain at that size is not one
-  lucky run.
-- Finish training C by example and by reward, and compare both against the untrained dossier and
-  against A and B.
-- **Give the model the news it cannot know.** Every approach misses the two Trump questions because
-  the models' data stop in 2024. We will add a short briefing on current events to the prompt
-  (tariffs, annexation threats, the change of prime minister), written only from facts published
-  before the survey was fielded, never from opinion results. First test: the untrained dossier with
-  and without the briefing (about 50 requests), then the role-play model on the new questions. We
-  check that it fixes the Trump questions without hurting the others.
-- Once all rows are filled in, decide whether to keep investing in longer role-play context (B) or
-  move resources into the dossier approach (C), based on which gets closest to the floor for the
-  least effort.
+- Push C by example further: more exercises (more surveys, more variants per question) and the
+  per-subgroup sample sizes in the dossier, and test it on a third set of questions.
+- **Give the model the news it cannot know.** Add a short briefing on current events (tariffs,
+  annexation threats, new prime minister), written only from facts published before the survey, and
+  check that it fixes the two Trump questions without hurting the others.
+- Put the effort into the dossier approach (C) rather than longer role-play context (B): C is
+  better, much cheaper to run (one request per question instead of 15,000) and gives directly the
+  table a client wants.
