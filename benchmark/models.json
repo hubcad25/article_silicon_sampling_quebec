@@ -121,5 +121,45 @@
   "capacity": 1000,
   "context": "rich",
   "training": "rich context (12 core themes + 6 nearest), 150000 examples, training seed s2, 8 federal surveys 2019-2024"
+ },
+ "ces25-dossier-1k-s1": {
+  "backend": "foundry",
+  "model": "Llama-3.3-70B-Instruct-9.ft-fbf14a945e16458d9634d524f6e6aebe-ces25-dossier-1k-s1",
+  "version": "1",
+  "deployment": "bench-ces25-dossier-1k-s1",
+  "sku": "GlobalStandard",
+  "capacity": 1000,
+  "task": "dossier",
+  "training": "C trained by example (dossier exercises, 3 epochs, batch 8), seed 20260930"
+ },
+ "ces25-dossier-1k-s2": {
+  "backend": "foundry",
+  "model": "Llama-3.3-70B-Instruct-9.ft-1105d3755ff84deb9d097470e0cf5f51-ces25-dossier-1k-s2",
+  "version": "1",
+  "deployment": "bench-ces25-dossier-1k-s2",
+  "sku": "GlobalStandard",
+  "capacity": 1000,
+  "task": "dossier",
+  "training": "C trained by example (dossier exercises, 3 epochs, batch 8), seed 20260931"
+ },
+ "ces25-ei-1k-s1": {
+  "backend": "foundry",
+  "model": "Llama-3.3-70B-Instruct-9.ft-942e8b93e3f14a00a0c4d8d7690f793e-ces25-ei-1k-s1",
+  "version": "1",
+  "deployment": "bench-ces25-ei-1k-s1",
+  "sku": "GlobalStandard",
+  "capacity": 1000,
+  "task": "dossier",
+  "training": "C trained by reward (expert iteration round 1: best of 8 base-Llama tables, 3 epochs, batch 8), seed 20260930"
+ },
+ "ces25-ei-1k-s2": {
+  "backend": "foundry",
+  "model": "Llama-3.3-70B-Instruct-9.ft-bba5c57fa5614bf6a37f01ad87c90062-ces25-ei-1k-s2",
+  "version": "1",
+  "deployment": "bench-ces25-ei-1k-s2",
+  "sku": "GlobalStandard",
+  "capacity": 1000,
+  "task": "dossier",
+  "training": "C trained by reward (expert iteration round 1: best of 8 base-Llama tables, 3 epochs, batch 8), seed 20260931"
  }
 }
