@@ -122,11 +122,16 @@ def load_model_c(set_name: str, options: dict[str, list[str]]) -> dict[str, np.n
 def balanced_stratified_sample(
     rng: np.random.Generator, cell_rows: list[np.ndarray], n: int,
 ) -> np.ndarray:
-    """Allocate n as evenly as possible over the 15 cells, then sample within cells."""
+    """Allocate n as evenly as possible over the 15 cells, then sample within cells.
+
+    A cell with fewer eligible respondents than its quota is drawn with
+    replacement (only the smallest cells at n=1,600 on split-sample items).
+    """
     counts = np.full(len(CELLS), n // len(CELLS), dtype=int)
     counts[: n % len(CELLS)] += 1
     return np.concatenate([
-        rng.choice(rows, size=count, replace=False) for rows, count in zip(cell_rows, counts)
+        rng.choice(rows, size=count, replace=count > len(rows))
+        for rows, count in zip(cell_rows, counts)
     ])
 
 
@@ -134,16 +139,24 @@ def draw_sample(
     rng: np.random.Generator,
     mechanism: str,
     n: int,
-    population_n: int,
+    pool: np.ndarray,
     bias_prob: np.ndarray,
-    cell_rows: list[np.ndarray],
+    cell_index: np.ndarray,
 ) -> np.ndarray:
+    """n respondents among ``pool``, the respondents who were asked the item.
+
+    CES 2025 asks several items of a random part of the sample only (25-50 %).
+    Drawing among everyone would leave a "400-person" collection with ~100
+    answers on those items, which is not what a client's survey looks like.
+    """
     if mechanism == "random":
-        return rng.choice(population_n, size=n, replace=False)
+        return rng.choice(pool, size=n, replace=False)
     if mechanism == "biased":
-        return rng.choice(population_n, size=n, replace=False, p=bias_prob)
+        p = bias_prob[pool] / bias_prob[pool].sum()
+        return rng.choice(pool, size=n, replace=False, p=p)
     if mechanism == "stratified":
-        return balanced_stratified_sample(rng, cell_rows, n)
+        cells = cell_index[pool]
+        return balanced_stratified_sample(rng, [pool[cells == g] for g in range(len(CELLS))], n)
     raise ValueError(mechanism)
 
 
@@ -261,7 +274,6 @@ def run() -> pd.DataFrame:
     weights = frame.w.to_numpy(float)
     cell_lookup = {cell: i for i, cell in enumerate(CELLS)}
     cell_index = frame.cell.map(cell_lookup).to_numpy(int)
-    cell_rows = [np.flatnonzero(cell_index == g) for g in range(len(CELLS))]
     cell_weights = np.array([weights[cell_index == g].sum() for g in range(len(CELLS))])
     cell_weights /= cell_weights.sum()
 
@@ -290,11 +302,12 @@ def run() -> pd.DataFrame:
     for mechanism in ("random", "biased", "stratified"):
         for n in ALL_NS:
             for repetition in range(REPETITIONS):
-                sample = draw_sample(rng, mechanism, n, len(frame), bias_prob, cell_rows)
                 for set_name, (items, code_arrays, truth, model) in set_data.items():
                     sample_est, gap_est = {}, {}
                     bayes_est = {prior_k: {} for prior_k in KS}
                     for item in items:
+                        pool = np.flatnonzero(code_arrays[item] >= 0)
+                        sample = draw_sample(rng, mechanism, n, pool, bias_prob, cell_index)
                         observed, bayes, level_gaps = item_estimates(
                             sample, code_arrays[item], weights, cell_index, cell_weights, model[item]
                         )
