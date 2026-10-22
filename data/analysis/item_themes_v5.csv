@@ -1,0 +1,780 @@
+survey_id,variable,year,theme1,theme2,display_label,question_text
+ces_2019_online,cps19_citizenship,2019,0,,Canadian citizenship status,Are you a...
+ces_2019_online,cps19_imp_iss_party,2019,14,,Party best at addressing most important issue,Which party is best at addressing this issue?
+ces_2019_online,cps19_imp_loc_iss_p,2019,14,,Party best at addressing most important local issue,Which party is best at addressing this local issue?
+ces_2019_online,cps19_v_likely,2019,0,,Likelihood of voting on election day,"On election day, are you..."
+ces_2019_online,cps19_v_likely_pr,2019,0,,Likelihood of voting if becoming Canadian citizen,"If you become a Canadian citizen, how likely are you to vote in the first election for which you are eligible?"
+ces_2019_online,cps19_votechoice,2019,14,,Federal party vote choice intention,Which party do you think you will vote for?
+ces_2019_online,cps19_votechoice_pr,2019,14,,Vote choice if eligible to vote,"If you could vote in this election, which party do you think you would vote for?"
+ces_2019_online,cps19_vote_unlikely,2019,14,,Vote choice if deciding to vote (unlikely voters),"If you decide to vote, which party do you think you will vote for?"
+ces_2019_online,cps19_v_advance,2019,14,,Party voted for in advance poll,For which party did you vote?
+ces_2019_online,cps19_vote_lean,2019,14,,Party respondent is leaning towards,Is there a party you are leaning towards?
+ces_2019_online,cps19_2nd_choice,2019,14,,Second choice party preference,And which party would be your second choice?
+ces_2019_online,cps19_2nd_choice_pr,2019,14,,Second choice party preference if eligible to vote,And which party would be your second choice?
+ces_2019_online,cps19_fed_gov_sat,2019,14,,Satisfaction with performance of federal government under Justin Trudeau,How satisfied are you with the performance of the federal government under Justin Trudeau?
+ces_2019_online,cps19_spend_educ,2019,0,,Federal spending on education,How much should the federal government spend on education?
+ces_2019_online,cps19_spend_env,2019,7,,Federal spending on the environment,How much should the federal government spend on the environment?
+ces_2019_online,cps19_spend_imm_min,2019,8,,Federal spending on immigrants and minorities,How much should the federal government spend on immigrants and minorities?
+ces_2019_online,cps19_pos_fptp,2019,13,,Views on replacing First Past the Post electoral system,Canada should change its electoral system from “First Past the Post” to a “proportional representation” system.
+ces_2019_online,cps19_pos_cannabis,2019,15,,Making cannabis possession a criminal offence,Possession of cannabis should be a criminal offence.
+ces_2019_online,cps19_pos_carbon,2019,7,,Federal carbon pricing to reduce greenhouse gas emissions,"To help reduce greenhouse gas emissions, the federal government should continue the carbon tax."
+ces_2019_online,cps19_pos_envreg,2019,7,,Stricter environmental regulations vs consumer costs,"Environmental regulation should be stricter, even if it leads to consumers having to pay higher prices."
+ces_2019_online,cps19_pos_subsid,2019,3b,,Ending corporate and economic development subsidies,The federal government should end all corporate and economic development subsidies.
+ces_2019_online,cps19_pos_trade,2019,1,,Support for more free trade with other countries,"There should be more free trade with other countries, even if it hurts some industries in Canada."
+ces_2019_online,cps19_econ_retro,2019,3b,,Evaluation of Canadian economy over past year,"Over the past year, has Canada's economy:"
+ces_2019_online,cps19_econ_fed,2019,3b,,Impact of federal government policies on Canadian economy,Have the policies of the federal government made Canada's economy...
+ces_2019_online,cps19_ownfinanc_fed,2019,3a,,Impact of federal government policies on personal finances,Have the policies of the federal government made your financial situation...
+ces_2019_online,cps19_issue_handle_1,2019,5,,Party best at handling Healthcare,Which party would do the best job at handling each of the following issues? - Healthcare
+ces_2019_online,cps19_issue_handle_2,2019,0,,Party best at handling Education,Which party would do the best job at handling each of the following issues? - Education
+ces_2019_online,cps19_issue_handle_3,2019,7,,Party best at handling Environment,Which party would do the best job at handling each of the following issues? - Environment
+ces_2019_online,cps19_issue_handle_4,2019,15,,Party best at handling Crime and justice,Which party would do the best job at handling each of the following issues? - Crime and Justice
+ces_2019_online,cps19_issue_handle_5,2019,2,,Party best at handling Defence,Which party would do the best job at handling each of the following issues? - Defence
+ces_2019_online,cps19_issue_handle_6,2019,2,,Party best at handling Indigenous issues,Which party would do the best job at handling each of the following issues? - International diplomacy
+ces_2019_online,cps19_issue_handle_7,2019,8,,Party best at handling Immigration,Which party would do the best job at handling each of the following issues? - Immigration and minorities
+ces_2019_online,cps19_issue_handle_8,2019,3b,,Party best at handling Economy,Which party would do the best job at handling each of the following issues? - Economy
+ces_2019_online,cps19_outcome_most,2019,14,,Most preferred federal election government outcome,Which election outcome would you most prefer?
+ces_2019_online,cps19_outcome_least,2019,14,,Least preferred federal election government outcome,Which election outcome would you least prefer?
+ces_2019_online,cps19_govt_confusing,2019,0,,Politics and government seem too complicated to understand,"Sometimes, politics and government seem so complicated that a person like me can't really understand what's going on."
+ces_2019_online,cps19_govt_say,2019,0,,People like me have no say about what government does,People like me don't have any say about what the government does.
+ces_2019_online,cps19_pol_eth,2019,0,,Importance of politicians behaving ethically in office,It is important that politicians behave ethically in office.
+ces_2019_online,cps19_lib_promises,2019,14,,Belief that Justin Trudeau kept 2015 election promises,Justin Trudeau kept the election promises he made in 2015.
+ces_2019_online,cps19_snclav,2019,14,,Evaluation of government handling of SNC-Lavalin affair,"How would you rate how the government handled the SNC-Lavalin Affair? If you haven’t heard about this, please indicate don’t know."
+ces_2019_online,cps19_news_cons,2019,0,,Daily time spent consuming political news,"On average, how much time do you usually spend watching, reading, and listening to news each day?"
+ces_2019_online,cps19_volunteer,2019,0,,Volunteering frequency over past 12 months,"In the past 12 months, how many times did you volunteer for a group or organization such as a school, a religious organization, or sports or community associations?"
+ces_2019_online,cps19_duty_choice,2019,0,,Voting viewed as a civic duty vs personal choice,"People have different views about voting. For some, voting is a duty. They feel that they should vote in every election. For others, voting is a choice. They only vote when they feel strongly about that election. For you personally, is voting first and foremost a Duty or a Choice?"
+ces_2019_online,cps19_quebec_sov,2019,9,,Support for Quebec sovereignty / independence,"Are you very favourable, somewhat favourable, somewhat opposed, or very opposed to Quebec sovereignty, that is Quebec is no longer a part of Canada?"
+ces_2019_online,cps19_fed_id,2019,14,,Federal political party identification,"In federal politics, do you usually think of yourself as a:"
+ces_2019_online,cps19_fed_donate,2019,0,,Donated money to a federal political party since 2015,"Since the 2015 federal election, have you donated money to any federal political party or candidate, beyond buying a party membership?"
+ces_2019_online,cps19_spoil,2019,0,,Ever intentionally spoiled a ballot in an election,Have you ever intentionally spoiled your ballot in an election (e.g. intentionally filled out your ballot so your vote would not be counted for any candidate)?
+ces_2019_online,cps19_turnout_2015,2019,0,,Voted in 2015 federal election,Did you happen to vote in the last Federal election in 2015?
+ces_2019_online,cps19_vote_2015,2019,0,,Party voted for in 2015 federal election,Which party did you vote for in the Federal election in 2015?
+ces_2019_online,cps19_debate_en,2019,0,,Watched or listened to English-language federal leaders' debate,"Did you happen to watch or listen to the English-language federal leaders debate on Monday, Oct. 7?"
+ces_2019_online,cps19_debate_fr,2019,0,,Watched or listened to French-language federal leaders' debate,"Did you happen to watch or listen to the French-language federal leaders debate on Thursday, Oct. 10?"
+ces_2019_online,cps19_rel_imp,2019,0,,Importance of religion in life,"In your life, you would say religion is:"
+ces_2019_online,cps19_sector,2019,0,,"Sector of employment (private, public, non-profit)","Do you work in the private sector, public sector, or non-profit sector?"
+ces_2019_online,pes19_citizen,2019,0,,Canadian citizenship status (PES),Are you a...
+ces_2019_online,pes19_turnout2019,2019,0,,Voted in 2019 federal election (PES),"The federal election was held on Monday, October 21. In any election, some people are not able to vote because they are sick or busy, or for some other reason. Others do not want to vote. Did you vote in the recent federal election?"
+ces_2019_online,pes19_turnout2019_v2,2019,0,,Voted in 2019 federal election (PES version 2),"The federal election was held on Monday, October 21. In any election, some people are not able to vote because they are sick or busy, or for some other reason. Others do not want to vote. Did you vote in the recent federal election?"
+ces_2019_online,pes19_howvote,2019,13,,Voting method used in 2019 federal election,There are many options for people wanting to vote in an election. How did you vote?
+ces_2019_online,pes19_votereason,2019,0,,Main motivation for voting in 2019 federal election,Did you vote mainly because...
+ces_2019_online,pes19_votechoice2019,2019,14,,Party voted for in 2019 federal election (PES),Which party did you vote for?
+ces_2019_online,pes19_campatt,2019,0,,Attention paid to 2019 election campaign,How much attention did you pay to the election campaign?
+ces_2019_online,pes19_contact1,2019,0,,Contacted by a party or candidate during campaign,"During the campaign, did a party or candidate contact you in person or by any other means?"
+ces_2019_online,pes19_mandate,2019,14,,Belief that winning party has a legitimate mandate to govern,"Given the results of the October 21 election, does the winning party have a legitimate mandate to implement its policies?"
+ces_2019_online,pes19_formgovt,2019,13,,View on what should be more important in forming government (most seats vs party support),Which should be more important to forming the government in Canada:
+ces_2019_online,pes19_keepromises,2019,14,,Belief that political parties keep election promises (PES),Do political parties keep their election promises:
+ces_2019_online,pes19_econ_retro,2019,3b,,Evaluation of Canadian economy over past 12 months (PES),"Would you say that over the past twelve months, the state of the economy in Canada has gotten..."
+ces_2019_online,pes19_pos_fptp,2019,13,,Views on changing First Past the Post electoral system (PES),Canada should change its electoral system from “First Past the Post” to a “proportional representation” system.
+ces_2019_online,pes19_paymed,2019,5,,Views on allowing private payment for faster medical treatment,People who are willing to pay should be allowed to get medical treatment sooner.
+ces_2019_online,pes19_senate,2019,14,,Views on abolishing the Canadian Senate,The Senate should be abolished.
+ces_2019_online,pes19_hatespeech,2019,12,,Views on banning public hate speech against racial/ethnic/religious groups,"It should be illegal to say hateful things publicly about racial, ethnic and religious groups."
+ces_2019_online,pes19_losetouch,2019,0,,View that elected MPs soon lose touch with people,Those elected to Parliament soon lose touch with the people.
+ces_2019_online,pes19_govtcare,2019,0,,View that government does not care much about what people think (PES),The government does not care much about what people like me think.
+ces_2019_online,pes19_complicated,2019,0,,Politics and government seem too complicated to understand (PES),"Sometimes, politics and government seem so complicated that a person like me can't really understand what's going on."
+ces_2019_online,pes19_pollie,2019,0,,View that politicians are willing to lie to get elected,Politicians are willing to lie to get elected.
+ces_2019_online,pes19_bilingualism,2019,9,,View that Canada has gone too far in pushing bilingualism,We have gone too far in pushing bilingualism in Canada.
+ces_2019_online,pes19_equalrights,2019,11,,View that Canada has gone too far in pushing equal rights,We have gone too far in pushing equal rights in this country.
+ces_2019_online,pes19_ethid,2019,0,,Importance of ethnicity and language to personal identity,My ethnicity and language are important parts of my identity.
+ces_2019_online,pes19_govteff,2019,0,,View that governments used to be better at getting things done,Governments used to be better at getting things done.
+ces_2019_online,pes19_tieus,2019,1,,Preferred closeness of Canada's ties with the United States,Do you think Canada's ties with the United States should be...
+ces_2019_online,pes19_tiechina,2019,2,,Preferred closeness of Canada's ties with China,Do you think Canada's ties with China should be...
+ces_2019_online,pes19_can_id_1,2019,0,,Importance for being Canadian: Being born in Canada,Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - To have been born in Canada.
+ces_2019_online,pes19_can_id_2,2019,0,,Importance for being Canadian: Having grandparents born in Canada,Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - For your grandparents to have been born in Canada.
+ces_2019_online,pes19_can_id_3,2019,0,,Importance for being Canadian: Speaking English or French,Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - To be able to speak English or French.
+ces_2019_online,pes19_can_id_4,2019,0,,Importance for being Canadian: Following Canada's customs and traditions,Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - To follow Canada's customs and traditions.
+ces_2019_online,pes19_ottawa_perf,2019,14,,General performance rating of federal government in Ottawa,"Now thinking about the performance of the government in Ottawa in general, how good or bad a job do you think the government in Ottawa did over the past four years?"
+ces_2019_online,pes19_party_rep,2019,14,,Belief that any federal party represents respondent's views well,Would you say that any of the federal parties in Canada represent your views reasonably well?
+ces_2019_online,pes19_party_rep_whic,2019,14,,Federal party that represents respondent's views best,Which party represents your views best?
+ces_2019_online,pes19_emb_none,2019,13,,Support for adding 'None of the above' option to election ballots,Election ballots should have the option 'None of the above' for those who do not support any of the candidates.
+ces_2019_online,pes19_emb_id,2019,13,,Support for issuing national voter identification card to electors,Canadian electors should be issued a national identification card to help them prove their identity and address when voting in federal elections.
+ces_2019_online,pes19_emb_vote16,2019,13,,Support for lowering federal voting age to 16,The voting age for voting in a federal election should be lowered from 18 to 16 years old.
+ces_2019_online,pes19_lowturnout,2019,13,,View that low voter turnout weakens Canadian democracy,Low voter turnout weakens Canadian democracy.
+ces_2019_online,pes19_internetvote1,2019,13,,Support for allowing Canadians to vote over the internet,How much do you agree or disagree with the following statement?
+ces_2019_online,pes19_internetvote2,2019,13,,Likelihood of voting over internet if available,"If you could vote over the internet, how likely would you be to do so?"
+ces_2019_online,pes19_conf_inst1_1,2019,0,,Confidence in Federal government,Please indicate how much confidence you have in the following: - The federal government
+ces_2019_online,pes19_conf_inst1_2,2019,0,,Confidence in Provincial government,Please indicate how much confidence you have in the following: - Your provincial or territorial government
+ces_2019_online,pes19_conf_inst1_3,2019,0,,Confidence in News media,Please indicate how much confidence you have in the following: - The media
+ces_2019_online,pes19_conf_inst2_1,2019,0,,Confidence in Courts,Please indicate how much confidence you have in the following: - The courts
+ces_2019_online,pes19_conf_inst2_2,2019,0,,Confidence in Organized religion,Please indicate how much confidence you have in the following: - Organized religion
+ces_2019_online,pes19_conf_inst2_3,2019,0,,Confidence in Armed forces,Please indicate how much confidence you have in the following: - The armed forces
+ces_2019_online,pes19_conf_inst2_4,2019,0,,Confidence in Public schools,Please indicate how much confidence you have in the following: - Public schools
+ces_2019_online,pes19_conf_inst2_5,2019,0,,Confidence in Big business,Please indicate how much confidence you have in the following: - Big business
+ces_2019_online,pes19_conf_inst2_6,2019,0,,Confidence in Labour unions,Please indicate how much confidence you have in the following: - Labour unions
+ces_2019_online,pes19_conf_inst2_7,2019,0,,Confidence in Public service / civil service,Please indicate how much confidence you have in the following: - The public service
+ces_2019_online,pes19_conf_inst2_8,2019,0,,Confidence in Police,Please indicate how much confidence you have in the following: - The police
+ces_2019_online,pes19_conf_inst2_9,2019,13,,Confidence in Elections Canada,Please indicate how much confidence you have in the following: - Elections Canada
+ces_2019_online,pes19_emb_satif,2019,13,,Satisfaction with way Elections Canada runs federal elections,How satisfied are you with the way Elections Canada runs federal elections?
+ces_2019_online,pes19_emb8,2019,13,,View on whether Elections Canada ran election fairly,"Thinking about this election, would you say that Elections Canada ran the election…"
+ces_2019_online,pes19_internetregis,2019,13,,Views on providing date of birth to complete online voter registration,"To complete voter registration online, electors must provide their date of birth, home address, and driver’s license number on Elections Canada’s website. How comfortable are you with providing this information online to Elections Canada?"
+ces_2019_online,pes19_internetrisk1,2019,13,,Views on security risks of internet voting vs accessibility,Which statement comes closest to your own view?
+ces_2019_online,pes19_internetrisk2,2019,13,,Views on voter turnout impact of internet voting,Which statement comes closest to your own view?
+ces_2019_online,pes19_emb_info,2019,13,,Ease or difficulty of finding voting information,How easy or difficult was it to find the information you needed to vote?
+ces_2019_online,pes19_discfam,2019,0,,Frequency of discussing politics with family and friends,How often do you discuss politics with family and friends?
+ces_2019_online,pes19_discwork,2019,0,,Frequency of discussing politics with work or school colleagues,How often do you discuss politics with people at your work or school?
+ces_2019_online,pes19_disagreed,2019,0,,Frequency of discussing politics with someone who disagrees,"During the last month, how often have you discussed politics with someone who disagreed with your political views?"
+ces_2019_online,pes19_partic1_1,2019,0,,Political participation (past 12 months): Attended a political meeting or speech,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Attended a political meeting or speech
+ces_2019_online,pes19_partic1_2,2019,0,,Political participation (past 12 months): Attended a rally or participated in a protest or demonstration,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Attended a rally or participated in a protest or demonstration
+ces_2019_online,pes19_partic1_3,2019,0,,"Political participation (past 12 months): Boycotted or bought products for ethical, environmental, or political reasons","Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Boycotted or bought products for ethical, environmental, or political reasons"
+ces_2019_online,pes19_partic2_1,2019,0,,Political participation (past 12 months): Followed elected officials or candidates on social media,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Followed any elected officials or candidates for office on social media
+ces_2019_online,pes19_partic2_2,2019,0,,Political participation (past 12 months): Volunteered for a political party or candidate,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Volunteered for a political party or candidate
+ces_2019_online,pes19_partic2_3,2019,0,,"Political participation (past 12 months): Contacted an elected representative (federal, provincial or local/municipal)","Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Contacted an elected representative (federal, provincial or local/municipal)"
+ces_2019_online,pes19_partic2_4,2019,0,,Political participation (past 12 months): Donated money to a political candidate or party,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Donated money to a political candidate or party
+ces_2019_online,pes19_partic3_1,2019,0,,"Civic participation (past 12 months): Volunteered for a group or organization (school, religious organization, sports or community associations)","Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Volunteered for a group or organization like a school, a religious organization, or sports or community associations"
+ces_2019_online,pes19_partic3_2,2019,0,,Civic participation (past 12 months): Donated money to a charitable cause,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Donated money to a charitable cause
+ces_2019_online,pes19_partic3_3,2019,0,,"Civic participation (past 12 months): Been active in another group or organization (e.g. local organization, church, arts or hobby group, women's group)",Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - women’s group)
+ces_2019_online,pes19_partic3_4,2019,0,,"Civic participation (past 12 months): Circulated, (re)posted or commented on political information, news or content online or offline",Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - or offline
+ces_2019_online,pes19_partic3_5,2019,0,,Civic participation (past 12 months): Used social media to discuss politics or political issues,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Used social media to discuss politics or political issues
+ces_2019_online,pes19_partic3_6,2019,0,,Civic participation (past 12 months): Signed a petition in person or online,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Signed a petition in person or online
+ces_2019_online,pes19_mediaelite,2019,0,,View that mainstream news media is controlled by elite interests,Mainstream news media is largely controlled by elite interests.
+ces_2019_online,pes19_medianolie,2019,0,,View that mainstream media journalists never lie,Journalists who work for mainstream news media never lie.
+ces_2019_online,pes19_opinion,2019,13,,View that non-factual opinions should be considered in debate,Even opinions that are not based on fact should be given consideration in public life.
+ces_2019_online,pes19_lookslikeme,2019,0,,View that respondent is better represented by someone who looks like them,I feel that I am better represented by someone who looks like me.
+ces_2019_online,pes19_womenparl,2019,11,,View that protecting women's interests requires more women in Parliament,The best way to protect women's interests is to have more women in Parliament.
+ces_2019_online,pes19_corruption,2019,14,,Perceived prevalence of corruption among politicians,How widespread do you think corruption such as bribe taking is among politicians in Canada?
+ces_2019_online,pes19_populism_1,2019,0,,Self-perceived understanding of important political issues,You feel you understand the most important political issues of this country.
+ces_2019_online,pes19_populism_2,2019,0,,View that political compromise is selling out on principles,What people call compromise in politics is really just selling out on one's principles.
+ces_2019_online,pes19_populism_3,2019,0,,View that most politicians do not care about the people,Most politicians do not care about the people.
+ces_2019_online,pes19_populism_4,2019,0,,View that most politicians are trustworthy,Most politicians are trustworthy.
+ces_2019_online,pes19_populism_5,2019,0,,View that politicians are the main problem in Canada,Politicians are the main problem in Canada.
+ces_2019_online,pes19_populism_6,2019,0,,Support for a strong leader who bends rules to get things done,Having a strong leader in government is good for Canada even if the leader bends the rules to get things done.
+ces_2019_online,pes19_populism_7,2019,0,,"View that the people, not politicians, should make key decisions","The people, and not politicians, should make our most important policy decisions."
+ces_2019_online,pes19_populism_8,2019,0,,View that politicians care only about rich and powerful interests,Most politicians care only about the interests of the rich and powerful.
+ces_2019_online,pes19_nativism2,2019,0,,View that majority will should prevail over minority rights,"The will of the majority should always prevail, even over the rights of minorities."
+ces_2019_online,pes19_nativism3,2019,8,,View that immigrants are generally good for Canada's economy,Immigrants are generally good for Canada's economy.
+ces_2019_online,pes19_canid1,2019,0,,Perceived commonalities with other Canadians,I have a lot in common with other Canadians
+ces_2019_online,pes19_canid2,2019,0,,Frequency of thinking about being Canadian,I often think about the fact that I am Canadian.
+ces_2019_online,pes19_canid3,2019,0,,Pride and gladness in being Canadian,"In general, I am glad to be Canadian"
+ces_2019_online,pes19_sdo1,2019,0,,View that problems would lessen if certain groups stayed in their place,"If certain groups stayed in their place, we would have fewer problems."
+ces_2019_online,pes19_sdo2,2019,0,,View that conditions should be equalized for different groups,We should do what we can to equalize conditions for different groups.
+ces_2019_online,pes19_sdo3,2019,0,,View that group equality should be society's ideal,Group equality should be our ideal.
+ces_2019_online,pes19_sdo4,2019,0,,View that it is good that certain groups are at top and others at bottom,It's probably a good thing that certain groups are at the top and other groups are at the bottom.
+ces_2019_online,pes19_donerm,2019,11,,Views on how much should be done for racial minorities,How much do you think should be done for racial minorities?
+ces_2019_online,pes19_donew,2019,11,,Views on how much should be done for women,How much do you think should be done for women?
+ces_2019_online,pes19_donegl,2019,11,,Views on how much should be done for gays and lesbians,How much do you think should be done for gays and lesbians?
+ces_2019_online,pes19_doneqc,2019,9,,Views on how much should be done for Quebec,How much do you think should be done for Quebec?
+ces_2019_online,pes19_taxes_1,2019,3b,,Fair tax burden rating for Small business,How much should each of the following pay in taxes? - Small business
+ces_2019_online,pes19_taxes_2,2019,3b,,Fair tax burden rating for Big Corporations,How much should each of the following pay in taxes? - Big Corporations
+ces_2019_online,pes19_taxes_3,2019,3b,,Fair tax burden rating for The Middle Class,How much should each of the following pay in taxes? - The Middle Class
+ces_2019_online,pes19_taxes_4,2019,3b,,Fair tax burden rating for Wealthy Canadians,How much should each of the following pay in taxes? - Wealthy Canadians
+ces_2019_online,pes19_taxes_5,2019,3b,,Fair tax burden rating for Poor Canadians,How much should each of the following pay in taxes? - Poor Canadians
+ces_2019_online,pes19_abort1,2019,11,,Abortion attitude: Should abortion be banned (scale 1),Should abortion be banned?
+ces_2019_online,pes19_abort2,2019,11,,Abortion attitude: Should abortion be banned (scale 2),Should abortion be banned?
+ces_2019_online,pes19_abort3,2019,11,,Abortion attitude: Views on whether woman should always have right to abortion,How much do you agree or disagree with the following statement.
+ces_2019_online,pes19_abort4,2019,11,,"Abortion attitude: Position on abortion availability (never, under conditions, always)","Now we would like to get your views on abortion. Of the following three positions, which is closest to your own opinion?"
+ces_2019_online,pes19_abort5,2019,11,,Abortion attitude: Ease or difficulty for women to get an abortion,And now a question on abortion. How easy or difficult should it be for women to get an abortion?
+ces_2019_online,pes19_abort6,2019,11,,Abortion attitude: Decision to have an abortion is between a woman and her doctor,How much do you agree or disagree with the following statement.
+ces_2019_online,pes19_trade,2019,1,,View that international trade creates more jobs than it destroys,International trade creates more jobs in Canada than it destroys.
+ces_2019_online,pes19_privjobs,2019,0,,View that government should leave job creation to private sector,The government should leave it entirely to the private sector to create jobs.
+ces_2019_online,pes19_govt_act_ineq,2019,0,,Support for government measures to reduce income inequality,The government should take measures to reduce differences in income levels.
+ces_2019_online,pes19_deserve1,2019,0,,View that anyone who wants to work can find a job,"If people really want to work, they can find a job."
+ces_2019_online,pes19_deserve2,2019,0,,View that welfare state reduces willingness to look after oneself,The welfare state makes people less willing to look after themselves.
+ces_2019_online,pes19_blame,2019,0,,"View that people who don't get ahead should blame themselves, not system","People who don't get ahead should blame themselves, not the system."
+ces_2019_online,pes19_stdofliving,2019,0,,Role of government in guaranteeing basic standard of living,The government should:
+ces_2019_online,pes19_inequal,2019,0,,View on whether income inequality is a big problem in Canada,Is income inequality a big problem in Canada?
+ces_2019_online,pes19_provfed,2019,9,,Preference for strong provincial vs strong federal government,Which do you prefer:
+ces_2019_online,pes19_hostile2,2019,11,,Hostile sexism scale - women seeking power over men,Women seek to gain power by getting control over men.
+ces_2019_online,pes19_hostile3,2019,11,,Hostile sexism scale - women interpreting remarks as sexist,Most women interpret innocent remarks or acts as being sexist.
+ces_2019_online,pes19_benevolent2,2019,11,,Benevolent sexism scale - women possessing purity,Many women have a quality of purity that few men possess.
+ces_2019_online,pes19_pos_carbon,2019,7,,Federal carbon pricing to reduce greenhouse gas emissions (PES),"To help reduce greenhouse gas emissions, the federal government should continu"
+ces_2019_online,pes19_cc1,2019,7,,Belief that climate change is happening,Do you think that climate change is happening?
+ces_2019_online,pes19_cc2,2019,7,,Perceived main cause of climate change (human vs natural),What do you think is the main cause of climate change?
+ces_2019_online,pes19_pid_close,2019,14,,Usually think of self as close to a federal political party,Do you usually think of yourself as close to any particular federal political party?
+ces_2019_online,pes19_little_close,2019,14,,Feel a little closer to one political party than others,Do you feel yourself a little closer to one of the political parties than the others?
+ces_2019_online,pes19_pid,2019,14,,Federal political party felt closest to,Which party do you feel closest to?
+ces_2019_online,pes19_pid_strength,2019,14,,Strength of closeness felt to political party,How close do you feel to this party?
+ces_2019_online,pes19_pidtrad,2019,14,,Traditional federal party identification,"In federal politics, do you usually think of yourself as a:"
+ces_2019_online,pes19_langQC,2019,9,,Perceived threat to French language in Quebec,"In your opinion, is the French language threatened in Quebec?"
+ces_2019_online,pes19_cultureQC,2019,9,,Perceived threat to French culture in Quebec,"In your opinion, is the French culture threatened in Quebec?"
+ces_2019_online,pes19_qclang,2019,9,,Perceived situation of French language if Quebec separates,"If Quebec separates from Canada, do you think that the situation of the French language in Quebec will..."
+ces_2019_online,pes19_qcsol,2019,9,,Perceived standard of living if Quebec separates,"If Quebec separates from Canada, do you think your standard of living will..."
+ces_2019_online,pes19_newerlife,2019,0,,View that newer lifestyles contribute to breakdown of society,Newer lifestyles are contributing to the breakdown of our society.
+ces_2019_online,pes19_happy,2019,0,,Life satisfaction statement (life close to ideal),"In most ways, my life is close to my ideal."
+ces_2019_online,pes19_satisfied,2019,0,,General satisfaction with life,I am satisfied with my life.
+ces_2019_online,pes19_cognition,2019,0,,Need for cognition (enjoy handling complex thinking tasks),I like to have responsibility for handling situations that require a lot of thinking.
+ces_2019_online,pes19_phealth,2019,0,,Self-rated physical health status,"Compared to other people your age, how would you describe your physical health?"
+ces_2019_online,pes19_mhealth,2019,0,,Self-rated mental health status,"Compared to other people your age, how would you describe your mental health?"
+ces_2019_online,pes19_service_freq,2019,0,,Frequency of religious service attendance,"How often do you attend religious services, excluding special occasions such as weddings and funerals?"
+ces_2019_online,pes19_lived,2019,0,,Years lived in current city or community,For how many years have you lived in your current city or community?
+ces_2019_online,pes19_follow_pol,2019,0,,Frequency of following politics in media,"And how closely do you follow politics on TV, radio, newspapers, or the Internet?"
+ces_2021,cps21_imp_iss_party,2021,14,,Parti le plus compétent pour traiter l'enjeu national principal,Which party is best at addressing this issue?
+ces_2021,cps21_imp_loc_iss_p,2021,14,,Parti le plus compétent pour traiter l'enjeu local principal,Which party is best at addressing this local issue?
+ces_2021,cps21_v_likely,2021,0,,Probabilité d'aller voter le jour du scrutin,"On election day, are you..."
+ces_2021,cps21_v_likely_pr,2021,0,,Probabilité d'aller voter le jour du scrutin,"If you become a Canadian citizen, how likely are you to vote in the first election for which you are eligible?"
+ces_2021,cps21_howvote2,2021,13,,"Mode de vote prévu ou utilisé (bureau de vote, anticipation, poste)",How did you vote?
+ces_2021,cps21_comfort1,2021,6,,Niveau de confort à l'idée de voter en personne ou par la poste,"Regardless of how you plan to vote, how comfortable are you with the idea of voting in person during the coronavirus (COVID-19) pandemic?"
+ces_2021,cps21_comfort2,2021,6,,Niveau de confort à l'idée de voter en personne ou par la poste,"If you decide to vote, how comfortable are you with the idea of voting in person during the coronavirus (COVID-19) pandemic?"
+ces_2021,cps21_comfort3,2021,6,,Niveau de confort à l'idée de voter en personne ou par la poste,"Regardless of how you voted, how comfortable were you with the idea of voting in person during the coronavirus (COVID-19) pandemic?"
+ces_2021,cps21_votechoice,2021,14,,Intention de vote pour l'élection fédérale 2021,Which party do you think you will vote for?
+ces_2021,cps21_votechoice_pr,2021,14,,Intention de vote pour l'élection fédérale 2021,"If you could vote in this election, which party do you think you would vote for?"
+ces_2021,cps21_vote_unlikely,2021,14,,Intention de vote pour l'élection fédérale 2021,"If you decide to vote, which party do you think you will vote for?"
+ces_2021,cps21_v_advance,2021,14,,Intention de vote pour l'élection fédérale 2021,For which party did you vote?
+ces_2021,cps21_2nd_choice,2021,14,,Deuxième choix de parti politique fédéral,And which party would be your second choice?
+ces_2021,cps21_fed_gov_sat,2021,14,,Satisfaction envers la performance du gouvernement fédéral de Justin Trudeau,How satisfied are you with the performance of the federal government under Justin Trudeau?
+ces_2021,cps21_spend_educ,2021,0,,Priorité de dépenses publiques fédérales : Éducation,How much should the federal government spend on education?
+ces_2021,cps21_spend_env,2021,7,,Priorité de dépenses publiques fédérales : Environnement,How much should the federal government spend on the environment?
+ces_2021,cps21_spend_imm_min,2021,8,,Priorité de dépenses publiques fédérales : Immigrants et minorités,How much should the federal government spend on immigrants and minorities?
+ces_2021,cps21_pos_mailtrust,2021,13,,"Confiance et attitudes envers le vote par la poste, par Internet et la sécurité électorale",Voting by mail is equally as trustworthy as voting in person.
+ces_2021,cps21_pos_fptp,2021,13,,Support à la réforme du mode de scrutin (abandon du uninominal à un tour),Canada should change its electoral system from “First Past the Post” to a “proportional representation” system.
+ces_2021,cps21_pos_cannabis,2021,15,,Position sur la criminalisation de la possession de cannabis,Possession of cannabis should be a criminal offence.
+ces_2021,cps21_pos_carbon,2021,7,,Maintien de la tarification fédérale du carbone pour réduire les émissions,"To help reduce greenhouse gas emissions, the federal government should continue the carbon tax."
+ces_2021,cps21_pos_envreg,2021,7,,Réglementation environnementale plus stricte même si cela hausse les prix,"Environmental regulation should be stricter, even if it leads to consumers having to pay higher prices."
+ces_2021,cps21_pos_subsid,2021,3b,,Abolition de toutes les subventions fédérales aux entreprises,The federal government should end all corporate and economic development subsidies.
+ces_2021,cps21_pos_trade,2021,1,,Appui au libre-échange international et à la création d'emplois,"There should be more free trade with other countries, even if it hurts some industries in Canada."
+ces_2021,cps21_covid_liberty,2021,6,12,Perception des restrictions sanitaires de COVID-19 sur les libertés individuelles,The public health recommendations aimed at slowing the spread of the COVID-19 virus are threatening my liberty.
+ces_2021,cps21_econ_retro,2021,3b,,Évaluation rétrospective de l'économie canadienne au cours de la dernière année,"Over the past year, has Canada's economy..."
+ces_2021,cps21_econ_fed_bette,2021,3b,,Impact des politiques du gouvernement fédéral sur l'économie canadienne,Have the policies of the federal government made Canada's economy...
+ces_2021,cps21_issue_handle_1,2021,5,,Parti le plus compétent pour gérer l'enjeu : Santé,Which party would do the best job at handling each of the following issues? - Healthcare
+ces_2021,cps21_issue_handle_2,2021,0,,Parti le plus compétent pour gérer l'enjeu : Éducation,Which party would do the best job at handling each of the following issues? - Education
+ces_2021,cps21_issue_handle_3,2021,7,,Parti le plus compétent pour gérer l'enjeu : Environnement,Which party would do the best job at handling each of the following issues? - Environment
+ces_2021,cps21_issue_handle_4,2021,15,,Parti le plus compétent pour gérer l'enjeu : Criminalité et justice,Which party would do the best job at handling each of the following issues? - Crime and Justice
+ces_2021,cps21_issue_handle_5,2021,2,,Parti le plus compétent pour gérer l'enjeu : Défense nationale,Which party would do the best job at handling each of the following issues? - Defence
+ces_2021,cps21_issue_handle_6,2021,2,,Parti le plus compétent pour gérer l'enjeu : Enjeux autochtones,Which party would do the best job at handling each of the following issues? - International diplomacy
+ces_2021,cps21_issue_handle_7,2021,8,,Parti le plus compétent pour gérer l'enjeu : Immigration,Which party would do the best job at handling each of the following issues? - Immigration and minorities
+ces_2021,cps21_issue_handle_8,2021,6,,Parti le plus compétent pour gérer l'enjeu : Gestion de la COVID-19,Which party would do the best job at handling each of the following issues? - COVID-19 Pandemic
+ces_2021,cps21_issue_handle_9,2021,3b,,Parti le plus compétent pour gérer l'enjeu : Économie,Which party would do the best job at handling each of the following issues? - Economy
+ces_2021,cps21__candidateref,2021,14,,Préférence de victoire pour le candidat dans la circonscription,Which candidate do you want to win the seat in your riding?
+ces_2021,cps21_candidate_imag,2021,14,,Préférence de victoire pour le candidat dans la circonscription,Imagine you were the only voter in the election. Which candidate would you want to win in your riding?
+ces_2021,cps21_outcome_most,2021,14,,Résultat du gouvernement issu des élections le plus souhaité,Which election outcome would you most prefer?
+ces_2021,cps21_outcome_least,2021,14,,Résultat du gouvernement issu des élections le moins souhaité,Which election outcome would you least prefer?
+ces_2021,cps21_minority_gov,2021,14,,Opinion sur les gouvernements minoritaires (bonne vs mauvaise chose),Do you think minority governments are:
+ces_2021,cps21_govt_confusing,2021,0,,Sentiment que la politique et le gouvernement sont trop complexes à comprendre,"Sometimes, politics and government seem so complicated that a person like me can't really understand what's going on."
+ces_2021,cps21_govt_say,2021,0,,Sentiment de n'avoir aucun mot à dire sur les actions du gouvernement,People like me don't have any say about what the government does.
+ces_2021,cps21_pol_eth,2021,0,,Importance d'un comportement éthique de la part des politiciens,It is important that politicians behave ethically in office.
+ces_2021,cps21_lib_promises,2021,14,,Perception du respect des promesses électorales de 2019 par Justin Trudeau,Justin Trudeau kept the election promises he made in 2019.
+ces_2021,cps21_news_cons,2021,0,,Temps quotidien consacré à suivre l'actualité politique,"On average, how much time do you usually spend watching, reading, and listening to news each day?"
+ces_2021,cps21_volunteer,2021,0,,Fréquence des activités de bénévolat dans les 12 derniers mois,"In the past 12 months, how many times did you volunteer for a group or organization such as a school, a religious organization, or sports or community associations?"
+ces_2021,cps21_duty_choice,2021,0,,Perception du vote : devoir civique vs choix personnel,"People have different views about voting. For some, voting is a duty. They feel that they should vote in every election. For others, voting is a choice. They only vote when they feel strongly about that election. For you personally, is voting first and foremost a Duty or a Choice?"
+ces_2021,cps21_quebec_sov,2021,9,,"Attitudes sur la souveraineté du Québec, la langue et la culture françaises","Are you very favourable, somewhat favourable, somewhat opposed, or very opposed to Quebec sovereignty, that is Quebec is no longer a part of Canada?"
+ces_2021,cps21_ownfinanc_fed,2021,3a,,Impact des politiques du gouvernement fédéral sur la situation financière personnelle,Have the policies of the federal government made your financial situation...
+ces_2021,cps21_own_fin_future,2021,3a,,Perspectives d'évolution de la situation financière personnelle pour l'an prochain,"Over the next year, do you think your financial situation will:"
+ces_2021,cps21_groupdiscrim_1,2021,10,,Discrimination perçue au Canada contre les Noirs,How much discrimination is there in Canada against each of the following groups? - Indigenous Peoples
+ces_2021,cps21_groupdiscrim_2,2021,11,,Discrimination perçue au Canada contre les Peuples Autochtones,How much discrimination is there in Canada against each of the following groups? - Black people or people of colour
+ces_2021,cps21_groupdiscrim_3,2021,8,,Discrimination perçue au Canada contre les Asiatiques,How much discrimination is there in Canada against each of the following groups? - Immigrants
+ces_2021,cps21_groupdiscrim_4,2021,11,,Discrimination perçue au Canada contre les Musulmans,How much discrimination is there in Canada against each of the following groups? - Women
+ces_2021,cps21_groupdiscrim_5,2021,11,,Discrimination perçue au Canada contre les Juifs,How much discrimination is there in Canada against each of the following groups? - Men
+ces_2021,cps21_groupdiscrim_6,2021,11,,Discrimination perçue au Canada contre les Femmes,How much discrimination is there in Canada against each of the following groups? - Gays and lesbians
+ces_2021,cps21_groupdiscrim_7,2021,11,,Discrimination perçue au Canada contre les Personnes LGBTQ+,How much discrimination is there in Canada against each of the following groups? - Transgender people
+ces_2021,cps21_groupdiscrim_8,2021,11,,Discrimination perçue au Canada contre les Canadiens français,How much discrimination is there in Canada against each of the following groups? - White people
+ces_2021,cps21_covid_sat_1,2021,6,,Satisfaction quant à la gestion du coronavirus : Gouvernement fédéral,How satisfied are you with how each of the following have handled the coronavirus outbreak? - Federal government
+ces_2021,cps21_covid_sat_2,2021,6,,Satisfaction quant à la gestion du coronavirus : Gouvernement provincial,How satisfied are you with how each of the following have handled the coronavirus outbreak? - Provincial government
+ces_2021,cps21_covid_sat_3,2021,6,,Satisfaction quant à la gestion du coronavirus : Autorités locales de santé,How satisfied are you with how each of the following have handled the coronavirus outbreak? - Local government
+ces_2021,cps21_vaccine_mandat_1,2021,6,,Passeport ou obligation vaccinale COVID-19 : Transports aériens ou ferroviaires,Should vaccination be required to: - Travel by air or rail in Canada
+ces_2021,cps21_vaccine_mandat_2,2021,6,,Passeport ou obligation vaccinale COVID-19 : Bars et restaurants,Should vaccination be required to: - Go to a bar or restaurant
+ces_2021,cps21_vaccine_mandat_3,2021,6,,Passeport ou obligation vaccinale COVID-19 : Milieu hospitalier,Should vaccination be required to: - Work in a hospital
+ces_2021,cps21_vaccine1,2021,6,,Statut et intentions de vaccination contre la COVID-19,Have you been vaccinated?
+ces_2021,cps21_vaccine2,2021,6,,Statut et intentions de vaccination contre la COVID-19,Are you eligible to be vaccinated?
+ces_2021,cps21_vaccine3,2021,6,,Statut et intentions de vaccination contre la COVID-19,Are you:
+ces_2021,cps21_fed_id,2021,14,,Identification à un parti politique fédéral et force de l'attachement,"In federal politics, do you usually think of yourself as a:"
+ces_2021,cps21_spoil,2021,13,,Annulation intentionnelle du bulletin de vote dans le passé,Have you ever intentionally spoiled your ballot in an election (e.g. intentionally filled out your ballot so your vote would not be counted for any candidate)?
+ces_2021,cps21_turnout_2019,2021,0,,Participation à l'élection fédérale de 2019,Did you happen to vote in the last Federal election in 2019?
+ces_2021,cps21_vote_2019,2021,14,,Parti pour lequel le répondant a voté à l'élection fédérale de 2019,Which party did you vote for in the Federal election in 2019?
+ces_2021,cps21_debate_fr,2021,0,,Écoute ou visionnement du débat des chefs en français,Did you happen to watch or listen to the French-language federal leaders' debate on Thursday September 2nd?
+ces_2021,cps21_debate_fr2,2021,0,,Écoute ou visionnement du débat des chefs en français,"And what about the French-language federal leaders' debate on Wednesday, September 8th? Did you happen to watch or listen to it?"
+ces_2021,cps21_debate_en,2021,0,,Écoute ou visionnement du débat des chefs en anglais,Did you happen to watch or listen to the English-language federal leaders' debate on Wednesday September 9th?
+ces_2021,cps21_residential_2a,2021,10,,"Attitudes envers les Peuple Autochtones, la réconciliation et les pensionnats",Accelerate progress on the calls to action from the truth and reconciliation commission.
+ces_2021,cps21_residential_2b,2021,10,,"Attitudes envers les Peuple Autochtones, la réconciliation et les pensionnats",Federal government funding to identify unmarked graves at all former residential schools.
+ces_2021,cps21_residential_2c,2021,10,,"Attitudes envers les Peuple Autochtones, la réconciliation et les pensionnats",All governments ceasing court actions against residential school survivors and first nations children.
+ces_2021,cps21_residential_2d,2021,10,,"Attitudes envers les Peuple Autochtones, la réconciliation et les pensionnats",Renaming buildings and institutions that are named for people who built or ran parts of the residential school system.
+ces_2021,cps21_rel_imp,2021,0,,Importance de la religion dans la vie,"In your life, you would say religion is:"
+ces_2021,cps21_two_spirit,2021,0,,Identité Bi-spirituelle (Two-Spirit),Are you Two-Spirit?
+ces_2021,pes21_turnout2021,2021,0,,Participation à l'élection fédérale du 20 septembre 2021,"The federal election was held on Monday, September 20. In any election, some people are not able to vote because they are sick or busy, or for some other reason. Others do not want to vote. Did you vote in the recent federal election?"
+ces_2021,pes21_notvotereason1,2021,0,,Principale raison de la non-participation au scrutin,What is the main reason you did not vote?
+ces_2021,pes21_howvote,2021,13,,"Mode de vote prévu ou utilisé (bureau de vote, anticipation, poste)",There are many options for people wanting to vote in an election. How did you vote?
+ces_2021,pes21_votingsafe,2021,6,,Sentiment de sécurité sanitaire lors du vote en personne,How safe did you feel voting in person?
+ces_2021,pes_maileasy,2021,13,,Évaluation de la facilité du vote par la poste,Did you find the process of requesting a mail-in ballot and voting by mail easy or difficult?
+ces_2021,Q145,2021,13,,Facilité d'utilisation du bulletin de vote par la poste,"Specifically regarding your mail-in ballot, how easy or difficult was it for you to find the information you needed to complete the mail-in ballot?"
+ces_2021,pes21_votechoice2021,2021,14,,Parti pour lequel le répondant a voté le 20 septembre 2021,Which party did you vote for?
+ces_2021,pes21_resason_chose,2021,14,,"Raison principale du choix de parti au scrutin (politiques, chef, candidat)",What was the most important reason for choosing this party?
+ces_2021,pes21_when_decide,2021,14,,"Moment de la prise de décision de vote (avant/pendant la campagne, jour J)",When did you decide that you were going to vote for this party?
+ces_2021,pes21_campatt,2021,0,,Attention accordée à la campagne électorale fédérale,How much attention did you pay to the election campaign?
+ces_2021,pes21_contact1,2021,0,,Contact du répondant par les partis ou candidats pendant la campagne,"During the campaign, did a party or candidate contact you in person or by any other means?"
+ces_2021,pes21_formgovt,2021,13,,Principe de légitimité pour former le gouvernement (sièges vs votes),Which should be more important to forming the government in Canada:
+ces_2021,pes21_keepromises,2021,14,,Perception générale du respect des promesses électorales par les partis,Do political parties keep their election promises?
+ces_2021,pes21_paymed,2021,5,,"Attitudes sur le rôle de l'État dans la santé, l'emploi et la réduction des inégalités",People who are willing to pay should be allowed to get medical treatment sooner.
+ces_2021,pes21_senate,2021,14,,Position sur l'abolition du Sénat du Canada,The Senate should be abolished.
+ces_2021,pes21_losetouch,2021,0,,Sentiment que les députés élus perdent rapidement le contact avec les citoyens,Those elected to Parliament soon lose touch with the people.
+ces_2021,pes21_hatespeech,2021,12,,Interdiction légale du discours haineux visant les groupes minoritaires,"It should be illegal to say hateful things publicly about racial, ethnic and religious groups."
+ces_2021,pes21_govtcare,2021,0,,Sentiment que le gouvernement ne se soucie pas de l'opinion des citoyens,The government does not care much about what people like me think.
+ces_2021,pes21_bilingualism,2021,9,,Position sur la promotion du bilinguisme officiel au Canada,We have gone too far in pushing bilingualism in Canada.
+ces_2021,pes21_equalrights,2021,11,,"Attitudes envers l'égalité des sexes, les droits des femmes et des minorités",We have gone too far in pushing equal rights in this country.
+ces_2021,pes21_ab_favors,2021,10,,"Attitudes envers les Peuple Autochtones, la réconciliation et les pensionnats","Irish, Italian, Jewish and many other minorities overcame prejudice and worked their way up. Aboriginal peoples in Canada should do the same without any special favors."
+ces_2021,pes21_ab_col,2021,10,,"Attitudes envers les Peuple Autochtones, la réconciliation et les pensionnats",Generations of colonialism and discrimination have created conditions that make it difficult for Aboriginal peoples to work their way out of the lower class.
+ces_2021,pes21_tieus,2021,1,,Orientation des relations internationales du Canada (avec États-Unis / Chine),Do you think Canada's ties with the United States should be...
+ces_2021,pes21_tiechina,2021,2,,Orientation des relations internationales du Canada (avec États-Unis / Chine),Do you think Canada's ties with China should be...
+ces_2021,pes21_ethid_1,2021,0,,"Importance accordée à l'identité canadienne, ethnique et linguistique",How important are the following things to your identity? - Being Canadian
+ces_2021,pes21_ethid_2,2021,0,,"Importance accordée à l'identité canadienne, ethnique et linguistique",How important are the following things to your identity? - Your ethnicity
+ces_2021,pes21_ethid_3,2021,0,,"Importance accordée à l'identité canadienne, ethnique et linguistique",How important are the following things to your identity? - Your language
+ces_2021,pes21_can_id_1,2021,0,,"Importance accordée à l'identité canadienne, ethnique et linguistique",Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - To have been born in Canada.
+ces_2021,pes21_can_id_2,2021,0,,"Importance accordée à l'identité canadienne, ethnique et linguistique",Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - For your grandparents to have been born in Canada.
+ces_2021,pes21_can_id_3,2021,0,,"Importance accordée à l'identité canadienne, ethnique et linguistique",Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - To follow Canada's customs and traditions.
+ces_2021,pes21_can_id_4,2021,0,,"Importance accordée à l'identité canadienne, ethnique et linguistique",Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - To follow Canada's institutions and laws
+ces_2021,pes21_can_id_5,2021,0,,"Importance accordée à l'identité canadienne, ethnique et linguistique",Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - To care about the needs of other Canadians
+ces_2021,pes21_can_id_6,2021,0,,"Importance accordée à l'identité canadienne, ethnique et linguistique",Some people say that the following things are important for being truly Canadian. Others say they are not important. How important do you think the following is for being truly Canadian... - To contribute one's fair share of taxes
+ces_2021,pes21_conf_inst1_1,2021,0,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - The federal government
+ces_2021,pes21_conf_inst1_2,2021,0,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - Your provincial or territorial government
+ces_2021,pes21_conf_inst1_3,2021,0,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - The media
+ces_2021,pes21_conf_inst1_4,2021,13,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - Elections Canada
+ces_2021,pes21_conf_inst2_1,2021,0,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - The courts
+ces_2021,pes21_conf_inst2_2,2021,0,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - Organized religion
+ces_2021,pes21_conf_inst2_3,2021,0,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - The armed forces
+ces_2021,pes21_conf_inst2_4,2021,0,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - Public schools
+ces_2021,pes21_conf_inst2_5,2021,0,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - The public service
+ces_2021,pes21_conf_inst2_6,2021,0,,"Confiance envers les institutions (gouvernement, médias, justice, police, armée)",Please indicate how much confidence you have in the following: - The police
+ces_2021,pes21_emb_none,2021,13,,Attitudes et évaluation de l'administration des élections par Élections Canada,Election ballots should have the option 'None of the above' for those who do not support any of the candidates.
+ces_2021,pes21_internetvote1,2021,13,,"Confiance et attitudes envers le vote par la poste, par Internet et la sécurité électorale",Canadians should have the option to vote over the Internet in federal elections.
+ces_2021,pes21_internetvote2,2021,13,,"Confiance et attitudes envers le vote par la poste, par Internet et la sécurité électorale","If you could vote over the internet, how likely would you be to do so?"
+ces_2021,pes21_foreign,2021,13,,"Confiance et attitudes envers le vote par la poste, par Internet et la sécurité électorale",How confident are you that our elections are safe from foreign interference?
+ces_2021,pes21_emb_satif,2021,13,,Attitudes et évaluation de l'administration des élections par Élections Canada,How satisfied are you with the way Elections Canada runs federal elections?
+ces_2021,pes21_emb8,2021,13,,Attitudes et évaluation de l'administration des élections par Élections Canada,"Thinking about this election, would you say that Elections Canada ran the election…"
+ces_2021,pes21_internetregis,2021,13,,"Confiance et attitudes envers le vote par la poste, par Internet et la sécurité électorale","To complete voter registration online, electors must provide their date of birth, home address, and driver’s license number on Elections Canada’s website. How comfortable are you with providing this information online to Elections Canada?"
+ces_2021,pes21_internetrisk1,2021,13,,"Confiance et attitudes envers le vote par la poste, par Internet et la sécurité électorale",Which statement comes closest to your own view?
+ces_2021,pes21_internetrisk2,2021,13,,"Confiance et attitudes envers le vote par la poste, par Internet et la sécurité électorale",Which statement comes closest to your own view?
+ces_2021,pes21_emb_register2,2021,0,,Attitudes et évaluation de l'administration des élections par Élections Canada,Did you register to vote during the election?
+ces_2021,pes21_emb_info,2021,13,,Attitudes et évaluation de l'administration des élections par Élections Canada,How easy or difficult was it to find the information you needed to vote?
+ces_2021,pes21_embsatisfy,2021,13,,Attitudes et évaluation de l'administration des élections par Élections Canada,"Overall, how satisfied were you with your voting experience?"
+ces_2021,pes21_discfam,2021,0,,Fréquence des discussions politiques avec la famille et les amis,How often do you discuss politics with family and friends?
+ces_2021,pes21_partic1_1,2021,0,,Activités de participation et d'engagement politique,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Attended a political meeting or speech
+ces_2021,pes21_partic1_2,2021,0,,Activités de participation et d'engagement politique,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Attended a rally or participated in a protest or demonstration
+ces_2021,pes21_partic1_3,2021,0,,Activités de participation et d'engagement politique,"Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Boycotted or bought products for ethical, environmental, or political reasons"
+ces_2021,pes21_partic1_4,2021,0,,Activités de participation et d'engagement politique,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Signed a petition in person or online
+ces_2021,pes21_partic2_1,2021,0,,Activités de participation et d'engagement politique,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Followed any elected officials or candidates for office on social media
+ces_2021,pes21_partic2_2,2021,0,,Activités de participation et d'engagement politique,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Volunteered for a political party or candidate
+ces_2021,pes21_partic2_3,2021,0,,Activités de participation et d'engagement politique,"Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Contacted an elected representative (federal, provincial or local/municipal)"
+ces_2021,pes21_partic2_4,2021,0,,Activités de participation et d'engagement politique,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Donated money to a political candidate or party
+ces_2021,pes21_partic3_1,2021,0,,Activités de participation et d'engagement politique,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Donated money to a charitable cause
+ces_2021,pes21_partic3_2,2021,0,,Activités de participation et d'engagement politique,"Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Been active in another group or organization (e.g. local organization, church, arts or hobby group, women’s group)"
+ces_2021,pes21_partic3_3,2021,0,,Activités de participation et d'engagement politique,"Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Circulated, (re)posted or commented on political information, news or content online or offline"
+ces_2021,pes21_partic3_4,2021,0,,Activités de participation et d'engagement politique,Here are some things people can do to participate in politics. Please indicate how many times you've done these things over the past 12 months. - Used social media to discuss politics or political issues
+ces_2021,pes21_womenparl,2021,11,,"Attitudes envers l'égalité des sexes, les droits des femmes et des minorités",The best way to protect women's interests is to have more women in Parliament.
+ces_2021,pes21_populism_2,2021,0,,Attitudes populistes envers les politiciens et les élites,What people call compromise in politics is really just selling out on one's principles.
+ces_2021,pes21_populism_3,2021,0,,Attitudes populistes envers les politiciens et les élites,Most politicians do not care about the people.
+ces_2021,pes21_populism_4,2021,0,,Attitudes populistes envers les politiciens et les élites,Most politicians are trustworthy.
+ces_2021,pes21_populism_6,2021,0,,Attitudes populistes envers les politiciens et les élites,Having a strong leader in government is good for Canada even if the leader bends the rules to get things done.
+ces_2021,pes21_populism_7,2021,0,,Attitudes populistes envers les politiciens et les élites,"The people, and not politicians, should make our most important policy decisions."
+ces_2021,pes21_populism_8,2021,0,,Attitudes populistes envers les politiciens et les élites,Most politicians care only about the interests of the rich and powerful.
+ces_2021,pes21_donerm,2021,11,,"Attitudes envers l'égalité des sexes, les droits des femmes et des minorités",How much do you think should be done for racial minorities?
+ces_2021,pes21_donew,2021,11,,"Attitudes envers l'égalité des sexes, les droits des femmes et des minorités",How much do you think should be done for women?
+ces_2021,pes21_donegl,2021,11,,"Attitudes envers l'égalité des sexes, les droits des femmes et des minorités",How much do you think should be done for gays and lesbians?
+ces_2021,pes21_doneqc,2021,9,,"Attitudes sur la souveraineté du Québec, la langue et la culture françaises",How much do you think should be done for Quebec?
+ces_2021,pes21_abort2,2021,11,,Prises de position sur l'aide médicale à mourir et l'avortement,Should abortion be banned?
+ces_2021,pes21_conversion_the,2021,11,,Position sur l'interdiction des thérapies de conversion,Conversion therapy is when mental health practitioners try to change a LGBTQ person’s sexual orientation or gender identity. Do you think that conversion therapy should be legal or illegal to use on LGBTQ children under age 18?
+ces_2021,pes21_trade,2021,1,,Appui au libre-échange international et à la création d'emplois,International trade creates more jobs in Canada than it destroys.
+ces_2021,pes21_privjobs,2021,0,,"Attitudes sur le rôle de l'État dans la santé, l'emploi et la réduction des inégalités",The government should leave it entirely to the private sector to create jobs.
+ces_2021,pes21_blame,2021,0,,"Attitudes sur le rôle de l'État dans la santé, l'emploi et la réduction des inégalités","People who don't get ahead should blame themselves, not the system."
+ces_2021,pes21_stdofliving,2021,0,,"Attitudes sur le rôle de l'État dans la santé, l'emploi et la réduction des inégalités",The government should:
+ces_2021,pes21_trust,2021,0,,Niveau de confiance générale envers les personnes,"Generally speaking would you say that most people can be trusted, or that you need to be very careful when dealing with people?"
+ces_2021,pes21_inequal,2021,3b,,"Attitudes sur le rôle de l'État dans la santé, l'emploi et la réduction des inégalités",Is income inequality a big problem in Canada?
+ces_2021,pes21_prov_treatment,2021,9,,Attitudes envers le traitement des provinces et la répartition des pouvoirs fédéraux,"In general, does the federal government treat your province..."
+ces_2021,pes21_provfed,2021,9,,Attitudes envers le traitement des provinces et la répartition des pouvoirs fédéraux,Which do you prefer:
+ces_2021,pes21_hostile2,2021,0,,"Attitudes envers l'égalité des sexes, les droits des femmes et des minorités",Women seek to gain power by getting control over men.
+ces_2021,pes21_pos_carbon,2021,7,,Maintien de la tarification fédérale du carbone pour réduire les émissions,"To help reduce greenhouse gas emissions, the federal government should continue the carbon tax."
+ces_2021,pes21_cc1,2021,7,,Perception de la réalité du changement climatique,Do you think that climate change is happening?
+ces_2021,pes21_cc2,2021,7,,Perception de la cause principale du changement climatique (humaine vs naturelle),What do you think is the main cause of climate change?
+ces_2021,pes21_pidtrad,2021,14,,Identification à un parti politique fédéral et force de l'attachement,"In federal politics, do you usually think of yourself as a:"
+ces_2021,pes21_langQC,2021,9,,"Attitudes sur la souveraineté du Québec, la langue et la culture françaises","In your opinion, is the French language threatened in Quebec?"
+ces_2021,pes21_cultureQC,2021,9,,"Attitudes sur la souveraineté du Québec, la langue et la culture françaises","In your opinion, is the French culture threatened in Quebec?"
+ces_2021,pes21_qclang,2021,9,,"Attitudes sur la souveraineté du Québec, la langue et la culture françaises","If Quebec separates from Canada, do you think that the situation of the French language in Quebec will..."
+ces_2021,pes21_qcsol,2021,9,,"Attitudes sur la souveraineté du Québec, la langue et la culture françaises","If Quebec separates from Canada, do you think your standard of living will..."
+ces_2021,pes21_newerlife,2021,0,,Attitudes envers les nouveaux modes de vie et la cohésion sociale,Newer lifestyles are contributing to the breakdown of our society.
+ces_2021,pes21_cognition,2021,0,,Besoin de cognition et attirance pour la réflexion complexe,I like to have responsibility for handling situations that require a lot of thinking.
+ces_2021,pes21_phealth,2021,0,,Évaluation de la santé physique,"Compared to other people your age, how would you describe your physical health?"
+ces_2021,pes21_mhealth,2021,0,,Évaluation de la santé mentale,"Compared to other people your age, how would you describe your mental health?"
+ces_2021,pes21_service_freq,2021,0,,Fréquence d'assistance aux services religieux,"How often do you attend religious services, excluding special occasions such as weddings and funerals?"
+ces_2021,pes21_follow_pol,2021,0,,Suivi de la politique dans les médias d'information,"And how closely do you follow politics on TV, radio, newspapers, or the Internet?"
+dc_2019,citizenship,2019,0,,,Are you a...
+dc_2019,vote_intention,2019,14,,,Which party do you intend to vote for in the federal election in October?
+dc_2019,political_interest_1,2019,0,,,"How interested are you in politics GENERALLY? Set the slider to a number from 0 to 10, where 0 means no interest at all, and 10 means a great deal of interest. No interest at A great deal of Don't know/ answer"
+dc_2019,news_time_spent,2019,0,,,"On average, how much time do you usually spend watching, reading, and listening to news each day?"
+dc_2019,social_media_freq,2019,0,,,How often do use social media like Facebook or Twitter?
+dc_2019,discuss_pol_freq,2019,0,,,How often do you discuss politics with family and friends?
+dc_2019,discuss_pol_disagree,2019,0,,,"During the last month, have you discussed politics with someone who disagreed with your political views?"
+dc_2019,discuss_pol_dis_freq,2019,0,,,How many times in the last month did you discuss politics with someone who disagreed with your political views?
+dc_2019,party_id,2019,14,,,"In federal politics, do you usually think of yourself as a:"
+dc_2019,pid_connection,2019,0,,,"When you meet someone who supports your party, do you feel a kind of instant connection with that person?"
+dc_2019,pid_insult,2019,0,,,"If someone you know criticizes your party, do you feel personally insulted?"
+dc_2019,pos_representation,2019,0,,,How much do you agree or disagree with the following statement? Electing people to represent citizens is the best way for a country to make decisions.
+dc_2019,pos_no_difference,2019,0,,,How much do you agree or disagree with the following statement? Elections make no difference to what happens in this country.
+dc_2019,pos_equal_rights,2019,11,,,How much do you agree or disagree with the following statement? We have gone too far in pushing equal rights in this country.
+dc_2019,pos_women_home,2019,11,,,How much do you agree or disagree with the following statement? Society would be better off if fewer women worked outside the home.
+dc_2019,pos_hate_speech,2019,12,,,"How much do you agree or disagree with the following statement? It should be illegal to say hateful things publicly about racial, ethnic and religious groups."
+dc_2019,pos_experts,2019,0,,,How much do you agree or disagree with the following statement? I’d rather put my trust in the wisdom of ordinary people than the opinions of experts and intellectuals.
+dc_2019,pos_lose_touch,2019,0,,,How much do you agree or disagree with the following statement? Those elected to Parliament soon lose touch with the people.
+dc_2019,pos_politicians_lie,2019,0,,,How much do you agree or disagree with the following statement? Politicians are willing to lie to get elected.
+dc_2019,pos_career_pol,2019,0,,,"How much do you agree or disagree with the following statement? Ordinary people, not career politicians, should make our most important policy decisions."
+dc_2019,pos_limit_protests,2019,12,,,How much do you agree or disagree with the following statement? Political protests are disruptive and should be limited.
+dc_2019,pos_imm_lang,2019,8,,,How much do you agree or disagree with the following statement? Speaking English or French should be a requirement for immigration to Canada.
+dc_2019,pos_bilingualism,2019,9,,,How much do you agree or disagree with the following statement? We have gone too far in pushing bilingualism in Canada.
+dc_2019,pos_group_id,2019,0,,,How much do you agree or disagree with the following statement? My ethnicity and language are important parts of my identity.
+dc_2019,pos_look_after,2019,8,,,How much do you agree or disagree with the following statement? We should look after Canadians born in this country first and others second.
+dc_2019,social_network_size,2019,0,,,"Thinking about people who are NOT family members or relatives, how many close friends do you have?"
+dc_2019,social_network_freq,2019,0,,,"In an average month, how often do you get together in person with your close friends?"
+dc_2019,least_liked_group,2019,0,,,"Thinking about the groups listed below, which would you say that you disagree with the most?"
+dc_2019,abortion,2019,11,,,Should abortion be banned?
+dc_2019,pos_govt_care,2019,0,,,How much do you agree or disagree with the following statement? The government does not care much about what people like me think.
+dc_2019,pos_govt_complicated,2019,0,,,"How much do you agree or disagree with the following statement? Sometimes, politics and government seem so complicated that a person like me can't really understand what's going on."
+dc_2019,pos_govt_say,2019,0,,,How much do you agree or disagree with the following statement? People like me don't have any say about what the government does.
+dc_2019,pos_offensive_speech,2019,12,,,How much do you agree or disagree with the following statement? People should be able to say what they think even if it offends some people.
+dc_2019,pos_govt_effective,2019,0,,,How much do you agree or disagree with the following statement? Governments used to be better at getting things done.
+dc_2019,pos_family_values,2019,0,,,How much do you agree or disagree with the following statement? This country would have many fewer problems if there was more emphasis on traditional family values.
+dc_2019,pos_govt_jobs,2019,0,,,How much do you agree or disagree with the following statement? The government should leave it ENTIRELY to the private sector to create jobs.
+dc_2019,ties_us,2019,1,,,"Do you think Canada's ties with the United States should be much closer, somewhat closer, about the same as now, somewhat more distant, or much more distant?"
+dc_2019,ties_china,2019,2,,,"Do you think Canada's ties with China should be much closer, somewhat closer, about the same as now, somewhat more distant, or much more distant?"
+dc_2019,internet_voting,2019,13,,,Which statement comes closest to your own view?
+dc_2019,turnout_2015,2019,0,,,Did you happen to vote in the last Federal election in 2015?
+dc_2019,vote_2015,2019,14,,,Which party did you vote for in the Federal election in 2015?
+dc_2019,trust1,2019,0,,,"When dealing with other people, which statement comes closest to your own views?"
+dc_2019,residence_length,2019,0,,,For how many years have you lived in your current city or community?
+dc_2019,canada_born,2019,0,,,Were you born in Canada?
+dc_2019,health,2019,0,,,"Compared to other people your age, how would you describe your health?"
+dc_2019,child_tax_benefit,2019,0,,,Do you receive the Child Tax Benefit?
+dc_2019,religion_import,2019,0,,,"In your life, you would say religion is:"
+dc_2020,dc20_citizenship,2020,0,,,Are you a...
+dc_2020,dc20_vote_choice,2020,14,,,"If an election were held today, which party would you be most likely to vote for?"
+dc_2020,dc20_fed_gov_satisfa,2020,14,,,How satisfied are you with the performance of the federal government under Justin Trudeau?
+dc_2020,dc20_pos_equal_1,2020,11,,,We have gone too far in pushing equal rights in this country.
+dc_2020,dc20_pos_equal_2,2020,11,,,Our society should do whatever is necessary to make sure that everyone has an equal opportunity to succeed.
+dc_2020,dc20_womenparl,2020,11,,,The best way to protect women's interests is to have more women in Parliament.
+dc_2020,dc20_pos_experts,2020,0,,,I’d rather put my trust in the wisdom of ordinary people than the opinions of experts and intellectuals.
+dc_2020,dc20_pos_lose_touch,2020,0,,,Those elected to Parliament soon lose touch with the people.
+dc_2020,dc20_pos_pol_lie,2020,0,,,Politicians are willing to lie to get elected.
+dc_2020,dc20_pos_career_pol,2020,0,,,"Ordinary people, not career politicians, should make our most important policy decisions."
+dc_2020,dc20_soc_fair,2020,0,,,"In general, Canadian society is fair."
+dc_2020,dc20_pol_sys,2020,0,,,"In general, the Canadian political system operates as it should."
+dc_2020,dc20_sdo2,2020,0,,,We should do what we can to equalize conditions for different groups.
+dc_2020,dc20_sdo5,2020,0,,,Some groups of people are simply inferior to other groups.
+dc_2020,dc20_canid1,2020,0,,,I have a lot in common with other Canadians
+dc_2020,dc20_canid2,2020,0,,,I often think about the fact that I am Canadian.
+dc_2020,dc20_pos_group_id,2020,0,,,My ethnicity is an important part of my identity.
+dc_2020,dc20_pos_take_jobs_0,2020,8,,,We should look after Canadians born in this country first and others second.
+dc_2020,dc20_pos_ab_favours,2020,10,,,"Irish, Italian, Jewish and many other minorities overcame prejudice and worked their way up. Indigenous peoples in Canada should do the same without any special favors."
+dc_2020,dc20_pos_ab_deserve,2020,10,,,"Over the past few years, Indigenous peoples have gotten less than they deserve."
+dc_2020,dc20_pos_ab_colonial,2020,10,,,Generations of colonialism and discrimination have created conditions that make it difficult for Indigenous peoples to work their way out of poverty.
+dc_2020,dc20_pos_bilingualis,2020,9,,,We have gone too far in pushing bilingualism in Canada.
+dc_2020,dc20_pos_govt_effect,2020,0,,,Governments used to be better at getting things done.
+dc_2020,dc20_pos_no_differen,2020,0,,,Elections make no difference to what happens in this country.
+dc_2020,dc20_cc1,2020,7,,,Do you think that climate change is happening?
+dc_2020,dc20_cc2,2020,7,,,What do you think is the main cause of climate change?
+dc_2020,dc20_news_time_spent,2020,0,,,"On average, how much time do you usually spend watching, reading, and listening to news each day?"
+dc_2020,dc20_soc_media_freq,2020,0,,,How often do you use social media like Facebook or Twitter?
+dc_2020,dc20_disc_pol_freq,2020,0,,,How often do you discuss politics with family and friends?
+dc_2020,dc20_disc_pol_disag,2020,0,,,"During the last month, how often have you discussed politics with someone who disagreed with your political views?"
+dc_2020,dc20_soc_net_size,2020,0,,,"Thinking about people who are not family members or relatives, how many close friends do you have?"
+dc_2020,dc20_soc_net_freq,2020,0,,,"In an average month, how often would you normally get together in person with your close friends?"
+dc_2020,dc20_group_empath_1,2020,0,,,How often would you say you try to better understand people of other racial or ethnic groups by imagining how things look from their perspective?
+dc_2020,dc20_group_empath_2,2020,0,,,"Before criticizing somebody from another racial or ethnic group, how often do you try to imagine how you would feel if you were in their place?"
+dc_2020,dc20_pos_govt_care,2020,0,,,The government does not care much about what people like me think.
+dc_2020,dc20_pos_govt_comp,2020,0,,,"Sometimes, politics and government seem so complicated that a person like me can't really understand what's going on."
+dc_2020,dc20_pos_govt_say,2020,0,,,People like me don't have any say about what the government does.
+dc_2020,dc20_newerlife,2020,0,,,Newer lifestyles are contributing to the breakdown of our society.
+dc_2020,dc20_pos_govt_jobs,2020,0,,,The government should leave it entirely to the private sector to create jobs.
+dc_2020,dc20_ties_us,2020,1,,,"Do you think Canada's ties with the United States should be much closer, somewhat closer, about the same as now, somewhat more distant, or much more distant?"
+dc_2020,dc20_ties_china,2020,2,,,"Do you think Canada's ties with China should be much closer, somewhat closer, about the same as now, somewhat more distant, or much more distant?"
+dc_2020,dc20_party_id,2020,14,,,"In federal politics, do you usually think of yourself as a:"
+dc_2020,dc20_turnout_2019,2020,0,,,Did you happen to vote in the last Federal election in 2019?
+dc_2020,dc20_vote_2019,2020,14,,,Which party did you vote forin the Federal election in 2019?
+dc_2020,dc20_covid_sac,2020,6,,,"Everyone is making different kinds of sacrifices during the coronavirus pandemic. Do you think most people are making more, less or about the same amount of sacrifices as you?"
+dc_2020,dc20_covid_essential,2020,0,,,Are you or someone in your family an essential worker?
+dc_2020,dc20_covid_health,2020,0,,,Do you or someone in your family work in healthcare?
+dc_2020,dc20_covid_financial,2020,6,3a,,"Is your household's current economic situation better, worse or about the same as before the coronavirus pandemic began in Canada?"
+dc_2020,dc20_covid_economic,2020,6,3a,,How worried are you that your household's economic situation will be negatively affected by the coronavirus pandemic?
+dc_2020,dc20_covid_access,2020,6,,,"How worried are you that your household will have difficulty accessing basic goods, such as food or medicine, due to the coronavirus pandemic?"
+dc_2020,dc20_covid_risk,2020,6,,,"Thinking about the risk to you or your family of contracting COVID-19, would you say you are…"
+dc_2020,dc20_covid_positive,2020,6,,,Have you or someone you know tested positive or presumed positive for COVID-19?
+dc_2020,dc20_feminist,2020,11,,,"Do you consider yourself to be a strong feminist, not a very strong feminist, or not a feminist at all?"
+dc_2020,dc20_hostile3,2020,0,,,Most women interpret innocent remarks or acts as being sexist.
+dc_2020,dc20_benevolent2,2020,0,,,Many women have a quality of purity that few men possess.
+dc_2020,dc20_childhood_care,2020,0,,,Women are taught from childhood how to care for children.
+dc_2020,dc20_prostitution,2020,15,,,Would you favour or oppose decriminalizing prostitution?
+dc_2020,dc20_ban_abortion,2020,11,,,Should abortion be banned?
+dc_2020,dc20_norms_protest,2020,12,,,Some groups should not be allowed to protest.
+dc_2020,dc20_norms_tone,2020,12,,,It is not necessary to maintain a respectful tone in political debate.
+dc_2020,dc20_norms_govern,2020,12,,,It is acceptable for the Prime Minister to govern without Parliament if there is a national emergency.
+dc_2020,dc20_covid_norm_pers,2020,6,,,"People have different views about the public health recommendations aimed at slowing the spread of COVID-19. For some, adhering to the recommendations is a duty, they feel they should follow them to help protect the health of Canadians. For others, adhering to them is a choice. For you personally, i"
+dc_2020,dc20_covid_norm_subj,2020,6,,,Do you think that most Canadians think adhering to the public health recommendations is first and foremost a duty or choice?
+dc_2020,dc20_covid_preval,2020,6,,,What percentage of the Canadian population do you think has or has had COVID-19?
+dc_2020,dc20_covid_alcant_1,2020,6,,,Which level of government tests for COVID-19 in Canada?
+dc_2020,dc20_covid_alcant_2a,2020,6,,,"In your opinion, has there been adequate testing for COVID-19 in the area in which you live?"
+dc_2020,dc20_covid_eval,2020,6,,,Has the Public Health Agency of Canada's list of recommendations aimed at slowing the spread of COVID-19...
+dc_2020,dc20_covid_liberty,2020,6,12,,The public health recommendations aimed at slowing the spread of the COVID-19 virus are threatening my liberty.
+dc_2020,dc20_covid_rights,2020,12,6,,"In a crisis, our political leaders should be allowed to violate individual rights."
+dc_2020,dc20_covid_protect,2020,3b,,,Canadian businesses should produce their goods first and foremost for the Canadian market
+dc_2020,dc20_covid_trade,2020,1,,,"In 2018 Canada, the United States and Mexico signed a new trade agreement to replace NAFTA, which has recently been ratified in Parliament. Has free trade between Canada, the United States and Mexico been good or bad for the Canadian economy?"
+dc_2020,dc20_canada_born,2020,0,,,Were you born in Canada?
+dc_2020,dc20_parent_born,2020,0,,,Were your parents born in Canada?
+dc_2020,dc20_health,2020,0,,,"Compared to other people your age, how would you describe your health?"
+dc_2020,dc20_unemployment1,2020,0,,,How long have you been unemployed?
+dc_2020,dc20_unemployment2,2020,6,,,Have you applied for the Canada Emergency Relief Benefit?
+dc_2020,dc20_children,2020,0,,,Do you have any children?
+dc_2020,dc20_wage_sup_app,2020,6,,,Have you applied for the Canada Emergency Wage Support to cover wages of employees?
+dc_2020,dc20_religion_import,2020,0,,,"In your life, you would say religion is:"
+dc_2021,dc21_citizenship,2021,0,,,Are you a...
+dc_2021,dc21_vote_choice,2021,14,,,"If a federal election were held today, which party would you be most likely to vote for?"
+dc_2021,dc21_fed_gov_satisfa,2021,14,,,How satisfied are you with the performance of the federal government under Justin Trudeau?
+dc_2021,dc21_pos_equal_1,2021,11,,,We have gone too far in pushing equal rights in this country.
+dc_2021,dc21_womenparl,2021,11,,,The best way to protect women's interests is to have more women in Parliament.
+dc_2021,dc21_pos_experts,2021,0,,,I’d rather put my trust in the wisdom of ordinary people than the opinions of experts and intellectuals.
+dc_2021,dc21_pos_lose_touch,2021,0,,,Those elected to Parliament soon lose touch with the people.
+dc_2021,dc21_pos_pol_lie,2021,0,,,Politicians are willing to lie to get elected.
+dc_2021,dc21_pos_career_pol,2021,0,,,"Ordinary people, not career politicians, should make our most important policy decisions."
+dc_2021,dc21_canid1,2021,0,,,I have a lot in common with other Canadians
+dc_2021,dc21_pos_group_id,2021,0,,,My ethnicity is an important part of my identity.
+dc_2021,dc21_pos_look_after,2021,8,,,We should look after Canadians born in this country first and others second.
+dc_2021,dc21_pos_ab_deserve,2021,10,,,"Over the past few years, Indigenous peoples have gotten less than they deserve."
+dc_2021,dc21_pos_ab_colonial,2021,10,,,Generations of colonialism and discrimination have created conditions that make it difficult for Indigenous peoples to work their way out of poverty.
+dc_2021,dc21_pos_bilingualis,2021,9,,,We have gone too far in pushing bilingualism in Canada.
+dc_2021,dc21_pos_govt_effect,2021,0,,,Governments used to be better at getting things done.
+dc_2021,dc21_pos_no_differen,2021,0,,,Elections make no difference to what happens in this country.
+dc_2021,dc21_cc1,2021,7,,,Do you think that climate change is happening?
+dc_2021,dc21_cc2,2021,7,,,What do you think is the main cause of climate change?
+dc_2021,dc21_news_time_spent,2021,0,,,"On average, how much time do you usually spend watching, reading, and listening to news each day?"
+dc_2021,dc21_soc_media_freq,2021,0,,,"How often do you use social media (Facebook, Twitter, Snapchat, TikTok, Instagram, etc.)?"
+dc_2021,dc21_disc_pol_freq,2021,0,,,How often do you discuss politics with family and friends?
+dc_2021,dc21_disc_pol_disag,2021,0,,,"During the last month, how often have you discussed politics with someone who disagreed with your political views?"
+dc_2021,dc21_soc_net_size,2021,0,,,"Thinking about people who are not family members or relatives, how many close friends do you have?"
+dc_2021,dc21_mailtrust,2021,13,,,Voting by mail in Canada is equally as trustworthy as voting in person.
+dc_2021,dc21_pos_govt_care,2021,0,,,The government does not care much about what people like me think.
+dc_2021,dc21_pos_govt_comp,2021,0,,,"Sometimes, politics and government seem so complicated that a person like me can't really understand what's going on."
+dc_2021,dc21_pos_govt_say,2021,0,,,People like me don't have any say about what the government does.
+dc_2021,dc21_newerlife,2021,0,,,Newer lifestyles are contributing to the breakdown of our society.
+dc_2021,dc21_pos_govt_jobs,2021,0,,,The government should leave it entirely to the private sector to create jobs.
+dc_2021,dc21_ties_us,2021,1,,,Do you think Canada's ties with the United States should be...
+dc_2021,dc21_ties_china,2021,2,,,Do you think Canada's ties with China should be...
+dc_2021,dc21_party_id,2021,14,,,"In federal politics, do you usually think of yourself as a:"
+dc_2021,dc21_turnout_2019,2021,0,,,Did you happen to vote in the last federal election in 2019?
+dc_2021,dc21_vote_2019,2021,0,,,Which party did you vote for in the federal election in 2019?
+dc_2021,dc21_canada_born,2021,0,,,Were you born in Canada?
+dc_2021,dc21_parent_born,2021,0,,,Were your parents born in Canada?
+dc_2021,dc21_sex,2021,0,,,"What sex were you assigned at birth, on your original birth certificate?"
+dc_2021,dc21_health,2021,0,,,"Compared to other people your age, how would you describe your health?"
+dc_2021,dc21_covidemploy,2021,6,,,"Since the start of the pandemic in 2020, which of the following have been true for you personally?"
+dc_2021,dc21_disability,2021,0,,,Are you a person with a disability?
+dc_2021,dc21_disabilitytype,2021,0,,,What is your disability?
+dc_2022,dc22_citizenship,2022,0,,,Are you a...
+dc_2022,dc22_trans,2022,0,,,Are you transgender?
+dc_2022,dc22_vote_choice,2022,14,,,"If a federal election were held today, which party would you be most likely to vote for?"
+dc_2022,dc22_fed_gov_satisfa,2022,14,,,How satisfied are you with the performance of the federal government under Justin Trudeau?
+dc_2022,dc22_pos_equal_1,2022,11,,,We have gone too far in pushing equal rights in this country.
+dc_2022,dc22_pos_hate_speech,2022,12,,,"It should be illegal to say hateful things publicly about racial, ethnic and religious groups."
+dc_2022,dc22_womenparl,2022,11,,,The best way to protect women's interests is to have more women in Parliament.
+dc_2022,dc22_pos_experts,2022,0,,,I’d rather put my trust in the wisdom of ordinary people than the opinions of experts and intellectuals.
+dc_2022,dc22_pos_lose_touch,2022,0,,,Those elected to Parliament soon lose touch with the people.
+dc_2022,dc22_pos_pol_lie,2022,0,,,Politicians are willing to lie to get elected.
+dc_2022,dc22_pos_career_pol,2022,0,,,"Ordinary people, not career politicians, should make our most important policy decisions."
+dc_2022,pos_protest_laws,2022,12,,,Canadians have a duty to protest laws and policies they believe are unjust.
+dc_2022,pos_limit_protests,2022,12,,,Political protests are disruptive and should be limited.
+dc_2022,dc22_soc_fair,2022,0,,,"In general, Canadian society is fair."
+dc_2022,dc22_pol_sys,2022,0,,,"In general, the Canadian political system operates as it should."
+dc_2022,dc22_canid1,2022,0,,,I have a lot in common with other Canadians
+dc_2022,dc22_pos_group_id,2022,0,,,My ethnicity is an important part of my identity.
+dc_2022,dc22_pos_look_after,2022,8,,,We should look after Canadians born in this country first and others second.
+dc_2022,dc22_pos_ab_deserve,2022,10,,,"Over the past few years, Indigenous peoples have gotten less than they deserve."
+dc_2022,dc22_pos_ab_colonial,2022,10,,,Generations of colonialism and discrimination have created conditions that make it difficult for Indigenous peoples to work their way out of poverty.
+dc_2022,dc22_pos_bilingualis,2022,9,,,We have gone too far in pushing bilingualism in Canada.
+dc_2022,dc22_pos_no_differen,2022,0,,,Elections make no difference to what happens in this country.
+dc_2022,dc22_cc1,2022,7,,,Do you think that climate change is happening?
+dc_2022,dc22_cc2,2022,7,,,What do you think is the main cause of climate change?
+dc_2022,dc22_attcheck,2022,0,,,"You probably have a favourite colour. But we are more interested in making sure you’re doing the survey carefully, so please just select the colour brown here."
+dc_2022,dc22_news_time_spent,2022,0,,,"On average, how much time do you usually spend watching, reading, and listening to news each day?"
+dc_2022,dc22_soc_media_freq,2022,0,,,"How often do you use social media (Facebook, Twitter, Snapchat, TikTok, Instagram, etc.)?"
+dc_2022,dc22_disc_pol_freq,2022,0,,,How often do you discuss politics with family and friends?
+dc_2022,dc22_disc_pol_disag,2022,0,,,"During the last month, how often have you discussed politics with someone who disagreed with your political views?"
+dc_2022,dc22_soc_net_size,2022,0,,,"Thinking about people who are not family members or relatives, how many close friends do you have?"
+dc_2022,dc22_ladder_future_1,2022,3a,,,"Where would you place your expected financial situation in 5 years on the scale below, where 1 means the worst life you can imagine and 5 means the best life you can imagine? Prefer not to answer"
+dc_2022,dc22_mailtrust,2022,13,,,Voting by mail in Canada is equally as trustworthy as voting in person.
+dc_2022,dc22_pos_govt_care,2022,0,,,The government does not care much about what people like me think.
+dc_2022,dc22_pos_govt_comp,2022,0,,,"Sometimes, politics and government seem so complicated that a person like me can't really understand what's going on."
+dc_2022,dc22_pos_govt_say,2022,0,,,People like me don't have any say about what the government does.
+dc_2022,dc22_newerlife,2022,0,,,Newer lifestyles are contributing to the breakdown of our society.
+dc_2022,dc22_pos_govt_jobs,2022,0,,,The government should leave it entirely to the private sector to create jobs.
+dc_2022,dc22_ties_us,2022,1,,,Do you think Canada's ties with the United States should be...
+dc_2022,dc22_ties_china,2022,2,,,Do you think Canada's ties with China should be...
+dc_2022,dc22_party_id,2022,14,,,"In federal politics, do you usually think of yourself as a:"
+dc_2022,dc22_pid_connection,2022,0,,,"When you meet someone who supports your party, do you feel a kind of instant connection with that person?"
+dc_2022,dc22_pid_insult,2022,0,,,"If someone you know criticizes your party, do you feel personally insulted?"
+dc_2022,dc22_Q447,2022,0,,,"Have you ever been a member of a federal, provincial or local/municipal party?"
+dc_2022,dc22_Q448,2022,0,,,Have you ever been a member of a federal or provincial party?
+dc_2022,dc22_turnout_2021,2022,0,,,Did you happen to vote in the last federal election in 2021?
+dc_2022,dc22_vote_2021,2022,0,,,Which party did you vote for in the federal election in 2021?
+dc_2022,dc22_covid_risk,2022,6,,,"Thinking about the risk to you or your family from the COVID-19 pandemic, would you say you are…"
+dc_2022,dc22_vaccine1,2022,6,,,Have you received at least one dose of a COVID-19 vaccine?
+dc_2022,dc22_covid_liberty,2022,6,12,,The public health recommendations aimed at slowing the spread of the COVID-19 virus are threatening my liberty.
+dc_2022,dc22_covid_rights_1,2022,6,12,,The government has the absolute power to restrict behaviour during a public health emergency.
+dc_2022,dc22_covid_rights_2,2022,12,6,,"In a crisis, our political leaders should be allowed to violate individual rights."
+dc_2022,dc22_benchmarkcda_4,2022,13,,,How would you rate the quality of democracy in Canada?
+dc_2022,dc22_norms_tone,2022,0,,,It is not necessary to maintain a respectful tone in political debate.
+dc_2022,dc22_norms_govern,2022,12,,,It is acceptable for the Prime Minister to govern without Parliament if there is a national emergency.
+dc_2022,dc22_feminist,2022,11,,,"Do you consider yourself to be a strong feminist, not a very strong feminist, or not a feminist at all?"
+dc_2022,dc22_truck_con_prote,2022,12,,,The protesters were protecting Canadians' rights and freedoms.
+dc_2022,dc22_truck_con_illeg,2022,12,,,The protests were illegal demonstrations.
+dc_2022,dc22_foreign_pol_ukr,2022,2,,,"Thinking about the war between Russia and Ukraine, do you think Canada should do…"
+dc_2022,dc22_canada_born,2022,0,,,Were you born in Canada?
+dc_2022,dc22_parent_born,2022,0,,,Were your parents born in Canada?
+dc_2022,dc22_health_physical,2022,0,,,"Compared to other people your age, how would you describe your physical health?"
+dc_2022,dc22_health_mental,2022,0,,,"Compared to other people your age, how would you describe your mental health?"
+dc_2022,dc22_disability,2022,0,,,Are you a person with a disability?
+dc_2022,dc22_disabilitytype,2022,0,,,What is your disability?
+dc_2022,dc22_religion_import,2022,0,,,"In your life, you would say religion is:"
+dc_2023,dc23_citizenship,2023,0,,,Are you a...
+dc_2023,dc23_trans,2023,0,,,Are you transgender?
+dc_2023,dc23_vote_choice,2023,14,,,"If a federal election were held today, which party would you be most likely to vote for?"
+dc_2023,dc23_fed_gov_satisfa,2023,14,,,How satisfied are you with the performance of the federal government under Justin Trudeau?
+dc_2023,dc23_pos_equal_1,2023,11,,,We have gone too far in pushing equal rights in this country.
+dc_2023,dc23_govtprograms,2023,0,,,Government can no longer deliver the kinds of programs and services people want.
+dc_2023,dc23_canid1,2023,0,,,I have a lot in common with other Canadians
+dc_2023,dc23_pos_group_id,2023,0,,,My ethnicity is an important part of my identity.
+dc_2023,dc23_pos_look_after,2023,8,,,We should look after Canadians born in this country first and others second.
+dc_2023,dc23_pos_protest_law,2023,12,,,Canadians have a duty to protest laws and policies they believe are unjust.
+dc_2023,dc23_pos_limit_prote,2023,12,,,Political protests are disruptive and should be limited.
+dc_2023,dc23_pos_career_pol,2023,0,,,"Ordinary people, not career politicians, should make our most important policy decisions."
+dc_2023,dc23_pos_experts,2023,0,,,I’d rather put my trust in the wisdom of ordinary people than the opinions of experts and intellectuals.
+dc_2023,dc23_pos_lose_touch,2023,0,,,Those elected to Parliament soon lose touch with the people.
+dc_2023,dc23_pos_pol_lie,2023,0,,,Politicians are willing to lie to get elected.
+dc_2023,dc23_pos_ab_colonial,2023,10,,,Generations of colonialism and discrimination have created conditions that make it difficult for Indigenous peoples to work their way out of poverty.
+dc_2023,dc23_pos_ab_deserve,2023,10,,,"Over the past few years, Indigenous peoples have gotten less than they deserve."
+dc_2023,dc23_womenparl,2023,11,,,The best way to protect women's interests is to have more women in Parliament.
+dc_2023,dc23_pos_bilingualis,2023,9,,,We have gone too far in pushing bilingualism in Canada.
+dc_2023,dc23_soc_fair,2023,0,,,"In general, Canadian society is fair."
+dc_2023,dc23_pol_sys,2023,0,,,"In general, the Canadian political system operates as it should."
+dc_2023,dc23_pos_no_differen,2023,0,,,Elections make no difference to what happens in this country.
+dc_2023,dc23_foreignconfid,2023,13,,,How confident are you that our elections are safe from foreign interference?
+dc_2023,dc23_foreignsafe,2023,13,,,How safe do you think Canadian elections are from foreign interference?
+dc_2023,dc23_cc1,2023,7,,,Do you think that climate change is happening?
+dc_2023,dc23_cc2,2023,7,,,What do you think is the main cause of climate change?
+dc_2023,dc23_attcheck,2023,0,,,"You probably have a favourite colour. But we are more interested in making sure you’re doing the survey carefully, so please just select the colour brown here."
+dc_2023,dc23_news_time_spent,2023,0,,,"On average, how much time do you usually spend watching, reading, and listening to news each day?"
+dc_2023,dc23_soc_media_freq,2023,0,,,"How often do you use social media (Facebook, Twitter, Snapchat, TikTok, Instagram, etc.)?"
+dc_2023,dc23_disc_pol_freq,2023,0,,,How often do you discuss politics with family and friends?
+dc_2023,dc23_disc_pol_disag,2023,0,,,"During the last month, how often have you discussed politics with someone who disagreed with your political views?"
+dc_2023,dc23_soc_net_size,2023,0,,,"Thinking about people who are not family members or relatives, how many close friends do you have?"
+dc_2023,dc23_soc_net_types,2023,0,,,How many of your close friends belong to a visibly different ethnicity than you?
+dc_2023,dc23_ladder_current_1,2023,3a,,,"Where would you place your current financial situation on the scale below, where 1 means the worst life you can imagine and 5 means the best life you can imagine?"
+dc_2023,dc23_ladder_future_1,2023,3a,,,"Where would you place your expected financial situation in 5 years on the scale below, where 1 means the worst life you can imagine and 5 means the best life you can imagine?"
+dc_2023,dc23_mailtrust,2023,13,,,Voting by mail in Canada is equally as trustworthy as voting in person.
+dc_2023,dc23_pos_govt_care,2023,0,,,The government does not care much about what people like me think.
+dc_2023,dc23_pos_govt_comp,2023,0,,,"Sometimes, politics and government seem so complicated that a person like me can't really understand what's going on."
+dc_2023,dc23_pos_govt_say,2023,0,,,People like me don't have any say about what the government does.
+dc_2023,dc23_pos_offensive_s,2023,12,,,People should be able to say what they think even if it offends some people.
+dc_2023,dc23_newerlife,2023,0,,,Newer lifestyles are contributing to the breakdown of our society.
+dc_2023,dc23_pos_govt_jobs,2023,0,,,The government should leave it entirely to the private sector to create jobs.
+dc_2023,dc23_ties_us,2023,1,,,Do you think Canada's ties with the United States should be...
+dc_2023,dc23_ties_china,2023,2,,,Do you think Canada's ties with China should be...
+dc_2023,dc23_party_id,2023,14,,,"In federal politics, do you usually think of yourself as a:"
+dc_2023,dc23_pid_connection,2023,0,,,"When you meet someone who supports your party, do you feel a kind of instant connection with that person?"
+dc_2023,dc23_pid_insult,2023,0,,,"If someone you know criticizes your party, do you feel personally insulted?"
+dc_2023,dc23_Q447,2023,0,,,"Have you ever been a member of a federal, provincial or local/municipal party?"
+dc_2023,dc23_Q448,2023,0,,,Have you ever been a member of a federal or provincial party?
+dc_2023,dc23_turnout_2021,2023,0,,,Did you happen to vote in the last federal election in 2021?
+dc_2023,dc23_vote_2021,2023,0,,,Which party did you vote for in the federal election in 2021?
+dc_2023,dc23_emb_satif,2023,13,,,How satisfied are you with the way Elections Canada runs federal elections?
+dc_2023,dc23_foreign_pol_ukr,2023,2,,,"Thinking about the war between Russia and Ukraine, do you think Canada should do…"
+dc_2023,dc23_canada_born,2023,0,,,Were you born in Canada?
+dc_2023,dc23_parent_born,2023,0,,,Were your parents born in Canada?
+dc_2023,dc23_health_physical,2023,0,,,"Compared to other people your age, how would you describe your physical health?"
+dc_2023,dc23_health_mental,2023,0,,,"Compared to other people your age, how would you describe your mental health?"
+dc_2023,dc23_disability,2023,0,,,Are you a person with a disability?
+dc_2023,dc23_disabilitytype,2023,0,,,What is your disability?
+dc_2023,dc23_religion_import,2023,0,,,"In your life, you would say religion is:"
+dc_2024,dc24_citizenship,2024,0,,,Are you a...
+dc_2024,dc24_citizen_other,2024,0,,,Are you a citizen of any other country besides Canada?
+dc_2024,dc24_trans,2024,0,,,Are you transgender?
+dc_2024,dc24_vote_choice,2024,14,,,"If a federal election were held today, which party would you be most likely to vote for?"
+dc_2024,dc24_fed_gov_satisfa,2024,14,,,How satisfied are you with the performance of the federal government under Justin Trudeau?
+dc_2024,dc24_pos_equal_1,2024,11,,,We have gone too far in pushing equal rights in this country.
+dc_2024,dc24_govtprograms,2024,0,,,Government can no longer deliver the kinds of programs and services people want.
+dc_2024,dc24_pos_group_id,2024,0,,,My ethnicity is an important part of my identity.
+dc_2024,dc24_pos_look_after,2024,8,,,We should look after Canadians born in this country first and others second.
+dc_2024,dc24_pos_protest_law,2024,12,,,Canadians have a duty to protest laws and policies they believe are unjust.
+dc_2024,dc24_pos_limit_prote,2024,12,,,Political protests are disruptive and should be limited.
+dc_2024,dc24_pos_career_pol,2024,0,,,"Ordinary people, not career politicians, should make our most important policy decisions."
+dc_2024,dc24_pos_experts,2024,0,,,I’d rather put my trust in the wisdom of ordinary people than the opinions of experts and intellectuals.
+dc_2024,dc24_pos_lose_touch,2024,0,,,Those elected to Parliament soon lose touch with the people.
+dc_2024,dc24_pos_pol_lie,2024,0,,,Politicians are willing to lie to get elected.
+dc_2024,dc24_pos_ab_colonial,2024,10,,,Generations of colonialism and discrimination have created conditions that make it difficult for Indigenous peoples to work their way out of poverty.
+dc_2024,dc24_pos_ab_deserve,2024,10,,,"Over the past few years, Indigenous peoples have gotten less than they deserve."
+dc_2024,dc24_womenparl,2024,11,,,The best way to protect women's interests is to have more women in Parliament.
+dc_2024,dc24_pos_bilingualis,2024,9,,,We have gone too far in pushing bilingualism in Canada.
+dc_2024,dc24_soc_fair,2024,0,,,"In general, Canadian society is fair."
+dc_2024,dc24_pol_sys,2024,0,,,"In general, the Canadian political system operates as it should."
+dc_2024,dc24_pos_no_differen,2024,0,,,Elections make no difference to what happens in this country.
+dc_2024,dc24_foreignconfid,2024,13,,,How confident are you that our elections are safe from foreign interference?
+dc_2024,dc24_foreignsafe,2024,13,,,How safe do you think Canadian elections are from foreign interference?
+dc_2024,dc24_cc1,2024,7,,,Do you think that climate change is happening?
+dc_2024,dc24_cc2,2024,7,,,What do you think is the main cause of climate change?
+dc_2024,dc24_attcheck,2024,0,,,"You probably have a favourite colour. But we are more interested in making sure you’re doing the survey carefully, so please just select the colour brown here."
+dc_2024,dc24_news_time_spent,2024,0,,,"On average, how much time do you usually spend watching, reading, and listening to news each day?"
+dc_2024,dc24_soc_media_freq,2024,0,,,"How often do you use social media (Facebook, Twitter, Snapchat, TikTok, Instagram, etc.)?"
+dc_2024,dc24_disc_pol_freq,2024,0,,,How often do you discuss politics with family and friends?
+dc_2024,dc24_disc_pol_disag,2024,0,,,"During the last month, how often have you discussed politics with someone who disagreed with your political views?"
+dc_2024,dc24_soc_net_size,2024,0,,,"Thinking about people who are not family members or relatives, how many close friends do you have?"
+dc_2024,dc24_soc_net_types,2024,0,,,How many of your close friends belong to a visibly different ethnicity than you?
+dc_2024,dc24_ladder_current_1,2024,3a,,,"Where would you place your current financial situation on the scale below, where 1 means the worst life you can imagine and 5 means the best life you can imagine?"
+dc_2024,dc24_mailtrust,2024,13,,,Voting by mail in Canada is equally as trustworthy as voting in person.
+dc_2024,dc24_pos_govt_care,2024,0,,,The government does not care much about what people like me think.
+dc_2024,dc24_pos_govt_comp,2024,0,,,"Sometimes, politics and government seem so complicated that a person like me can't really understand what's going on."
+dc_2024,dc24_pos_govt_say,2024,0,,,People like me don't have any say about what the government does.
+dc_2024,dc24_pos_offensive_s,2024,12,,,People should be able to say what they think even if it offends some people.
+dc_2024,dc24_newerlife,2024,0,,,Newer lifestyles are contributing to the breakdown of our society.
+dc_2024,dc24_pos_govt_jobs,2024,0,,,The government should leave it entirely to the private sector to create jobs.
+dc_2024,dc24_ties_us,2024,1,,,Do you think Canada's ties with the United States should be...
+dc_2024,dc24_ties_china,2024,2,,,Do you think Canada's ties with China should be...
+dc_2024,dc24_party_id,2024,14,,,"In federal politics, do you usually think of yourself as a:"
+dc_2024,dc24_pid_connection,2024,0,,,"When you meet someone who supports your party, do you feel a kind of instant connection with that person?"
+dc_2024,dc24_pid_insult,2024,0,,,"If someone you know criticizes your party, do you feel personally insulted?"
+dc_2024,dc24_Q447,2024,0,,,"Have you ever been a member of a federal, provincial or local/municipal party?"
+dc_2024,dc24_Q448,2024,0,,,Have you ever been a member of a federal or provincial party?
+dc_2024,dc24_turnout_2021,2024,0,,,Did you happen to vote in the last federal election in 2021?
+dc_2024,dc24_vote_2021,2024,0,,,Which party did you vote for in the federal election in 2021?
+dc_2024,dc24_foreign_pol_ukr,2024,2,,,"Thinking about the war between Russia and Ukraine, do you think Canada should do…"
+dc_2024,dc24_emb_satif,2024,13,,,How satisfied are you with the way Elections Canada runs federal elections?
+dc_2024,dc24_canada_born,2024,0,,,Were you born in Canada?
+dc_2024,dc24_parent_born,2024,0,,,Were your parents born in Canada?
+dc_2024,dc24_health_physical,2024,0,,,"Compared to other people your age, how would you describe your physical health?"
+dc_2024,dc24_health_mental,2024,0,,,"Compared to other people your age, how would you describe your mental health?"
+dc_2024,dc24_disability,2024,0,,,Are you a person with a disability?
+dc_2024,dc24_disabilitytype,2024,0,,,What is your disability?
+dc_2024,dc24_religion_import,2024,0,,,"In your life, you would say religion is:"
+ces_2025,cps25_lead_int_4,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how intelligent they are. - Yves-François Blanchet"
+ces_2025,cps25_lead_int_2,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how intelligent they are. - Pierre Poilievre"
+ces_2025,cps25_lead_cares_3,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how much they care about people like you. - Jagmeet Singh"
+ces_2025,cps25_lead_int_3,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how intelligent they are. - Jagmeet Singh"
+ces_2025,cps25_lead_cares_4,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how much they care about people like you. - Yves-François Blanchet"
+ces_2025,cps25_safe_injection,2025,15,,,Safe injection sites make neighbourhoods unsafe.
+ces_2025,cps25_lead_trust_4,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how trustworthy they are. - Yves-François Blanchet"
+ces_2025,cps25_lead_cares_2,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how much they care about people like you. - Pierre Poilievre"
+ces_2025,cps25_big_issue,2025,P,,,What is the biggest issue that will face Canadian society over the next few years?
+ces_2025,cps25_lead_trust_3,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how trustworthy they are. - Jagmeet Singh"
+ces_2025,cps25_lead_strong_4,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how well they provide strong leadership. - Yves-François Blanchet"
+ces_2025,cps25_lead_strong_3,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how well they provide strong leadership. - Jagmeet Singh"
+ces_2025,cps25_lead_int_1,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how intelligent they are. - Mark Carney"
+ces_2025,cps25_lead_cares_1,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how much they care about people like you. - Mark Carney"
+ces_2025,pes25_emb_prefer_reg,2025,13,,,Would you prefer to receive your voter information card in:
+ces_2025,cps25_lead_trust_1,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how trustworthy they are. - Mark Carney"
+ces_2025,pes25_emb_accuracy,2025,13,,,Do you trust the accuracy of the voting results in your electoral district?
+ces_2025,cps25_lead_trust_2,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how trustworthy they are. - Pierre Poilievre"
+ces_2025,pes25_emb_preferred,2025,13,,,What would be your preferred way to receive official information about where and when to vote in an election?
+ces_2025,cps25_tarrifs_2,2025,1,,,Who is responsible for worsening relations between the US and Canada?
+ces_2025,cps25_foreign_pol_increase,2025,2,1,,"Below is a list of possible foreign policy goals that Canada might have. For each one, please select whether you think it should be a very important, somewhat important, or not at all important policy goal for Canada. - Increasing our defense spending to ensure we can protect our citizens."
+ces_2025,cps25_lead_strong_2,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how well they provide strong leadership. - Pierre Poilievre"
+ces_2025,cps25_foreign_pol_provide,2025,2,,,"Below is a list of possible foreign policy goals that Canada might have. For each one, please select whether you think it should be a very important, somewhat important, or not at all important policy goal for Canada. - Providing aid to countries undergoing war."
+ces_2025,pes25_decent_housing,2025,4,,,The government has a responsibility to provide decent housing for all.
+ces_2025,cps25_lead_strong_1,2025,14,,,"Thinking about the political leaders below, please rate each of them in terms of how well they provide strong leadership. - Mark Carney"
+ces_2025,cps25_foreign_pol_support,2025,2,,,"Below is a list of possible foreign policy goals that Canada might have. For each one, please select whether you think it should be a very important, somewhat important, or not at all important policy goal for Canada. - Supporting our NATO allies in their military commitments."
+ces_2025,cps25_foreign_pol_protect,2025,2,,,"Below is a list of possible foreign policy goals that Canada might have. For each one, please select whether you think it should be a very important, somewhat important, or not at all important policy goal for Canada. - Protecting weaker nations from foreign aggression."
+ces_2025,cps25_modern_racism_1,2025,11,,,"To what extent do you agree with the following statements? - Over the past few years, the Canadian government and news media have shown more respect to racialized people than they deserve."
+ces_2025,cps25_modern_racism_3,2025,11,,,"To what extent do you agree with the following statements? - Over the past few years, racialized people in Canada have gotten more economically than they deserve."
+ces_2025,pes25_emb_fraud,2025,13,,,"In your opinion, how frequently, if at all, does voter fraud (including things like a person voting multiple times or an ineligible person voting) occur in Canadian elections?"
+ces_2025,cps25_modern_racism_2,2025,11,,,To what extent do you agree with the following statements? - Discrimination against racialized people is no longer a problem in Canada.
+ces_2025,cps25_tarrifs_1,2025,1,,,Has the relationship between Canada and the US become better or worse after US President Trump’s election?
+ces_2025,pes25_fitin,2025,8,,,Too many recent immigrants just don't want to fit in to Canadian society.
+ces_2025,cps25_rent_security,2025,4,3a,,How worried are you about the security of your housing situation in the next few years?
+ces_2025,pes25_ai,2025,13,,,"Given the rise of AI, how confident are you in the information you received about the election?"
+ces_2025,pes25_nativism5,2025,8,15,,Immigrants increase crime rates in Canada.
+ces_2025,cps25_big_issue_gov,2025,9,P,,Which level of government is best able to address the issue?
+ces_2025,pes25_benevolent3,2025,0,,,A good woman ought to be set on a pedestal by her man.
+ces_2025,cps25_student_protes,2025,12,,,Student protests on university campuses have gone too far.
+ces_2025,pes25_immigjobs,2025,8,,,Immigrants take jobs away from other Canadians.
+ces_2025,pes25_hostile1,2025,0,,,Most women fail to appreciate all that men do for them.
+ces_2025,pes25_benevolent1,2025,0,,,Women should be cherished and protected by men.
+ces_2025,pes25_hostile4,2025,0,,,Women exaggerate problems they have at work.
+ces_2025,cps25_howvote1,2025,13,,,How are you most likely to vote?
+ces_2025,cps25_issue_handle_10,2025,4,14,,Which party would do the best job at handling each of the following issues? - Housing

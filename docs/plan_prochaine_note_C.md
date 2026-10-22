@@ -63,10 +63,30 @@ produit. **Pas** de calibration des marges dans cette note (elle vient une fois 
 | V1 | Dossier enrichi : 15 questions semblables au lieu de 8, tailles d'échantillon par groupe, écarts par sexe et scolarité | Plus de preuves aide-t-il ? |
 | V2 | Plus d'entraînement : plus de questions (études québécoises du corpus : EEQ, CECD) et 10 variantes de dossier par question au lieu de 3, soit ~5-10× plus d'exemples | Plafonne-t-on déjà ? |
 | V3 | Exemple + récompense : (1) V0 écrit 8 tableaux par exercice, notés contre la vérité (`benchmark/dossier_grader.py`) ; (2) on réentraîne V0 sur ses meilleurs (`scripts/43_dossier_expert_iteration.py`, à adapter pour partir de V0) | La récompense aide-t-elle sur un bon départ ? |
-| V5 | Contexte d'actualité : court résumé des faits de l'année, daté d'avant la collecte, ajouté au dossier, à l'entraînement (un par année 2019-2024) comme au test (2025) | Corrige-t-il les questions d'actualité sans nuire aux autres ? |
+| V5 | Contexte d'actualité : résumé thématique daté d'avant la collecte, ajouté au dossier, à l'entraînement comme au test (voir §4b) | Corrige-t-il les questions d'actualité sans nuire aux autres ? |
 
 Références sans entraînement : C Llama de base et gpt-5.5 (signalé). V4 (national puis écarts) écartée :
 dans l'hybride le niveau vient de l'échantillon.
+
+## 4a. Décisions du 22 octobre
+
+- **V0 réentraîné** : la sortie change (grille riche), l'ancien V0 ne sait pas produire sexe/scolarité.
+  V0 = même recette, nouvelle grille, anti-fuite refait sur les ~25-30 nouveaux items.
+- **Grille : une requête par variable ou croisement** (région, âge, sexe, scolarité, région × âge,
+  âge × sexe, région × sexe). JSON plus court, ~5× plus d'exemples d'entraînement. Cellules complètes
+  reconstruites par calage (pas d'interaction d'ordre 3).
+
+## 4b. V5 : résumés d'actualité (fait)
+
+- Thèmes : `docs/themes_actualite_v5.md` (17 thèmes + « aucun »), pas les clusters k-means du script 41
+  (ils regroupent selon la forme des questions).
+- Classement : `data/analysis/item_themes_v5.csv` (779 questions = 734 exercices + 45 candidats
+  CES 2025 ; ≤ 2 thèmes ; ~50 % « aucun »). Fait par agents Sonnet, 2025 revu à la main.
+- Résumés : `data/analysis/news_summaries_v5.csv`, 105 = thème × sondage, 80-150 mots, anglais,
+  faits datés d'avant la date limite (début du terrain : DC selon `StartDate`, CES 2019 13 sept.,
+  CES 2021 17 août, CES 2025 24 mars), aucun résultat de sondage. Recherche web + passe de révision ;
+  2025 validé par Hubert (`docs/news_summaries_2025_review.md`).
+- Limite : le logement (4) n'apparaît qu'au test 2025.
 
 ## 5. Mécanique (ce qui marche, ce qui a cassé)
 
