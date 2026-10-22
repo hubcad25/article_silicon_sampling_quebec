@@ -25,7 +25,22 @@ SETS = {
     "novel": ("cps25_tarrifs_1", "cps25_tarrifs_2", "cps25_foreign_pol_protect",
               "cps25_safe_injection", "cps25_student_protes", "cps25_resident_2f",
               "cps25_rent_security", "pes25_decent_housing"),
+    # 20 novel items with >= 1,000 Quebec respondents (no party/leader items, none the
+    # content filter flags), then 8 CSES module items (543 in Quebec), reported apart.
+    # Chosen 2026-10-22 for the approach-C recipe note (docs/plan_prochaine_note_C.md).
+    "novel28": ("cps25_tarrifs_1", "cps25_tarrifs_2", "cps25_foreign_pol_increase",
+                "cps25_foreign_pol_provide", "cps25_foreign_pol_support",
+                "cps25_foreign_pol_protect", "cps25_big_issue", "cps25_big_issue_gov",
+                "cps25_howvote1", "pes25_decent_housing", "cps25_rent_security",
+                "cps25_safe_injection", "cps25_student_protes", "cps25_resident_2e",
+                "cps25_resident_2f", "pes25_emb_prefer_reg", "pes25_emb_accuracy",
+                "pes25_emb_preferred", "pes25_emb_fraud", "pes25_ai",
+                "cses_module6_Q07_1", "cses_module6_Q07_3", "cses_module6_Q07_4",
+                "cses_module6_Q07_6", "cses_module6_Q04a", "cses_module6_Q04b",
+                "cses_module6_27b", "cses_module6_Q26b"),
 }
+#: The CSES items of "novel28": smaller Quebec n, scored and reported separately.
+CSES_ITEMS = frozenset(v for v in SETS["novel28"] if v.startswith("cses_"))
 TARGET_VARS = SETS[SET]
 #: Context given to each profile: "fix" = the 7 anchors of the plan (A models);
 #: "rich" = 12 core themes + the 6 DC 2024 items nearest the target (B models,

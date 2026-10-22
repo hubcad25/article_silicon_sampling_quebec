@@ -74,3 +74,21 @@ Donald Trump's re-election in November 2024 and subsequent tariffs and repeated 
 
 *Sources : https://www.cbc.ca/lite/story/1.7484290 ; https://en.wikipedia.org/wiki/2025_Liberal_Party_of_Canada_leadership_election*
 
+## 5 — Health care system (not COVID)
+
+Canada's health-care system faced persistent strain in the year before the survey. About 6.5 million Canadians lacked a regular family doctor, and a Senate committee report in October 2024 urged faster recognition of international medical graduates. Provinces continued signing bilateral deals under the February 2023 federal offer of $196 billion over ten years, with Quebec reaching an agreement in principle (about $900 million) in March 2024. In Quebec, the Dube reform's Bill 15 created the Sante Quebec agency, which began operating on May 6, 2024 and, on December 1, 2024, took full operational control of the province's health and social services network, becoming the sole employer of its roughly 330,000 workers while facing a reported $1.5 billion budget deficit and warnings that cuts would affect services.
+
+*Sources : https://www.oma.org/newsroom/news/2024/february/ontarios-doctors-welcome-new-federal-health-care-funding-but-warn-more-resources-are-needed ; https://qcna.qc.ca/sante-quebec-is-now-at-the-helm-of-local-health-services/ ; https://www.cbc.ca/1.7396783*
+
+## 6 — COVID-19 and public health measures
+
+By the year before the survey, Canada's acute COVID-19 emergency measures were long over, but their legacy remained under review. The Public Order Emergency Commission, which examined the federal government's February 2022 use of the Emergencies Act against the Freedom Convoy protests, had released its final report in February 2023. A separate, narrowly mandated expert panel reviewing aspects of the pandemic response was expected to report in early 2024; opposition parties' push for a broader public inquiry into the pandemic response did not proceed. Meanwhile, COVID-19 continued to circulate seasonally: a new Omicron-lineage variant called XEC was first detected in Canada in mid-2024 and grew to account for about 19% of sequenced cases by mid-October 2024, and Health Canada had approved an updated Pfizer-BioNTech vaccine formulation in September 2024.
+
+*Sources : https://securitepublique.gc.ca/cnt/trnsprnc/brfng-mtrls/prlmntry-bndrs/20240719/41-en.aspx ; https://www.ctvnews.ca/health/article/does-the-updated-covid-19-vaccine-protect-against-the-xec-variant/*
+
+## 10 — Indigenous peoples and reconciliation
+
+In the year before the survey, reconciliation work continued on multiple fronts. Canada's 2024 federal budget allocated $91 million over two years to support Indigenous-led efforts to locate and document burial sites at former residential schools; by September 2024, more than $216.6 million had been committed under 146 funding agreements for this work. Investigations at former residential school sites, including at Tk'emlups te Secwepemc in British Columbia, continued, with decisions on further excavation still unresolved as of March 2024. On the specific-claims file, the federal government reported settling 40 claims worth over $3.3 billion between April 2024 and January 31, 2025, with 760 claims still in its specific-claims inventory as of that date. In Quebec, Atikamekw and Innu nations continued pressing land-rights claims through the courts, including a Specific Claims Tribunal ruling in favour of the Atikamekw of Opitciwan against the federal government.
+
+*Sources : https://afn.bynder.com/m/27a5bcce7cd438ba/original/2023-Issues-Update-Residential-Schools-and-Unmarked-Graves.pdf ; https://www.rcaanc-cirnac.gc.ca/eng/1740087916970 ; https://www.aptnnews.ca/national-news/quebec-first-nation-waiting-to-see-if-feds-appeal-specific-claims-ruling/*
+
