@@ -12,8 +12,13 @@ prompt format of benchmark/dossier.py (so a model trained on it is scored with
                cells (region x age at that survey), as the JSON dossier.py parses
 
 Anti-leak: an item at cosine >= 0.80, same stem or same wording as any of the
-18 benchmark items (SETS main + novel) is no exercise; nor is an item that close
-to one of the three attitude items of the fixed block.
+benchmark items (every set of SETS, novel28 included) is no exercise; nor is an
+item that close to one of the three attitude items of the fixed block.
+
+Rich grid (recipe note, docs/plan_prochaine_note_C.md): ``--breakdowns all``
+makes one exercise per item and breakdown of dz.BREAKDOWNS (the 15 cells, four
+margins, two crossings), each with VARIANTS dossiers; ``--news`` adds the item's
+dated news summaries (V5). Same neighbours across the breakdowns of an item.
 
 Small cells: a cell with n < MIN_N respondents is shrunk toward the national
 distribution, (n * p_cell + (MIN_N - n) * p_nat) / MIN_N, so an empty cell gets
@@ -25,10 +30,11 @@ Augmentation: VARIANTS dossiers per item. Variant 0 is the benchmark policy
 top POOL, the last one in shuffled order. Validation (~10% of items, variant 0
 only) holds out whole topic clusters (k-means on item embeddings).
 
-    .venv/bin/python scripts/41_dossier_training_data.py            # build
+    .venv/bin/python scripts/41_dossier_training_data.py            # build (15 cells, first round)
+    .venv/bin/python scripts/41_dossier_training_data.py --breakdowns all [--news] --out datasets_dossier_grid
     .venv/bin/python scripts/41_dossier_training_data.py --audit    # + RAI screen of 1,000 lines
 
-Writes data/datasets_dossier/: dossier_train_<N>.jsonl (full and nested half),
+Writes data/<out>/ (default datasets_dossier): dossier_train_<N>.jsonl (full and nested half),
 dossier_validation.jsonl, dossier_rft_{train,validation}.jsonl (the same
 exercises for reinforcement fine-tuning: messages without the reply, plus
 target / codes / item for benchmark/dossier_grader.py), exercises.csv, manifest.json.
@@ -49,7 +55,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 
-from benchmark import CELLS, SETS
+from benchmark import SETS
 from benchmark import dossier as dz
 
 REPO = Path(__file__).resolve().parents[1]
@@ -117,7 +123,7 @@ def kmeans(x: np.ndarray, k: int, seed: int, iters: int = 50) -> np.ndarray:
     return labels
 
 
-def build() -> dict:
+def build(breakdowns: tuple[str, ...] = ("region_age",), news: bool = False) -> dict:
     rng = random.Random(SEED)
     train = dz.s36.load_items()
     bench = bench_rows()
@@ -147,15 +153,16 @@ def build() -> dict:
     crosswalk = dz.SesCrosswalk.load()
     past = {s: dz.Past(s, crosswalk) for s in dz.s36.SURVEYS}
     extra = pl.concat([pl.read_parquet(p) for p in dz.s36.ITEMS], how="diagonal_relaxed")
-    profile = dz.attitudes(past["dc_2024"], extra)
+    profiles = {b: dz.attitudes(past["dc_2024"], extra, b) for b in breakdowns}
 
-    tables: dict[int, dict] = {}
-    def table(j: int):
-        if j not in tables:
+    tables: dict[tuple[int, str], tuple] = {}
+    def table(j: int, breakdown: str = "region_age"):
+        if (j, breakdown) not in tables:
             row = train.row(j, named=True)
             options = dz.parse_options(row["options"])
-            tables[j] = (options, past[row["survey_id"]].table(row["variable"], [o.code for o in options]))
-        return tables[j]
+            tables[j, breakdown] = (options, past[row["survey_id"]].table(
+                row["variable"], [o.code for o in options], breakdown))
+        return tables[j, breakdown]
 
     def candidates(j: int) -> list[int]:
         """Neighbours of j by the dossier.py rules, minus j's own survey and j asked again."""
@@ -220,14 +227,11 @@ def build() -> dict:
     rows = []
     for e, j in enumerate(exercises):
         row = train.row(j, named=True)
-        options, tab = table(j)
-        codes = [o.code for o in options]
-        national = tab["national"]
-        reply = {"national": rounded(national, codes),
-                 "cells": {c: rounded(shrink(*tab["cells"][c], national), codes) for c in CELLS}}
-        answer = json.dumps(reply, separators=(",", ":"))
+        context = dz.news_for(keys[j][0], keys[j][1]) if news else None
         pool = candidates(j)
         n_variants = 1 if split[j] == "validation" else VARIANTS
+        # Neighbour draws are shared by the breakdowns of the item.
+        draws = []
         for v in range(n_variants):
             if v == 0:
                 picked = pool[:dz.K]
@@ -236,31 +240,42 @@ def build() -> dict:
                                 key=lambda i: -float(tv[i] @ tv[j]))
                 if v == VARIANTS - 1:
                     rng.shuffle(picked)
-            blocks = []
-            for n, i in enumerate(picked, 1):
-                nb = train.row(i, named=True)
-                nb_options, nb_tab = table(i)
-                blocks.append(dz.render_question(n, nb["survey_id"], float(tv[i] @ tv[j]),
-                                                 nb["question_text"], nb["display_label"],
-                                                 nb_options, nb_tab))
-            messages = dz.prompt(row["question_text"], row["display_label"], options, blocks,
-                                 profile, setting=setting(row["survey_id"]))
-            messages.append({"role": "assistant", "content": answer})
-            tokens = n_tokens(messages)
-            while tokens > MAX_TOKENS and blocks:  # drop the least similar neighbour
-                blocks.pop()
+            draws.append(picked)
+        for breakdown in breakdowns:
+            options, tab = table(j, breakdown)
+            codes = [o.code for o in options]
+            national = tab["national"]
+            reply = {"national": rounded(national, codes),
+                     "cells": {c: rounded(shrink(*tab["cells"][c], national), codes)
+                               for c in dz.groups(breakdown)}}
+            answer = json.dumps(reply, separators=(",", ":"))
+            def render(blocks):
                 messages = dz.prompt(row["question_text"], row["display_label"], options, blocks,
-                                     profile, setting=setting(row["survey_id"]))
-                messages.append({"role": "assistant", "content": answer})
+                                     profiles[breakdown], setting=setting(row["survey_id"]),
+                                     breakdown=breakdown, news=context)
+                return messages + [{"role": "assistant", "content": answer}]
+            for v, picked in enumerate(draws):
+                blocks = []
+                for n, i in enumerate(picked, 1):
+                    nb = train.row(i, named=True)
+                    nb_options, nb_tab = table(i, breakdown)
+                    blocks.append(dz.render_question(n, nb["survey_id"], float(tv[i] @ tv[j]),
+                                                     nb["question_text"], nb["display_label"],
+                                                     nb_options, nb_tab))
+                messages = render(blocks)
                 tokens = n_tokens(messages)
-            rft = {"messages": messages[:-1], "target": reply["cells"], "codes": codes,
-                   "item": f"{keys[j][0]}:{keys[j][1]}"}
-            lines[split[j]].append((j, json.dumps({"messages": messages}, ensure_ascii=False),
-                                    json.dumps(rft, ensure_ascii=False)))
-            rows.append({"survey_id": keys[j][0], "variable": keys[j][1], "split": split[j],
-                         "variant": v, "n_neighbours": len(blocks), "tokens": tokens,
-                         "cluster": int(labels[e]),
-                         "small_cells": sum(n < MIN_N for _, n in tab["cells"].values())})
+                while tokens > MAX_TOKENS and blocks:  # drop the least similar neighbour
+                    blocks.pop()
+                    messages = render(blocks)
+                    tokens = n_tokens(messages)
+                rft = {"messages": messages[:-1], "target": reply["cells"], "codes": codes,
+                       "item": f"{keys[j][0]}:{keys[j][1]}", "breakdown": breakdown}
+                lines[split[j]].append((j, json.dumps({"messages": messages}, ensure_ascii=False),
+                                        json.dumps(rft, ensure_ascii=False)))
+                rows.append({"survey_id": keys[j][0], "variable": keys[j][1], "breakdown": breakdown,
+                             "split": split[j], "variant": v, "n_neighbours": len(blocks),
+                             "tokens": tokens, "cluster": int(labels[e]), "news": len(context or []),
+                             "small_cells": sum(n < MIN_N for _, n in tab["cells"].values())})
         if e % 100 == 0:
             print(f"  {e}/{len(exercises)}", flush=True)
 
@@ -289,10 +304,12 @@ def build() -> dict:
     manifest = {
         "generated_at": date.today().isoformat(), "generated_by": "scripts/41_dossier_training_data.py",
         "seed": SEED, "prompt": "benchmark/dossier.py (prompt, render_question, attitudes)",
+        "breakdowns": list(breakdowns), "news": news,
         "surveys": list(dz.s36.SURVEYS), "variants_train": VARIANTS, "pool": POOL, "k_variant0": dz.K,
         "min_cell_n_shrink": MIN_N, "min_national_n": MIN_NATIONAL_N,
         "n_exercises": len(exercises),
-        "n_items": {s: int(frame[frame.variant == 0].split.eq(s).sum()) for s in ("train", "validation")},
+        "n_items": {s: int(frame[(frame.variant == 0) & (frame.breakdown == breakdowns[0])].split.eq(s).sum())
+                    for s in ("train", "validation")},
         "files": {k: len(v) for k, v in files.items()},
         "dropped": dropped, "leak_by_benchmark_item": dict(sorted(leak_by_bench.items())),
         "validation_clusters": sorted(int(c) for c in held),
@@ -341,5 +358,10 @@ def audit(n: int = 1000) -> dict:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--audit", action="store_true", help="only the RAI screen of built files")
+    parser.add_argument("--breakdowns", default="region_age", help="comma-separated, or 'all'")
+    parser.add_argument("--news", action="store_true", help="add the V5 news summaries")
+    parser.add_argument("--out", default="datasets_dossier", help="folder under data/")
     args = parser.parse_args()
-    audit() if args.audit else build()
+    OUT = REPO / "data" / args.out
+    names = tuple(dz.BREAKDOWNS) if args.breakdowns == "all" else tuple(args.breakdowns.split(","))
+    audit() if args.audit else build(names, args.news)
