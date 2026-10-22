@@ -25,8 +25,8 @@ SETS = {
     "novel": ("cps25_tarrifs_1", "cps25_tarrifs_2", "cps25_foreign_pol_protect",
               "cps25_safe_injection", "cps25_student_protes", "cps25_resident_2f",
               "cps25_rent_security", "pes25_decent_housing"),
-    # 20 novel items with >= 1,000 Quebec respondents (no party/leader items, none the
-    # content filter flags), then 8 CSES module items (543 in Quebec), reported apart.
+    # 20 novel items with ~5,000+ respondents (no party/leader items, none the content
+    # filter flags), then 8 CSES module items (2,331 respondents, ~155 a cell), reported apart.
     # Chosen 2026-10-22 for the approach-C recipe note (docs/plan_prochaine_note_C.md).
     "novel28": ("cps25_tarrifs_1", "cps25_tarrifs_2", "cps25_foreign_pol_increase",
                 "cps25_foreign_pol_provide", "cps25_foreign_pol_support",
@@ -39,7 +39,16 @@ SETS = {
                 "cses_module6_Q07_6", "cses_module6_Q04a", "cses_module6_Q04b",
                 "cses_module6_27b", "cses_module6_Q26b"),
 }
-#: The CSES items of "novel28": smaller Quebec n, scored and reported separately.
+#: Routed CES 2025 items (checked in the data 2026-10-22): who was asked. The truth is
+#: computed among them (non-asked are missing); the dossier states the population.
+#: Split-sample blocks (block_*, pes_block) are random and need nothing.
+ASKED_ONLY = {
+    "cps25_tarrifs_2": "respondents who said relations with the US had become worse (cps25_tarrifs_1 = 2)",
+    "cps25_howvote1": "respondents who said they were likely to vote (cps25_v_likely = 1 or 2)",
+    "cps25_rent_security": "renters (cps25_rent = 1)",
+    "cps25_big_issue_gov": "respondents who named a biggest issue (cps25_big_issue != 6)",
+}
+#: The CSES items of "novel28": smaller n, scored and reported separately.
 CSES_ITEMS = frozenset(v for v in SETS["novel28"] if v.startswith("cses_"))
 TARGET_VARS = SETS[SET]
 #: Context given to each profile: "fix" = the 7 anchors of the plan (A models);

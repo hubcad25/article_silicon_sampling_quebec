@@ -49,6 +49,17 @@ produit. **Pas** de calibration des marges dans cette note (elle vient une fois 
    `data/analysis/ces2025_novelty.csv` (script 39) : n ≥ ~5 000, pas de questions sur les partis/leaders,
    pas d'items sensibles au filtre de contenu (racisme, sexisme, nativisme). Rapporter avec et sans les
    items liés à l'actualité 2025 (ex. `tarrifs_1/2`).
+   - **Fait (22 oct.)** : set `novel28` (`benchmark/__init__.py`) = 20 items CES + 8 items CSES
+     (2 331 répondants, ~155 par cellule, rapportés à part).
+   - **Routage** (remarque de Justin, note du 22 oct.) : pour chaque item, vérifier à qui la question
+     a été posée. Vérifié dans les données : `tarrifs_2` (si `tarrifs_1` = « Worse »), `howvote1`
+     (votants probables), `rent_security` (locataires, n = 5 713), `big_issue_gov` (si un enjeu nommé).
+     La vérité se calcule déjà parmi les répondants concernés ; le dossier l'indique maintenant
+     (`ASKED_ONLY`). Les blocs `block_*` / `pes_block` sont des sous-échantillons aléatoires : rien à faire.
+   - **Set 3 de Justin** (8 items, `questions_set3_holdout8.json`) : `resident_2e` et `pes25_ai` sont
+     déjà dans `novel28`. `foreign_grid_1` (cos 0,847), `internetvote_1` (0,851), `emb_vote16` (0,918)
+     et `tieindia` (0,825) dépassent notre seuil anti-fuite de 0,80 ; `abort2` a déjà été posée
+     (2019/2021) ; `tarrifs_3` n'est pas dans nos candidats (à vérifier).
 3. **Trois mesures par variante**, chacune convertie en « vaut un sondage représentatif de n » et en marge
    d'erreur par groupe (conversion : TV ≈ 0,66 / √n par groupe ; marge ≈ ±98/√n points) :
    - **C seul** (client sans données) ;
@@ -65,7 +76,11 @@ produit. **Pas** de calibration des marges dans cette note (elle vient une fois 
 | V3 | Exemple + récompense : (1) V0 écrit 8 tableaux par exercice, notés contre la vérité (`benchmark/dossier_grader.py`) ; (2) on réentraîne V0 sur ses meilleurs (`scripts/43_dossier_expert_iteration.py`, à adapter pour partir de V0) | La récompense aide-t-elle sur un bon départ ? |
 | V5 | Contexte d'actualité : résumé thématique daté d'avant la collecte, ajouté au dossier, à l'entraînement comme au test (voir §4b) | Corrige-t-il les questions d'actualité sans nuire aux autres ? |
 
-Références sans entraînement : C Llama de base et gpt-5.5 (signalé). V4 (national puis écarts) écartée :
+Références sans entraînement : C Llama de base et gpt-5.5 (signalé). Pour V5, deux de plus
+(proposition de Justin) : (a) Llama de base + résumés d'actualité ; (b) V0 + résumés au test
+seulement. Justin a déjà testé (a) en zéro-shot avec un briefing de 4 puces, sur la grille
+région × âge : Set 2 0,247 → 0,211 (l'égal de notre C par l'exemple, 0,214), Set 1 inchangé
+(0,219 → 0,225). V4 (national puis écarts) écartée :
 dans l'hybride le niveau vient de l'échantillon.
 
 ## 4a. Décisions du 22 octobre
